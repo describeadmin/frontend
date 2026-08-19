@@ -1,0 +1,54 @@
+# frontend 仓库 CI
+#
+# 本仓库自成体系：类型检查、lint、构建都不依赖其他仓库。
+# 需要真实后端的端到端冒烟（e2e/smoke.mjs）**不在这里跑**——
+# 它要 MySQL + Spring Boot 一起起来，属于跨仓库的集成验证，
+# 放在这里等于把 framework 的构建产物也扛进前端 CI。
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: 类型检查与构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # 与 package.json engines 保持一致，不要写 'lts/*'
+          node-version: 22.18.0
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 类型检查
+        run: pnpm -F @describeadmin/admin run typecheck
+
+      - name: Lint
+        # 分层约束（@core 不得引用上层包）由 eslint 的 no-restricted-imports 承担，
+        # 这条规则合并 scope 后需要否定模式才正确，因此必须在 CI 里真的跑一次
+        run: pnpm exec eslint packages apps internal --max-warnings 0
+
+      - name: 构建
+        run: pnpm -F @describeadmin/admin run build
+
+      - name: 校验产物中没有残留的上游 CDN 外链
+        # 目标部署环境（政务内网）通常无公网出口，外链资源会一直加载失败，
+        # 且表现为「图一直转圈」，排查时容易被误判成样式问题
+        run: |
+          if grep -rq "unpkg.com\|@vbenjs/static-source" apps/admin/dist; then
+            echo "::error::构建产物中仍存在外部 CDN 引用"
+            grep -ro "https://[^\"']*unpkg[^\"']*" apps/admin/dist | head -5
+            exit 1
+          fi
+          echo "OK：无外部 CDN 引用"
