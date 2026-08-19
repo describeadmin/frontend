@@ -1,0 +1,33 @@
+{
+  "name": "@describeadmin/commitlint-config",
+  "version": "0.0.1",
+  "private": true,
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "internal/lint-configs/commitlint-config"
+  },
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./index.mjs",
+  "module": "./index.mjs",
+  "exports": {
+    ".": {
+      "import": "./index.mjs",
+      "default": "./index.mjs"
+    }
+  },
+  "dependencies": {
+    "@commitlint/cli": "catalog:",
+    "@commitlint/config-conventional": "catalog:",
+    "@describeadmin/node-utils": "workspace:*",
+    "commitlint-plugin-function-rules": "catalog:",
+    "cz-git": "catalog:",
+    "czg": "catalog:"
+  }
+}

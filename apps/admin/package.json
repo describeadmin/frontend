@@ -1,0 +1,48 @@
+{
+  "name": "@describeadmin/admin",
+  "version": "0.0.1",
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "apps/admin"
+  },
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm vite build --mode production",
+    "build:analyze": "pnpm vite build --mode analyze",
+    "dev": "pnpm vite --mode development",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit --skipLibCheck"
+  },
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "dependencies": {
+    "@describeadmin/access": "workspace:*",
+    "@describeadmin/ui": "workspace:*",
+    "@describeadmin/constants": "workspace:*",
+    "@describeadmin/hooks": "workspace:*",
+    "@describeadmin/icons": "workspace:*",
+    "@describeadmin/layouts": "workspace:*",
+    "@describeadmin/locales": "workspace:*",
+    "@describeadmin/plugins": "workspace:*",
+    "@describeadmin/preferences": "workspace:*",
+    "@describeadmin/request": "workspace:*",
+    "@describeadmin/stores": "workspace:*",
+    "@describeadmin/styles": "workspace:*",
+    "@describeadmin/types": "workspace:*",
+    "@describeadmin/utils": "workspace:*",
+    "@vueuse/core": "catalog:",
+    "dayjs": "catalog:",
+    "element-plus": "catalog:",
+    "pinia": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:"
+  },
+  "devDependencies": {
+    "unplugin-element-plus": "catalog:"
+  }
+}

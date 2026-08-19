@@ -1,0 +1,57 @@
+{
+  "name": "@describeadmin/ui",
+  "version": "0.0.1",
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "packages/effects/common-ui"
+  },
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./es/tippy": {
+      "types": "./src/components/tippy/index.ts",
+      "default": "./src/components/tippy/index.ts"
+    },
+    "./es/loading": {
+      "types": "./src/components/loading/index.ts",
+      "default": "./src/components/loading/index.ts"
+    }
+  },
+  "dependencies": {
+    "@describeadmin/core-design": "workspace:*",
+    "@describeadmin/core-form-ui": "workspace:*",
+    "@describeadmin/core-popup-ui": "workspace:*",
+    "@describeadmin/core-preferences": "workspace:*",
+    "@describeadmin/core-shadcn-ui": "workspace:*",
+    "@describeadmin/core-shared": "workspace:*",
+    "@describeadmin/constants": "workspace:*",
+    "@describeadmin/hooks": "workspace:*",
+    "@describeadmin/icons": "workspace:*",
+    "@describeadmin/locales": "workspace:*",
+    "@describeadmin/types": "workspace:*",
+    "@vueuse/core": "catalog:",
+    "@vueuse/integrations": "catalog:",
+    "json-bigint": "catalog:",
+    "qrcode": "catalog:",
+    "tippy.js": "catalog:",
+    "vue": "catalog:",
+    "vue-json-pretty": "catalog:",
+    "vue-router": "catalog:",
+    "vue-tippy": "catalog:"
+  },
+  "devDependencies": {
+    "@types/json-bigint": "catalog:",
+    "@types/qrcode": "catalog:",
+    "@vue/test-utils": "catalog:"
+  }
+}

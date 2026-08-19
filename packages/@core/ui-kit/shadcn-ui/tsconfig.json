@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@describeadmin/tsconfig/web.json",
+  "compilerOptions": {
+    "paths": {
+      "@describeadmin/core-shadcn-ui/*": ["./src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}

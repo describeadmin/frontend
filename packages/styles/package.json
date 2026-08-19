@@ -1,0 +1,42 @@
+{
+  "name": "@describeadmin/styles",
+  "version": "0.0.1",
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "packages/styles"
+  },
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./antd": {
+      "types": "./src/style-exports.d.ts",
+      "default": "./src/antd/index.css"
+    },
+    "./antdv-next": {
+      "types": "./src/style-exports.d.ts",
+      "default": "./src/antdv-next/index.css"
+    },
+    "./ele": {
+      "types": "./src/style-exports.d.ts",
+      "default": "./src/ele/index.css"
+    },
+    "./naive": {
+      "types": "./src/style-exports.d.ts",
+      "default": "./src/naive/index.css"
+    },
+    "./global": {
+      "types": "./src/style-exports.d.ts",
+      "default": "./src/global/index.scss"
+    }
+  },
+  "dependencies": {
+    "@describeadmin/core-design": "workspace:*"
+  }
+}

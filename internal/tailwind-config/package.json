@@ -1,0 +1,38 @@
+{
+  "name": "@describeadmin/tailwind-config",
+  "version": "0.0.1",
+  "private": true,
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "internal/tailwind-config"
+  },
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "src"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./theme": {
+      "default": "./src/theme.css"
+    }
+  },
+  "dependencies": {
+    "@iconify/tailwind4": "catalog:",
+    "@tailwindcss/typography": "catalog:",
+    "tailwindcss": "catalog:",
+    "tw-animate-css": "catalog:"
+  }
+}

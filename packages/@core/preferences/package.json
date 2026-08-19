@@ -1,0 +1,48 @@
+{
+  "name": "@describeadmin/core-preferences",
+  "version": "0.0.1",
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "packages/@core/preferences"
+  },
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "#build": "pnpm exec tsdown"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "development": "./src/index.ts",
+      "production": "./src/index.ts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      }
+    }
+  },
+  "dependencies": {
+    "@describeadmin/core-shared": "workspace:*",
+    "@describeadmin/core-typings": "workspace:*",
+    "@vueuse/core": "catalog:",
+    "vue": "catalog:"
+  }
+}

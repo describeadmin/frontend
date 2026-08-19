@@ -1,0 +1,32 @@
+{
+  "name": "@describeadmin/request",
+  "version": "0.0.1",
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "packages/effects/request"
+  },
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@describeadmin/locales": "workspace:*",
+    "@describeadmin/utils": "workspace:*",
+    "axios": "catalog:",
+    "qs": "catalog:"
+  },
+  "devDependencies": {
+    "@types/qs": "catalog:",
+    "axios-mock-adapter": "catalog:"
+  }
+}

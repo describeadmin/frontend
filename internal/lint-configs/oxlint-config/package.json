@@ -1,0 +1,35 @@
+{
+  "name": "@describeadmin/oxlint-config",
+  "version": "0.0.1",
+  "private": true,
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "internal/lint-configs/oxlint-config"
+  },
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "stub": "pnpm exec tsdown"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "dependencies": {
+    "@eslint-community/eslint-plugin-eslint-comments": "catalog:",
+    "eslint-plugin-better-tailwindcss": "catalog:",
+    "eslint-plugin-command": "catalog:",
+    "oxlint": "catalog:"
+  }
+}

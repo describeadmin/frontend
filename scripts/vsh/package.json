@@ -1,0 +1,38 @@
+{
+  "name": "@describeadmin/vsh",
+  "version": "0.0.1",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "stub": "pnpm exec tsdown"
+  },
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "vsh": "./bin/vsh.mjs"
+  },
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@describeadmin/node-utils": "workspace:*",
+    "cac": "catalog:",
+    "circular-dependency-scanner": "catalog:",
+    "knip": "catalog:",
+    "publint": "catalog:"
+  },
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "scripts/vsh"
+  }
+}

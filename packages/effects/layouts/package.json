@@ -1,0 +1,44 @@
+{
+  "name": "@describeadmin/layouts",
+  "version": "0.0.1",
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "packages/effects/layouts"
+  },
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@describeadmin/core-composables": "workspace:*",
+    "@describeadmin/core-design": "workspace:*",
+    "@describeadmin/core-form-ui": "workspace:*",
+    "@describeadmin/core-layout-ui": "workspace:*",
+    "@describeadmin/core-menu-ui": "workspace:*",
+    "@describeadmin/core-popup-ui": "workspace:*",
+    "@describeadmin/core-shadcn-ui": "workspace:*",
+    "@describeadmin/core-shared": "workspace:*",
+    "@describeadmin/core-tabs-ui": "workspace:*",
+    "@describeadmin/constants": "workspace:*",
+    "@describeadmin/hooks": "workspace:*",
+    "@describeadmin/icons": "workspace:*",
+    "@describeadmin/locales": "workspace:*",
+    "@describeadmin/preferences": "workspace:*",
+    "@describeadmin/stores": "workspace:*",
+    "@describeadmin/types": "workspace:*",
+    "@describeadmin/utils": "workspace:*",
+    "@vueuse/core": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:"
+  }
+}

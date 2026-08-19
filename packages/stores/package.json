@@ -1,0 +1,32 @@
+{
+  "name": "@describeadmin/stores",
+  "version": "0.0.1",
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "packages/stores"
+  },
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@describeadmin/core-preferences": "workspace:*",
+    "@describeadmin/core-shared": "workspace:*",
+    "@describeadmin/core-typings": "workspace:*",
+    "pinia": "catalog:",
+    "pinia-plugin-persistedstate": "catalog:",
+    "secure-ls": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:"
+  }
+}
