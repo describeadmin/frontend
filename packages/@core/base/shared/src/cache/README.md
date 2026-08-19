@@ -93,7 +93,10 @@ await cache.clearExpiredItems();
 基于浏览器 `localStorage` 或 `sessionStorage`，数据持久化存储。
 
 ```typescript
-import { LocalStorageDriver, StorageManager } from '@describeadmin/core-shared/cache';
+import {
+  LocalStorageDriver,
+  StorageManager,
+} from '@describeadmin/core-shared/cache';
 
 // 使用 localStorage（默认）
 const cache = new StorageManager({
@@ -162,7 +165,10 @@ await cache.setItem('config', {
 基于内存 Map，数据不持久化，页面刷新即丢失。
 
 ```typescript
-import { MemoryStorageDriver, StorageManager } from '@describeadmin/core-shared/cache';
+import {
+  MemoryStorageDriver,
+  StorageManager,
+} from '@describeadmin/core-shared/cache';
 
 const cache = new StorageManager({
   driver: new MemoryStorageDriver(),

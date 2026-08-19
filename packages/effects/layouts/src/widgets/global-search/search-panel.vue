@@ -4,12 +4,15 @@ import type { MenuRecordRaw } from '@describeadmin/types';
 import { nextTick, onMounted, ref, shallowRef, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { SearchX, X } from '@describeadmin/icons';
-import { $t } from '@describeadmin/locales';
-import { mapTree, traverseTreeValues, uniqueByField } from '@describeadmin/utils';
-
 import { VbenIcon, VbenScrollbar } from '@describeadmin/core-shadcn-ui';
 import { isHttpUrl } from '@describeadmin/core-shared/utils';
+import { SearchX, X } from '@describeadmin/icons';
+import { $t } from '@describeadmin/locales';
+import {
+  mapTree,
+  traverseTreeValues,
+  uniqueByField,
+} from '@describeadmin/utils';
 
 import {
   onKeyStroke,

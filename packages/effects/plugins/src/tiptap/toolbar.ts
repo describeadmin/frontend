@@ -6,6 +6,7 @@ import type {
   ToolbarMenuItem,
 } from './types';
 
+import { prompt } from '@describeadmin/core-popup-ui';
 import {
   AlignCenter,
   AlignLeft,
@@ -30,8 +31,6 @@ import {
 } from '@describeadmin/icons';
 import { $t } from '@describeadmin/locales';
 import { COLOR_PRESETS } from '@describeadmin/preferences';
-
-import { prompt } from '@describeadmin/core-popup-ui';
 
 const headingLevels = [1, 2, 3, 4] as const;
 const editorColorPresets = [

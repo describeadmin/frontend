@@ -5,7 +5,11 @@ import { useRouter } from 'vue-router';
 
 import { LOGIN_PATH } from '@describeadmin/constants';
 import { preferences } from '@describeadmin/preferences';
-import { resetAllStores, useAccessStore, useUserStore } from '@describeadmin/stores';
+import {
+  resetAllStores,
+  useAccessStore,
+  useUserStore,
+} from '@describeadmin/stores';
 
 import { ElNotification } from 'element-plus';
 import { defineStore } from 'pinia';

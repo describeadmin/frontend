@@ -5,10 +5,9 @@ import type { LayoutType } from '@describeadmin/types';
 
 import { computed } from 'vue';
 
+import { VbenTooltip } from '@describeadmin/core-shadcn-ui';
 import { CircleHelp } from '@describeadmin/icons';
 import { $t } from '@describeadmin/locales';
-
-import { VbenTooltip } from '@describeadmin/core-shadcn-ui';
 
 import {
   FullContent,

@@ -1,4 +1,7 @@
-import type { BuiltinThemeType, TimezoneOption } from '@describeadmin/core-typings';
+import type {
+  BuiltinThemeType,
+  TimezoneOption,
+} from '@describeadmin/core-typings';
 
 interface BuiltinThemePreset {
   color: string;

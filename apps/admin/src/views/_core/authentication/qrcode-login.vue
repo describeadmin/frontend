@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { AuthenticationQrCodeLogin } from '@describeadmin/ui';
 import { LOGIN_PATH } from '@describeadmin/constants';
+import { AuthenticationQrCodeLogin } from '@describeadmin/ui';
 
 defineOptions({ name: 'QrCodeLogin' });
 </script>

@@ -4,7 +4,6 @@ import type { NotificationItem } from '@describeadmin/layouts';
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { AuthenticationLoginExpiredModal } from '@describeadmin/ui';
 import { VBEN_DOC_URL, VBEN_GITHUB_URL } from '@describeadmin/constants';
 import { useWatermark } from '@describeadmin/hooks';
 import { BookOpenText, CircleHelp, SvgGithubIcon } from '@describeadmin/icons';
@@ -16,6 +15,7 @@ import {
 } from '@describeadmin/layouts';
 import { preferences, usePreferences } from '@describeadmin/preferences';
 import { useAccessStore, useUserStore } from '@describeadmin/stores';
+import { AuthenticationLoginExpiredModal } from '@describeadmin/ui';
 import { openWindow } from '@describeadmin/utils';
 
 import { $t } from '#/locales';

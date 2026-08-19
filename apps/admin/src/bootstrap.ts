@@ -1,11 +1,11 @@
 import { createApp, watchEffect } from 'vue';
 
 import { registerAccessDirective } from '@describeadmin/access';
-import { registerLoadingDirective } from '@describeadmin/ui';
 import { preferences } from '@describeadmin/preferences';
 import { initStores } from '@describeadmin/stores';
 import '@describeadmin/styles';
 import '@describeadmin/styles/ele';
+import { registerLoadingDirective } from '@describeadmin/ui';
 
 import { useTitle } from '@vueuse/core';
 import { ElLoading } from 'element-plus';

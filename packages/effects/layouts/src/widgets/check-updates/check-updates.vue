@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
 
-import { $t } from '@describeadmin/locales';
-
 import { useVbenModal } from '@describeadmin/core-popup-ui';
+import { $t } from '@describeadmin/locales';
 
 interface Props {
   // 轮询时间，分钟

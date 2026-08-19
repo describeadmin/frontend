@@ -10,7 +10,10 @@ import type { Ref } from 'vue';
 
 import type { ClassType, DeepPartial } from '@describeadmin/types';
 
-import type { BaseFormComponentType, VbenFormProps } from '@describeadmin/core-form-ui';
+import type {
+  BaseFormComponentType,
+  VbenFormProps,
+} from '@describeadmin/core-form-ui';
 
 import type { VxeGridApi } from './api';
 

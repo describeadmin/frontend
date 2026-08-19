@@ -2,11 +2,13 @@
 import type { SupportedLanguagesType } from '@describeadmin/locales';
 
 import { SUPPORT_LANGUAGES } from '@describeadmin/constants';
+import {
+  VbenDropdownRadioMenu,
+  VbenIconButton,
+} from '@describeadmin/core-shadcn-ui';
 import { Languages } from '@describeadmin/icons';
 import { loadLocaleMessages } from '@describeadmin/locales';
 import { preferences, updatePreferences } from '@describeadmin/preferences';
-
-import { VbenDropdownRadioMenu, VbenIconButton } from '@describeadmin/core-shadcn-ui';
 
 defineOptions({
   name: 'LanguageToggle',

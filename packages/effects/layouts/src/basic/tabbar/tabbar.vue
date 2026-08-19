@@ -2,16 +2,15 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 
-import { useContentMaximize, useTabs } from '@describeadmin/hooks';
-import { preferences } from '@describeadmin/preferences';
-import { useTabbarStore } from '@describeadmin/stores';
-
 import {
   TabsToolMore,
   TabsToolRefresh,
   TabsToolScreen,
   TabsView,
 } from '@describeadmin/core-tabs-ui';
+import { useContentMaximize, useTabs } from '@describeadmin/hooks';
+import { preferences } from '@describeadmin/preferences';
+import { useTabbarStore } from '@describeadmin/stores';
 
 import { useTabbar } from './use-tabbar';
 

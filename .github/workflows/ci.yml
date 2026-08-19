@@ -31,13 +31,15 @@ jobs:
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
 
-      - name: 类型检查
-        run: pnpm -F @describeadmin/admin run typecheck
-
-      - name: Lint
-        # 分层约束（@core 不得引用上层包）由 eslint 的 no-restricted-imports 承担，
-        # 这条规则合并 scope 后需要否定模式才正确，因此必须在 CI 里真的跑一次
-        run: pnpm exec eslint packages apps internal --max-warnings 0
+      # 用仓库自带的 pnpm check，而不是自己拼一条 eslint 命令。
+      # check 会跑 oxfmt --check + oxlint + eslint + stylelint + turbo typecheck，
+      # 与 lefthook 的 pre-commit 钩子**完全一致**——两边不一致的话，
+      # 本地能提交的代码到 CI 才挂（这个坑已经踩过一次）。
+      #
+      # 其中 eslint 的 no-restricted-imports 承担 @core 的分层约束，
+      # 该规则在合并 scope 后需要否定模式才正确，必须真的跑到。
+      - name: 检查（格式 / lint / 类型 / 循环依赖）
+        run: pnpm check
 
       - name: 构建
         run: pnpm -F @describeadmin/admin run build

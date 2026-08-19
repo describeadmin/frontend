@@ -3,10 +3,6 @@ import type { IconPickerProps } from './types';
 
 import { computed, ref, useAttrs, watch, watchEffect } from 'vue';
 
-import { usePagination } from '@describeadmin/hooks';
-import { EmptyIcon, Grip, listIcons } from '@describeadmin/icons';
-import { $t } from '@describeadmin/locales';
-
 import {
   Button,
   Input,
@@ -23,6 +19,9 @@ import {
   VbenPopover,
 } from '@describeadmin/core-shadcn-ui';
 import { isFunction } from '@describeadmin/core-shared/utils';
+import { usePagination } from '@describeadmin/hooks';
+import { EmptyIcon, Grip, listIcons } from '@describeadmin/icons';
+import { $t } from '@describeadmin/locales';
 
 import { objectOmit, refDebounced, watchDebounced } from '@vueuse/core';
 

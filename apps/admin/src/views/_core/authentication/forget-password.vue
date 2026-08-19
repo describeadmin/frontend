@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import type { VbenFormSchema } from '@describeadmin/ui';
 import type { Recordable } from '@describeadmin/types';
+import type { VbenFormSchema } from '@describeadmin/ui';
 
 import { computed, ref } from 'vue';
 
-import { AuthenticationForgetPassword, z } from '@describeadmin/ui';
 import { $t } from '@describeadmin/locales';
+import { AuthenticationForgetPassword, z } from '@describeadmin/ui';
 
 defineOptions({ name: 'ForgetPassword' });
 

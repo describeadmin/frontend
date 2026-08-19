@@ -1,4 +1,7 @@
-import type { RouteRecordStringComponent, UserInfo } from '@describeadmin/types';
+import type {
+  RouteRecordStringComponent,
+  UserInfo,
+} from '@describeadmin/types';
 
 import { requestClient } from '#/api/request';
 
@@ -104,7 +107,8 @@ export async function getUserInfoApi(): Promise<UserInfo> {
  * 「页面上有哪些按钮」与「谁能看到这些按钮」共用同一份数据，不会各说各话。
  */
 export async function getAccessCodesApi(): Promise<string[]> {
-  return (await getMeApi()).permissions ?? [];
+  const me = await getMeApi();
+  return me.permissions ?? [];
 }
 
 /** 后端 `SysMenu` 的原样映射。 */
@@ -133,26 +137,28 @@ function routeNameOf(path: string): string {
 }
 
 function toRouteRecords(menus: BackendMenu[]): RouteRecordStringComponent[] {
-  return menus
-    // 后端 treeOf 已过滤 BUTTON，这里再挡一次：菜单数据是业主可编辑的，
-    // 一个手滑把按钮建成菜单就会产生没有 component 的坏路由
-    .filter((menu) => menu.menuType !== 'BUTTON' && !!menu.path)
-    .map((menu) => {
-      const path = menu.path as string;
-      const children = toRouteRecords(menu.children ?? []);
-      return {
-        children: children.length > 0 ? children : undefined,
-        component: menu.component ?? 'BasicLayout',
-        meta: {
-          hideInMenu: menu.visible === 0,
-          icon: menu.icon ?? undefined,
-          order: menu.sort ?? 0,
-          title: menu.menuName,
-        },
-        name: routeNameOf(path),
-        path,
-      } as RouteRecordStringComponent;
-    });
+  return (
+    menus
+      // 后端 treeOf 已过滤 BUTTON，这里再挡一次：菜单数据是业主可编辑的，
+      // 一个手滑把按钮建成菜单就会产生没有 component 的坏路由
+      .filter((menu) => menu.menuType !== 'BUTTON' && !!menu.path)
+      .map((menu) => {
+        const path = menu.path as string;
+        const children = toRouteRecords(menu.children ?? []);
+        return {
+          children: children.length > 0 ? children : undefined,
+          component: menu.component ?? 'BasicLayout',
+          meta: {
+            hideInMenu: menu.visible === 0,
+            icon: menu.icon ?? undefined,
+            order: menu.sort ?? 0,
+            title: menu.menuName,
+          },
+          name: routeNameOf(path),
+          path,
+        } as RouteRecordStringComponent;
+      })
+  );
 }
 
 /**

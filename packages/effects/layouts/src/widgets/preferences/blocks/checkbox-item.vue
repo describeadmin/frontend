@@ -3,9 +3,11 @@ import type { SelectOption } from '@describeadmin/types';
 
 import { useSlots } from 'vue';
 
+import {
+  VbenCheckButtonGroup,
+  VbenTooltip,
+} from '@describeadmin/core-shadcn-ui';
 import { CircleHelp } from '@describeadmin/icons';
-
-import { VbenCheckButtonGroup, VbenTooltip } from '@describeadmin/core-shadcn-ui';
 
 defineOptions({
   name: 'PreferenceCheckboxItem',

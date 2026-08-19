@@ -14,7 +14,11 @@
 ## 使用
 
 ```ts
-import { MotionPlugin, Motion, MotionDirective } from '@describeadmin/plugins/motion';
+import {
+  MotionPlugin,
+  Motion,
+  MotionDirective,
+} from '@describeadmin/plugins/motion';
 
 app.use(MotionPlugin);
 ```
@@ -22,5 +26,8 @@ app.use(MotionPlugin);
 ## 类型
 
 ```ts
-import type { MotionOptions, MotionVariants } from '@describeadmin/plugins/motion';
+import type {
+  MotionOptions,
+  MotionVariants,
+} from '@describeadmin/plugins/motion';
 ```

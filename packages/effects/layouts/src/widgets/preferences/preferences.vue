@@ -1,13 +1,12 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 
+import { useVbenDrawer } from '@describeadmin/core-popup-ui';
+import { VbenButton } from '@describeadmin/core-shadcn-ui';
 import { Settings } from '@describeadmin/icons';
 import { $t, loadLocaleMessages } from '@describeadmin/locales';
 import { preferences, updatePreferences } from '@describeadmin/preferences';
 import { capitalizeFirstLetter } from '@describeadmin/utils';
-
-import { useVbenDrawer } from '@describeadmin/core-popup-ui';
-import { VbenButton } from '@describeadmin/core-shadcn-ui';
 
 import PreferencesDrawer from './preferences-drawer.vue';
 

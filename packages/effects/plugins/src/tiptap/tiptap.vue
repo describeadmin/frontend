@@ -8,12 +8,11 @@ import type {
 
 import { computed, onBeforeUnmount, reactive, watch } from 'vue';
 
-import { Check, ChevronDown, Eye } from '@describeadmin/icons';
-import { $t } from '@describeadmin/locales';
-
 import { useVbenModal } from '@describeadmin/core-popup-ui';
 import { VbenIconButton, VbenPopover } from '@describeadmin/core-shadcn-ui';
 import { cn } from '@describeadmin/core-shared/utils';
+import { Check, ChevronDown, Eye } from '@describeadmin/icons';
+import { $t } from '@describeadmin/locales';
 
 import { EditorContent, useEditor } from '@tiptap/vue-3';
 

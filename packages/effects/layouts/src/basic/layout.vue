@@ -7,6 +7,8 @@ import type { MenuRecordRaw } from '@describeadmin/types';
 import { computed, onMounted, useSlots, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
+import { VbenAdminLayout } from '@describeadmin/core-layout-ui';
+import { VbenBackTop, VbenLogo } from '@describeadmin/core-shadcn-ui';
 import { useRefresh } from '@describeadmin/hooks';
 import { $t, i18n } from '@describeadmin/locales';
 import {
@@ -14,11 +16,12 @@ import {
   updatePreferences,
   usePreferences,
 } from '@describeadmin/preferences';
-import { useAccessStore, useTabbarStore, useTimezoneStore } from '@describeadmin/stores';
+import {
+  useAccessStore,
+  useTabbarStore,
+  useTimezoneStore,
+} from '@describeadmin/stores';
 import { cloneDeep, mapTree } from '@describeadmin/utils';
-
-import { VbenAdminLayout } from '@describeadmin/core-layout-ui';
-import { VbenBackTop, VbenLogo } from '@describeadmin/core-shadcn-ui';
 
 import { Breadcrumb, CheckUpdates, Preferences } from '../widgets';
 import { LayoutContent, LayoutContentSpinner } from './content';

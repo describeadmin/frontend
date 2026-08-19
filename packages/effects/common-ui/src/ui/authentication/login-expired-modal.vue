@@ -3,10 +3,9 @@ import type { AuthenticationProps } from './types';
 
 import { computed, watch } from 'vue';
 
-import { $t } from '@describeadmin/locales';
-
 import { useVbenModal } from '@describeadmin/core-popup-ui';
 import { Slot, VbenAvatar } from '@describeadmin/core-shadcn-ui';
+import { $t } from '@describeadmin/locales';
 
 interface Props extends AuthenticationProps {
   avatar?: string;

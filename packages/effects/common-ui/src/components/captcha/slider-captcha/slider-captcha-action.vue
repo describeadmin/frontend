@@ -3,9 +3,8 @@ import type { CSSProperties } from 'vue';
 
 import { computed, ref, useTemplateRef } from 'vue';
 
-import { Check, ChevronsRight } from '@describeadmin/icons';
-
 import { Slot } from '@describeadmin/core-shadcn-ui';
+import { Check, ChevronsRight } from '@describeadmin/icons';
 
 const props = defineProps<{
   actionStyle: CSSProperties;

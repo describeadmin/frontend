@@ -2,6 +2,13 @@
   "name": "@describeadmin/turbo-run",
   "version": "0.0.1",
   "private": true,
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "scripts/turbo-run"
+  },
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -25,12 +32,5 @@
     "@clack/prompts": "catalog:",
     "@describeadmin/node-utils": "workspace:*",
     "cac": "catalog:"
-  },
-  "homepage": "https://github.com/describeadmin/frontend",
-  "bugs": "https://github.com/describeadmin/frontend/issues",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/describeadmin/frontend.git",
-    "directory": "scripts/turbo-run"
   }
 }

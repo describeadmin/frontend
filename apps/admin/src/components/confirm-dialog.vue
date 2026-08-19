@@ -22,9 +22,9 @@ withDefaults(defineProps<Props>(), {
   loading: false,
 });
 
-const visible = defineModel<boolean>({ required: true });
-
 const emit = defineEmits<{ confirm: [] }>();
+
+const visible = defineModel<boolean>({ required: true });
 </script>
 
 <template>

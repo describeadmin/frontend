@@ -2,9 +2,8 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { $t } from '@describeadmin/locales';
-
 import { VbenButton } from '@describeadmin/core-shadcn-ui';
+import { $t } from '@describeadmin/locales';
 
 import { useQRCode } from '@vueuse/integrations/useQRCode';
 

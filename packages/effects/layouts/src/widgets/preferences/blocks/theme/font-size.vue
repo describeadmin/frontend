@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { watch } from 'vue';
 
-import { $t } from '@describeadmin/locales';
-
 import {
   NumberField,
   NumberFieldContent,
@@ -10,6 +8,7 @@ import {
   NumberFieldIncrement,
   NumberFieldInput,
 } from '@describeadmin/core-shadcn-ui';
+import { $t } from '@describeadmin/locales';
 
 defineOptions({
   name: 'PreferenceFontSize',

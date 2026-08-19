@@ -5,6 +5,10 @@ import type { VbenDropdownMenuItem } from '@describeadmin/core-shadcn-ui';
 
 import { computed } from 'vue';
 
+import {
+  VbenDropdownRadioMenu,
+  VbenIconButton,
+} from '@describeadmin/core-shadcn-ui';
 import { InspectionPanel, PanelLeft, PanelRight } from '@describeadmin/icons';
 import { $t } from '@describeadmin/locales';
 import {
@@ -12,8 +16,6 @@ import {
   updatePreferences,
   usePreferences,
 } from '@describeadmin/preferences';
-
-import { VbenDropdownRadioMenu, VbenIconButton } from '@describeadmin/core-shadcn-ui';
 
 defineOptions({
   name: 'AuthenticationLayoutToggle',

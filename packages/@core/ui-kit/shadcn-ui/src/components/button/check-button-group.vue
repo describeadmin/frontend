@@ -5,7 +5,11 @@ import type { ValueType, VbenButtonGroupProps } from './button';
 
 import { computed, ref, watch } from 'vue';
 
-import { Circle, CircleCheckBig, LoaderCircle } from '@describeadmin/core-icons';
+import {
+  Circle,
+  CircleCheckBig,
+  LoaderCircle,
+} from '@describeadmin/core-icons';
 import { cn, isFunction } from '@describeadmin/core-shared/utils';
 
 import { objectOmit } from '@vueuse/core';

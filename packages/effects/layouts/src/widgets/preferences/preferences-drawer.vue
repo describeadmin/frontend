@@ -17,6 +17,13 @@ import type { SegmentedItem } from '@describeadmin/core-shadcn-ui';
 
 import { computed, ref } from 'vue';
 
+import { useVbenDrawer } from '@describeadmin/core-popup-ui';
+import {
+  VbenButton,
+  VbenIconButton,
+  VbenSegmented,
+} from '@describeadmin/core-shadcn-ui';
+import { globalShareState } from '@describeadmin/core-shared/global-state';
 import { Copy, Pin, PinOff, RotateCw } from '@describeadmin/icons';
 import { $t, loadLocaleMessages } from '@describeadmin/locales';
 import {
@@ -26,14 +33,6 @@ import {
   updateCustomPreferences,
   usePreferences,
 } from '@describeadmin/preferences';
-
-import { useVbenDrawer } from '@describeadmin/core-popup-ui';
-import {
-  VbenButton,
-  VbenIconButton,
-  VbenSegmented,
-} from '@describeadmin/core-shadcn-ui';
-import { globalShareState } from '@describeadmin/core-shared/global-state';
 
 import { useClipboard } from '@vueuse/core';
 

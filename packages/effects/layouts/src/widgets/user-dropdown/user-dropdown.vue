@@ -5,13 +5,6 @@ import type { AnyFunction } from '@describeadmin/types';
 
 import { computed, useTemplateRef, watch } from 'vue';
 
-import { useHoverToggle } from '@describeadmin/hooks';
-import { LockKeyhole, LogOut, Settings } from '@describeadmin/icons';
-import { $t } from '@describeadmin/locales';
-import { preferences, usePreferences } from '@describeadmin/preferences';
-import { useAccessStore } from '@describeadmin/stores';
-import { isWindowsOs } from '@describeadmin/utils';
-
 import { useVbenModal } from '@describeadmin/core-popup-ui';
 import {
   Badge,
@@ -25,6 +18,12 @@ import {
   VbenAvatar,
   VbenIcon,
 } from '@describeadmin/core-shadcn-ui';
+import { useHoverToggle } from '@describeadmin/hooks';
+import { LockKeyhole, LogOut, Settings } from '@describeadmin/icons';
+import { $t } from '@describeadmin/locales';
+import { preferences, usePreferences } from '@describeadmin/preferences';
+import { useAccessStore } from '@describeadmin/stores';
+import { isWindowsOs } from '@describeadmin/utils';
 
 import { useMagicKeys, whenever } from '@vueuse/core';
 

@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import type { CaptchaPoint, PointSelectionCaptchaProps } from '../types';
 
+import { VbenButton, VbenIconButton } from '@describeadmin/core-shadcn-ui';
 import { RotateCw } from '@describeadmin/icons';
 import { $t } from '@describeadmin/locales';
-
-import { VbenButton, VbenIconButton } from '@describeadmin/core-shadcn-ui';
 
 import { useCaptchaPoints } from '../hooks/useCaptchaPoints';
 import CaptchaCard from './point-selection-captcha-card.vue';

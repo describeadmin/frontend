@@ -6,9 +6,8 @@ import type { IBreadcrumb } from '@describeadmin/core-shadcn-ui';
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { $t } from '@describeadmin/locales';
-
 import { VbenBreadcrumbView } from '@describeadmin/core-shadcn-ui';
+import { $t } from '@describeadmin/locales';
 
 interface Props {
   hideWhenOnlyOne?: boolean;

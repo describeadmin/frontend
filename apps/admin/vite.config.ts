@@ -1,3 +1,5 @@
+import process from 'node:process';
+
 import { defineConfig } from '@describeadmin/vite-config';
 
 import ElementPlus from 'unplugin-element-plus/vite';

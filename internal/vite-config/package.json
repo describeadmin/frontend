@@ -27,10 +27,10 @@
     }
   },
   "dependencies": {
+    "@describeadmin/node-utils": "workspace:*",
     "@intlify/unplugin-vue-i18n": "catalog:",
     "@jspm/generator": "catalog:",
     "@tailwindcss/vite": "catalog:",
-    "@describeadmin/node-utils": "workspace:*",
     "archiver": "catalog:",
     "cheerio": "catalog:",
     "get-port": "catalog:",

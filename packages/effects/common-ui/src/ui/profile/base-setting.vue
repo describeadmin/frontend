@@ -5,10 +5,9 @@ import type { VbenFormSchema } from '@describeadmin/core-form-ui';
 
 import { computed, reactive } from 'vue';
 
-import { $t } from '@describeadmin/locales';
-
 import { useVbenForm } from '@describeadmin/core-form-ui';
 import { VbenButton } from '@describeadmin/core-shadcn-ui';
+import { $t } from '@describeadmin/locales';
 
 interface Props {
   formSchema?: VbenFormSchema[];

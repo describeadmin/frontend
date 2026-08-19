@@ -7,9 +7,8 @@ import type {
 
 import { reactive, unref, useTemplateRef, watch, watchEffect } from 'vue';
 
-import { $t } from '@describeadmin/locales';
-
 import { cn } from '@describeadmin/core-shared/utils';
+import { $t } from '@describeadmin/locales';
 
 import { useTimeoutFn } from '@vueuse/core';
 

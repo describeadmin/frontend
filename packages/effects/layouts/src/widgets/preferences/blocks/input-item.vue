@@ -3,9 +3,8 @@ import type { SelectOption } from '@describeadmin/types';
 
 import { useSlots } from 'vue';
 
-import { CircleHelp, CircleX } from '@describeadmin/icons';
-
 import { Input, VbenTooltip } from '@describeadmin/core-shadcn-ui';
+import { CircleHelp, CircleX } from '@describeadmin/icons';
 
 defineOptions({
   name: 'PreferenceSelectItem',

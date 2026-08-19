@@ -21,17 +21,17 @@ import type {
 
 import type { Component } from 'vue';
 
+import type { Recordable } from '@describeadmin/types';
 import type {
   ApiComponentSharedProps,
   BaseFormComponentType,
   IconPickerProps,
 } from '@describeadmin/ui';
-import type { Recordable } from '@describeadmin/types';
 
 import { defineAsyncComponent, defineComponent, h, ref } from 'vue';
 
-import { ApiComponent, globalShareState, IconPicker } from '@describeadmin/ui';
 import { $t } from '@describeadmin/locales';
+import { ApiComponent, globalShareState, IconPicker } from '@describeadmin/ui';
 
 import { ElNotification } from 'element-plus';
 

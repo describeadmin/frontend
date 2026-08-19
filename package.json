@@ -1,6 +1,7 @@
 {
   "name": "describeadmin-frontend",
   "version": "0.0.1",
+  "description": "describeadmin 前端：由 Vben Admin 5.7.0 一次性取材后独立演进",
   "private": true,
   "homepage": "https://github.com/describeadmin/frontend",
   "bugs": "https://github.com/describeadmin/frontend/issues",
@@ -38,8 +39,6 @@
   "devDependencies": {
     "@changesets/changelog-github": "catalog:",
     "@changesets/cli": "catalog:",
-    "@tsdown/css": "catalog:",
-    "@types/node": "catalog:",
     "@describeadmin/commitlint-config": "workspace:*",
     "@describeadmin/eslint-config": "workspace:*",
     "@describeadmin/oxfmt-config": "workspace:*",
@@ -50,6 +49,8 @@
     "@describeadmin/turbo-run": "workspace:*",
     "@describeadmin/vite-config": "workspace:*",
     "@describeadmin/vsh": "workspace:*",
+    "@tsdown/css": "catalog:",
+    "@types/node": "catalog:",
     "@vitejs/plugin-vue": "catalog:",
     "@vitejs/plugin-vue-jsx": "catalog:",
     "cross-env": "catalog:",
@@ -75,6 +76,5 @@
     "node": "^22.18.0 || ^24.12.0",
     "pnpm": ">=11"
   },
-  "packageManager": "pnpm@11.21.0",
-  "description": "describeadmin 前端：由 Vben Admin 5.7.0 一次性取材后独立演进"
+  "packageManager": "pnpm@11.21.0"
 }

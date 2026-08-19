@@ -28,13 +28,13 @@
     }
   },
   "dependencies": {
+    "@describeadmin/constants": "workspace:*",
     "@describeadmin/core-design": "workspace:*",
     "@describeadmin/core-form-ui": "workspace:*",
     "@describeadmin/core-popup-ui": "workspace:*",
     "@describeadmin/core-preferences": "workspace:*",
     "@describeadmin/core-shadcn-ui": "workspace:*",
     "@describeadmin/core-shared": "workspace:*",
-    "@describeadmin/constants": "workspace:*",
     "@describeadmin/hooks": "workspace:*",
     "@describeadmin/icons": "workspace:*",
     "@describeadmin/locales": "workspace:*",

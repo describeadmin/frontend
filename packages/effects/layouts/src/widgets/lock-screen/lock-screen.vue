@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
 
-import { LockKeyhole } from '@describeadmin/icons';
-import { $t, useI18n } from '@describeadmin/locales';
-import { storeToRefs, useAccessStore } from '@describeadmin/stores';
-
 import { useScrollLock } from '@describeadmin/core-composables';
 import { useVbenForm, z } from '@describeadmin/core-form-ui';
 import { VbenAvatar, VbenButton } from '@describeadmin/core-shadcn-ui';
+import { LockKeyhole } from '@describeadmin/icons';
+import { $t, useI18n } from '@describeadmin/locales';
+import { storeToRefs, useAccessStore } from '@describeadmin/stores';
 
 import { useDateFormat, useNow } from '@vueuse/core';
 

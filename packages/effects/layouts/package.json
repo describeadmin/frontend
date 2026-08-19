@@ -20,6 +20,7 @@
     }
   },
   "dependencies": {
+    "@describeadmin/constants": "workspace:*",
     "@describeadmin/core-composables": "workspace:*",
     "@describeadmin/core-design": "workspace:*",
     "@describeadmin/core-form-ui": "workspace:*",
@@ -29,7 +30,6 @@
     "@describeadmin/core-shadcn-ui": "workspace:*",
     "@describeadmin/core-shared": "workspace:*",
     "@describeadmin/core-tabs-ui": "workspace:*",
-    "@describeadmin/constants": "workspace:*",
     "@describeadmin/hooks": "workspace:*",
     "@describeadmin/icons": "workspace:*",
     "@describeadmin/locales": "workspace:*",

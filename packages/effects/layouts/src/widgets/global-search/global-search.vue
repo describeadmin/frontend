@@ -3,6 +3,7 @@ import type { MenuRecordRaw } from '@describeadmin/types';
 
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
+import { useVbenModal } from '@describeadmin/core-popup-ui';
 import {
   ArrowDown,
   ArrowUp,
@@ -12,8 +13,6 @@ import {
 } from '@describeadmin/icons';
 import { $t } from '@describeadmin/locales';
 import { isWindowsOs } from '@describeadmin/utils';
-
-import { useVbenModal } from '@describeadmin/core-popup-ui';
 
 import { useMagicKeys, whenever } from '@vueuse/core';
 

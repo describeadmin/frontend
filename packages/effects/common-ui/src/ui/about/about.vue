@@ -8,7 +8,6 @@ import {
   VBEN_GITHUB_URL,
   VBEN_PREVIEW_URL,
 } from '@describeadmin/constants';
-
 import { VbenRenderContent } from '@describeadmin/core-shadcn-ui';
 
 import { Page } from '../../components';

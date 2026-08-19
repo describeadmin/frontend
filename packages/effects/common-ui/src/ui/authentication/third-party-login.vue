@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { VbenIconButton } from '@describeadmin/core-shadcn-ui';
 import { useAppConfig } from '@describeadmin/hooks';
 import {
   SvgGithubIcon,
@@ -7,8 +8,6 @@ import {
   SvgWeChatIcon,
 } from '@describeadmin/icons';
 import { $t } from '@describeadmin/locales';
-
-import { VbenIconButton } from '@describeadmin/core-shadcn-ui';
 
 import DingdingLogin from './dingding-login.vue';
 

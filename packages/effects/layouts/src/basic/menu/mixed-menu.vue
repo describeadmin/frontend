@@ -6,9 +6,8 @@ import type { NormalMenuProps } from '@describeadmin/core-menu-ui';
 import { onBeforeMount } from 'vue';
 import { useRoute } from 'vue-router';
 
-import { findMenuByPath } from '@describeadmin/utils';
-
 import { NormalMenu } from '@describeadmin/core-menu-ui';
+import { findMenuByPath } from '@describeadmin/utils';
 
 interface Props extends NormalMenuProps {}
 

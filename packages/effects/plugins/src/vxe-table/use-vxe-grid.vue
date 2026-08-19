@@ -25,6 +25,7 @@ import {
   watch,
 } from 'vue';
 
+import { VbenHelpTooltip, VbenLoading } from '@describeadmin/core-shadcn-ui';
 import { usePriorityValues } from '@describeadmin/hooks';
 import { EmptyIcon } from '@describeadmin/icons';
 import { $t } from '@describeadmin/locales';
@@ -36,8 +37,6 @@ import {
   isEqual,
   mergeWithArrayOverride,
 } from '@describeadmin/utils';
-
-import { VbenHelpTooltip, VbenLoading } from '@describeadmin/core-shadcn-ui';
 
 import { VxeButton } from 'vxe-pc-ui';
 import { VxeGrid, VxeUI } from 'vxe-table';

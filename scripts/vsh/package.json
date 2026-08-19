@@ -2,6 +2,13 @@
   "name": "@describeadmin/vsh",
   "version": "0.0.1",
   "private": true,
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "scripts/vsh"
+  },
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -27,12 +34,5 @@
     "circular-dependency-scanner": "catalog:",
     "knip": "catalog:",
     "publint": "catalog:"
-  },
-  "homepage": "https://github.com/describeadmin/frontend",
-  "bugs": "https://github.com/describeadmin/frontend/issues",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/describeadmin/frontend.git",
-    "directory": "scripts/vsh"
   }
 }

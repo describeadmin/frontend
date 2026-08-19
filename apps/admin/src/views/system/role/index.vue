@@ -156,14 +156,22 @@ onMounted(load);
 </script>
 
 <template>
-  <Page description="角色与菜单授权由框架的 framework-system-starter 提供" title="角色管理">
+  <Page
+    description="角色与菜单授权由框架的 framework-system-starter 提供"
+    title="角色管理"
+  >
     <template #extra>
       <ElButton type="primary" data-testid="role-add-btn" @click="openCreate">
         新增
       </ElButton>
     </template>
 
-    <ElTable v-loading="loading" :data="rows" row-key="id" data-testid="role-table">
+    <ElTable
+      v-loading="loading"
+      :data="rows"
+      row-key="id"
+      data-testid="role-table"
+    >
       <ElTableColumn prop="roleName" label="角色名称" min-width="160" />
       <ElTableColumn prop="roleCode" label="角色标识" min-width="160" />
       <ElTableColumn prop="sort" label="排序" width="80" />

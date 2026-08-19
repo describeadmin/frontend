@@ -1,6 +1,11 @@
 <script lang="ts" setup>
 import type { ThemeModeType } from '@describeadmin/types';
 
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+  VbenTooltip,
+} from '@describeadmin/core-shadcn-ui';
 import { MoonStar, Sun, SunMoon } from '@describeadmin/icons';
 import { $t } from '@describeadmin/locales';
 import {
@@ -8,12 +13,6 @@ import {
   updatePreferences,
   usePreferences,
 } from '@describeadmin/preferences';
-
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-  VbenTooltip,
-} from '@describeadmin/core-shadcn-ui';
 
 import ThemeButton from './theme-button.vue';
 

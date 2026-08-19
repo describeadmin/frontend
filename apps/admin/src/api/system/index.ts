@@ -6,6 +6,10 @@
  * `list` / `get` / `create` / `update` / `remove` 五个端点来自后端的
  * `BaseController`，各模块形状一致；模块特有的接口（分配角色、菜单树等）
  * 单独列在各自的段落里。
+ *
+ * 无返回体的接口不写 `<void>` 泛型：`void` 只在返回类型位置合法，作为类型实参
+ * 会被 `@typescript-eslint/no-invalid-void-type` 拦下。省略泛型即可，
+ * 调用方本来也不该用这些接口的返回值。
  */
 import type {
   PageQuery,
@@ -43,11 +47,11 @@ export async function updateUserApi(id: number, data: SysUser) {
 }
 
 export async function deleteUserApi(id: number) {
-  return requestClient.delete<void>(`/system/user/${id}`);
+  return requestClient.delete(`/system/user/${id}`);
 }
 
 export async function resetUserPasswordApi(id: number, password: string) {
-  return requestClient.put<void>(`/system/user/${id}/password`, { password });
+  return requestClient.put(`/system/user/${id}/password`, { password });
 }
 
 export async function getUserRolesApi(id: number) {
@@ -55,7 +59,7 @@ export async function getUserRolesApi(id: number) {
 }
 
 export async function assignUserRolesApi(id: number, roleIds: number[]) {
-  return requestClient.put<void>(`/system/user/${id}/roles`, roleIds);
+  return requestClient.put(`/system/user/${id}/roles`, roleIds);
 }
 
 // --------------------------------------------------------------------- 角色
@@ -73,7 +77,7 @@ export async function updateRoleApi(id: number, data: SysRole) {
 }
 
 export async function deleteRoleApi(id: number) {
-  return requestClient.delete<void>(`/system/role/${id}`);
+  return requestClient.delete(`/system/role/${id}`);
 }
 
 export async function getRoleMenusApi(id: number) {
@@ -81,7 +85,7 @@ export async function getRoleMenusApi(id: number) {
 }
 
 export async function assignRoleMenusApi(id: number, menuIds: number[]) {
-  return requestClient.put<void>(`/system/role/${id}/menus`, menuIds);
+  return requestClient.put(`/system/role/${id}/menus`, menuIds);
 }
 
 // --------------------------------------------------------------------- 菜单
@@ -100,7 +104,7 @@ export async function updateMenuApi(id: number, data: SysMenu) {
 }
 
 export async function deleteMenuApi(id: number) {
-  return requestClient.delete<void>(`/system/menu/${id}`);
+  return requestClient.delete(`/system/menu/${id}`);
 }
 
 // --------------------------------------------------------------------- 部门
@@ -118,5 +122,5 @@ export async function updateDeptApi(id: number, data: SysDept) {
 }
 
 export async function deleteDeptApi(id: number) {
-  return requestClient.delete<void>(`/system/dept/${id}`);
+  return requestClient.delete(`/system/dept/${id}`);
 }

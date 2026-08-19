@@ -5,8 +5,8 @@ import type {
 
 import type { ComponentPropsMap, ComponentType } from './component';
 
-import { setupVbenForm, useVbenForm as useForm, z } from '@describeadmin/ui';
 import { $t } from '@describeadmin/locales';
+import { setupVbenForm, useVbenForm as useForm, z } from '@describeadmin/ui';
 
 async function initSetupVbenForm() {
   setupVbenForm<ComponentType>({

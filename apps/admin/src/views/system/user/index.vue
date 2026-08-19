@@ -7,8 +7,8 @@ import { Page } from '@describeadmin/ui';
 
 import {
   ElButton,
-  ElCheckboxGroup,
   ElCheckbox,
+  ElCheckboxGroup,
   ElDialog,
   ElForm,
   ElFormItem,
@@ -217,14 +217,22 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Page description="用户体系由框架的 framework-system-starter 提供，业务方无需实现" title="用户管理">
+  <Page
+    description="用户体系由框架的 framework-system-starter 提供，业务方无需实现"
+    title="用户管理"
+  >
     <template #extra>
       <ElButton type="primary" data-testid="user-add-btn" @click="openCreate">
         新增
       </ElButton>
     </template>
 
-    <ElTable v-loading="loading" :data="rows" row-key="id" data-testid="user-table">
+    <ElTable
+      v-loading="loading"
+      :data="rows"
+      row-key="id"
+      data-testid="user-table"
+    >
       <ElTableColumn prop="username" label="用户名" min-width="140" />
       <ElTableColumn prop="nickname" label="昵称" min-width="140" />
       <ElTableColumn prop="deptName" label="部门" min-width="140" />
@@ -367,7 +375,10 @@ onMounted(async () => {
         placeholder="请输入新密码"
       />
       <template #footer>
-        <ElButton data-testid="user-password-cancel-btn" @click="pwdVisible = false">
+        <ElButton
+          data-testid="user-password-cancel-btn"
+          @click="pwdVisible = false"
+        >
           取消
         </ElButton>
         <ElButton
@@ -397,7 +408,10 @@ onMounted(async () => {
         />
       </ElCheckboxGroup>
       <template #footer>
-        <ElButton data-testid="user-role-cancel-btn" @click="roleVisible = false">
+        <ElButton
+          data-testid="user-role-cancel-btn"
+          @click="roleVisible = false"
+        >
           取消
         </ElButton>
         <ElButton

@@ -6,7 +6,11 @@ import type {
   RouteMeta,
 } from '@describeadmin/core-typings';
 
-import { filterTree, mapTree, sortTree } from '@describeadmin/core-shared/utils';
+import {
+  filterTree,
+  mapTree,
+  sortTree,
+} from '@describeadmin/core-shared/utils';
 
 /**
  * 根据 routes 生成菜单列表

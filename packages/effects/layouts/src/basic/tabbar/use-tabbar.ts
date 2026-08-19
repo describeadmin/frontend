@@ -22,7 +22,11 @@ import {
   X,
 } from '@describeadmin/icons';
 import { $t, useI18n } from '@describeadmin/locales';
-import { getTabKey, useAccessStore, useTabbarStore } from '@describeadmin/stores';
+import {
+  getTabKey,
+  useAccessStore,
+  useTabbarStore,
+} from '@describeadmin/stores';
 import { filterTree } from '@describeadmin/utils';
 
 export function useTabbar() {

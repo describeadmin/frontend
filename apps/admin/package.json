@@ -23,7 +23,6 @@
   },
   "dependencies": {
     "@describeadmin/access": "workspace:*",
-    "@describeadmin/ui": "workspace:*",
     "@describeadmin/constants": "workspace:*",
     "@describeadmin/hooks": "workspace:*",
     "@describeadmin/icons": "workspace:*",
@@ -35,6 +34,7 @@
     "@describeadmin/stores": "workspace:*",
     "@describeadmin/styles": "workspace:*",
     "@describeadmin/types": "workspace:*",
+    "@describeadmin/ui": "workspace:*",
     "@describeadmin/utils": "workspace:*",
     "@vueuse/core": "catalog:",
     "dayjs": "catalog:",
@@ -44,6 +44,7 @@
     "vue-router": "catalog:"
   },
   "devDependencies": {
+    "playwright": "catalog:",
     "unplugin-element-plus": "catalog:"
   }
 }

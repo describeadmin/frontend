@@ -8,10 +8,9 @@ import type { AuthenticationProps } from './types';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { $t } from '@describeadmin/locales';
-
 import { useVbenForm } from '@describeadmin/core-form-ui';
 import { VbenButton, VbenCheckbox } from '@describeadmin/core-shadcn-ui';
+import { $t } from '@describeadmin/locales';
 
 import Title from './auth-title.vue';
 import ThirdPartyLogin from './third-party-login.vue';

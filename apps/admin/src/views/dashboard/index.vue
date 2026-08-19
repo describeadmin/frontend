@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue';
 
-import { Page } from '@describeadmin/ui';
 import { useUserStore } from '@describeadmin/stores';
+import { Page } from '@describeadmin/ui';
 
 import { ElCard, ElCol, ElRow, ElStatistic, ElTag } from 'element-plus';
 
@@ -27,11 +27,15 @@ const userStore = useUserStore();
 const counts = ref({ dept: 0, menu: 0, role: 0, user: 0 });
 const loading = ref(true);
 
+const cards = [
+  { key: 'user', title: '用户' },
+  { key: 'role', title: '角色' },
+  { key: 'menu', title: '菜单与权限点' },
+  { key: 'dept', title: '部门' },
+] as const;
+
 function countTree(nodes: { children?: any[] }[]): number {
-  return nodes.reduce(
-    (sum, n) => sum + 1 + countTree(n.children ?? []),
-    0,
-  );
+  return nodes.reduce((sum, n) => sum + 1 + countTree(n.children ?? []), 0);
 }
 
 onMounted(async () => {
@@ -56,7 +60,11 @@ onMounted(async () => {
 
 <template>
   <Page description="以下数字均来自后端真实接口，不是演示数据" title="工作台">
-    <ElCard v-loading="loading" class="mb-4" data-testid="dashboard-welcome-card">
+    <ElCard
+      v-loading="loading"
+      class="mb-4"
+      data-testid="dashboard-welcome-card"
+    >
       <div class="text-lg font-medium">
         欢迎回来，{{ userStore.userInfo?.realName ?? '' }}
       </div>
@@ -76,18 +84,15 @@ onMounted(async () => {
       </p>
     </ElCard>
 
+    <!--
+      每张卡片都写成多行：单行写法下 oxfmt 与 eslint 的 vue/multiline-html-element-content-newline
+      会互相改回去，形成「格式化一次、lint 一次」的死循环。
+    -->
     <ElRow :gutter="16" data-testid="dashboard-stats">
-      <ElCol :md="6" :sm="12" :xs="24">
-        <ElCard><ElStatistic :value="counts.user" title="用户" /></ElCard>
-      </ElCol>
-      <ElCol :md="6" :sm="12" :xs="24">
-        <ElCard><ElStatistic :value="counts.role" title="角色" /></ElCard>
-      </ElCol>
-      <ElCol :md="6" :sm="12" :xs="24">
-        <ElCard><ElStatistic :value="counts.menu" title="菜单与权限点" /></ElCard>
-      </ElCol>
-      <ElCol :md="6" :sm="12" :xs="24">
-        <ElCard><ElStatistic :value="counts.dept" title="部门" /></ElCard>
+      <ElCol v-for="item in cards" :key="item.key" :md="6" :sm="12" :xs="24">
+        <ElCard>
+          <ElStatistic :value="counts[item.key]" :title="item.title" />
+        </ElCard>
       </ElCol>
     </ElRow>
   </Page>

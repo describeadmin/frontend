@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-import { Profile } from '@describeadmin/ui';
 import { useUserStore } from '@describeadmin/stores';
+import { Profile } from '@describeadmin/ui';
 
 import ProfileBase from './base-setting.vue';
 import ProfileNotificationSetting from './notification-setting.vue';
