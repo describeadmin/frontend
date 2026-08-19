@@ -15,8 +15,8 @@ const defaultPreferences: Preferences = {
     contentPaddingLeft: 0,
     contentPaddingRight: 0,
     contentPaddingTop: 0,
-    defaultAvatar:
-      'https://unpkg.com/@vbenjs/static-source@0.1.7/source/avatar-v1.webp',
+    // 本地资源而非 CDN：政务内网通常无公网出口，外链头像会一直加载失败
+    defaultAvatar: '/avatar.svg',
     defaultHomePath: '/analytics',
     dynamicTitle: true,
     enableCheckUpdates: true,
@@ -67,7 +67,7 @@ const defaultPreferences: Preferences = {
   logo: {
     enable: true,
     fit: 'contain',
-    source: 'https://unpkg.com/@vbenjs/static-source@0.1.7/source/logo-v1.webp',
+    source: '/logo.svg',
   },
   navigation: {
     accordion: true,

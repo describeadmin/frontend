@@ -1,30 +1,31 @@
 /**
+ * 项目对外链接与品牌资源。
+ *
+ * 常量名保留 `VBEN_` 前缀（代码出处保留，见 NOTICE.md），但**取值必须指向本项目**——
+ * 界面上显示的仓库地址、文档地址若还指着上游，是在向使用者提供错误信息。
+ */
+
+/**
  * @zh_CN GITHUB 仓库地址
  */
-export const VBEN_GITHUB_URL = 'https://github.com/vbenjs/vue-vben-admin';
+export const VBEN_GITHUB_URL = 'https://github.com/describeadmin/frontend';
 
 /**
  * @zh_CN 文档地址
  */
-export const VBEN_DOC_URL = 'https://doc.vben.pro';
+export const VBEN_DOC_URL = 'https://github.com/describeadmin/docs';
 
 /**
- * @zh_CN Vben Logo
+ * @zh_CN Logo。
+ *
+ * ⚠️ 用的是本地静态资源而不是 CDN。上游此处指向 unpkg.com，
+ * 而本项目的目标部署环境（政务内网）通常没有公网出口，
+ * 外链资源会表现为「logo 一直转圈或干脆不显示」，且排查时容易被误判为样式问题。
+ * 新增品牌资源时一律放进 public/，不要引入任何外部 CDN。
  */
-export const VBEN_LOGO_URL =
-  'https://unpkg.com/@vbenjs/static-source@0.1.7/source/logo-v1.webp';
+export const VBEN_LOGO_URL = '/logo.svg';
 
 /**
- * @zh_CN Vben Admin 首页地址
+ * @zh_CN 预览地址
  */
-export const VBEN_PREVIEW_URL = 'https://www.vben.pro';
-
-export const VBEN_ANTDV_NEXT_PREVIEW_URL = 'https://antdv-next.vben.pro';
-
-export const VBEN_ELE_PREVIEW_URL = 'https://ele.vben.pro';
-
-export const VBEN_NAIVE_PREVIEW_URL = 'https://naive.vben.pro';
-
-export const VBEN_ANT_PREVIEW_URL = 'https://ant.vben.pro';
-
-export const VBEN_TD_PREVIEW_URL = 'https://tdesign.vben.pro';
+export const VBEN_PREVIEW_URL = 'https://github.com/describeadmin';

@@ -10,7 +10,7 @@ import { resetAllStores, useAccessStore, useUserStore } from '@describeadmin/sto
 import { ElNotification } from 'element-plus';
 import { defineStore } from 'pinia';
 
-import { getAccessCodesApi, getUserInfoApi, loginApi, logoutApi } from '#/api';
+import { getMeApi, loginApi, logoutApi, toUserInfo } from '#/api';
 import { $t } from '#/locales';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -40,16 +40,13 @@ export const useAuthStore = defineStore('auth', () => {
         // 将 accessToken 存储到 accessStore 中
         accessStore.setAccessToken(accessToken);
 
-        // 获取用户信息并存储到 accessStore 中
-        const [fetchUserInfoResult, accessCodes] = await Promise.all([
-          fetchUserInfo(),
-          getAccessCodesApi(),
-        ]);
-
-        userInfo = fetchUserInfoResult;
+        // 用户信息与权限码来自同一个 /auth/me，一次取全。
+        // 上游模板在这里并发打两个接口，对我们的后端就是对同一端点请求两次
+        const me = await getMeApi();
+        userInfo = toUserInfo(me);
 
         userStore.setUserInfo(userInfo);
-        accessStore.setAccessCodes(accessCodes);
+        accessStore.setAccessCodes(me.permissions ?? []);
 
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
@@ -98,9 +95,17 @@ export const useAuthStore = defineStore('auth', () => {
     });
   }
 
+  /**
+   * 刷新页面后由路由守卫调用，用于恢复登录态。
+   *
+   * 权限码一并刷新：只恢复用户信息而不刷新权限码，会让「后台刚被降权的用户」
+   * 在刷新页面后依然看得见本该消失的按钮。
+   */
   async function fetchUserInfo() {
-    const userInfo = await getUserInfoApi();
+    const me = await getMeApi();
+    const userInfo = toUserInfo(me);
     userStore.setUserInfo(userInfo);
+    accessStore.setAccessCodes(me.permissions ?? []);
     return userInfo;
   }
 
