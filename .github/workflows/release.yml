@@ -137,12 +137,46 @@ jobs:
       - name: 打包演练（不上传）
         run: pnpm publish -r --dry-run --no-git-checks --access public --registry https://registry.npmjs.org/
 
-      - name: 发布到 npm
+      - name: 发布到 npm（带限流退避重试）
         if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
         # --registry 是命令行参数，优先级高于仓库 .npmrc 里的 registry=。
         # 带尾斜杠是为了和 setup-node 写入的鉴权键
         # //registry.npmjs.org/:_authToken 精确匹配。
-        run: pnpm publish -r --no-git-checks --access public --registry https://registry.npmjs.org/
+        #
+        # 【为什么必须有重试】
+        # 本仓库一次要发 27 个包。npm 对【新建包】有发布速率限制，
+        # 0.1.0 首发时实际撞上了：25 个发出去之后第 26 个拿到
+        #   429 Too Many Requests ... rate limited exceeded
+        # 结果是【半发布】——一部分包在 registry 上，一部分不在。
+        #
+        # 那次运气好，卡在两个叶子包上（layouts / plugins），没有其他
+        # 已发布包依赖它们，所以已发出的 25 个内部仍然自洽。但如果卡在
+        # core-shared 这种被大量依赖的包上，整组包会真的破损：
+        # 消费者装得到 A，却拉不到 A 依赖的 B。
+        #
+        # 对一个要发几十个新包的仓库，撞限流是必然而不是意外。
+        #
+        # 【为什么重试是安全的】
+        # pnpm publish 会跳过 registry 上【已存在的相同版本】，
+        # 因此重跑只会补发缺的那些，不会重复发布、也不会覆盖。
+        # 这个幂等性正是这段循环成立的前提——没有它，重试就是危险动作。
+        run: |
+          set -e
+          delay=60
+          for i in 1 2 3 4 5; do
+            if pnpm publish -r --no-git-checks --access public --registry https://registry.npmjs.org/; then
+              echo "  ✓ 发布完成（第 $i 次尝试）"
+              exit 0
+            fi
+            if [ "$i" -lt 5 ]; then
+              echo "::warning::第 $i 次未全部发完（多半是 429 限流），${delay}s 后重试仅补发缺失的包"
+              sleep "$delay"
+              delay=$((delay * 2))
+            fi
+          done
+          echo "::error::5 次尝试后仍未发完。请查看上方日志确认是限流还是别的原因，"
+          echo "::error::并用「核实包真的到了 npmjs.org 上」的做法逐个核对缺了哪些。"
+          exit 1
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'false'
@@ -164,10 +198,28 @@ jobs:
             }')
           echo "核实版本 $ver"
           [ -n "$ver" ] || { echo "::error::读不到版本号"; exit 1; }
-          fail=0
-          for pkg in @describeadmin/ui @describeadmin/ele-ui @describeadmin/core-design @describeadmin/request; do
+          # 逐个核对【全部】待发布包，不抽查——
+          # 0.1.0 首发时的半发布状态恰恰是「大部分包在、少数不在」，
+          # 抽查 4 个很可能全部命中已发布的那批，从而漏报。
+          node -e '
+            const {execSync}=require("child_process"), fs=require("fs"), path=require("path");
+            for (const p of JSON.parse(execSync("pnpm ls -r --depth -1 --json",{encoding:"utf8"}))) {
+              const f=path.join(p.path,"package.json");
+              if(!fs.existsSync(f)) continue;
+              const k=JSON.parse(fs.readFileSync(f,"utf8"));
+              if(k.private||!k.name?.startsWith("@describeadmin/")) continue;
+              console.log(k.name);
+            }
+          ' > /tmp/expected.txt
+          echo "待核对 $(wc -l < /tmp/expected.txt) 个包"
+          fail=0; n=0
+          while read -r pkg; do
+            [ -n "$pkg" ] || continue
+            n=$((n+1))
             got=$(npm view "$pkg@$ver" version --registry https://registry.npmjs.org/ 2>/dev/null || echo "")
-            if [ -z "$got" ]; then echo "::error::$pkg@$ver 在 npmjs.org 上查不到"; fail=1
-            else echo "  ✓ $pkg@$got"; fi
-          done
-          exit $fail
+            if [ -z "$got" ]; then echo "::error::$pkg@$ver 在 npmjs.org 上查不到"; fail=1; fi
+          done < /tmp/expected.txt
+          if [ "$fail" -eq 0 ]; then
+            echo "  ✓ $n 个包在 npmjs.org 上全部可查到"
+          fi
+          exit "$fail"
