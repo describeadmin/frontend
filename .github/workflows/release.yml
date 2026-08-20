@@ -134,6 +134,22 @@ jobs:
         env:
           PUBLISH_REGISTRY: 'https://registry.npmjs.org/'
 
+      - name: 诊断：确认令牌真的通过了认证
+        # 把「是不是 token 没读到」这个问题一次性钉死。
+        # 0.1.0 首发时出现过 429，错误文案是
+        #   "Could not publish, as user undefined: rate limited exceeded"
+        # 那句 "as user undefined" 极易让人以为是认证失败，从而反复
+        # 重置令牌——而真实原因是 npm 对【创建新包】的配额。
+        # whoami 能打印出用户名，就说明认证没问题，可以直接排除这条线索。
+        if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
+        run: |
+          set -e
+          who=$(npm whoami --registry https://registry.npmjs.org/ 2>&1) || {
+            echo "::error::令牌未通过认证：$who"; exit 1; }
+          echo "  ✓ 已认证为 $who"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: 打包演练（不上传）
         run: pnpm publish -r --dry-run --no-git-checks --access public --registry https://registry.npmjs.org/
 
@@ -162,6 +178,17 @@ jobs:
         # 这个幂等性正是这段循环成立的前提——没有它，重试就是危险动作。
         run: |
           set -e
+          # 注意每次尝试自身就要耗时约 70 秒：npm 客户端有内置的
+          # fetch-retry（默认 retries=2、mintimeout=10s、maxtimeout=60s），
+          # 拿到 429 后会自己先重试两次才把错误抛出来。
+          # 也就是说日志里那个「恒定 71 秒」是客户端重试，不是超时——
+          # 429 其实是第一时间就返回的。
+          #
+          # 实测：npm 对【创建新包】的配额是【小时级】的，
+          # 首发 25 个包之后，第 26 个连续一小时被拒。
+          # 因此这里的分钟级退避只能救「短暂抖动」，救不了配额耗尽。
+          # 配额耗尽时正确的做法是隔几小时再从 main 用
+          # workflow_dispatch（dry_run=false）补跑——发布是幂等的。
           delay=60
           for i in 1 2 3 4 5; do
             if pnpm publish -r --no-git-checks --access public --registry https://registry.npmjs.org/; then
