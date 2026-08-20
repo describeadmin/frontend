@@ -115,12 +115,59 @@ jobs:
             process.exit(fail);
           '
 
+      - name: 校验发布目标是 npmjs.org 而不是镜像源
+        # 仓库根目录的 .npmrc 把 registry 指向 registry.npmmirror.com——
+        # 装包时这是对的（国内快），但那是【只读镜像】，NPM_TOKEN 对它无效，
+        # publish 会得到 401 Login first。而 401 看起来像「token 配错了」，
+        # 会把人引到完全错误的方向上去查。
+        #
+        # 下面所有 publish 都显式带 --registry，这一步则是守卫：
+        # 万一将来有人改了配置，让它在【发布之前】就喊出来。
+        run: |
+          set -e
+          echo "仓库 .npmrc: $(cat .npmrc 2>/dev/null || echo '(无)')"
+          target="${PUBLISH_REGISTRY}"
+          case "$target" in
+            https://registry.npmjs.org/) echo "  ✓ 发布目标 $target" ;;
+            *) echo "::error::发布目标是 $target，不是 npmjs.org"; exit 1 ;;
+          esac
+        env:
+          PUBLISH_REGISTRY: 'https://registry.npmjs.org/'
+
       - name: 打包演练（不上传）
-        run: pnpm publish -r --dry-run --no-git-checks --access public
+        run: pnpm publish -r --dry-run --no-git-checks --access public --registry https://registry.npmjs.org/
 
       - name: 发布到 npm
         if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
-        run: pnpm publish -r --no-git-checks --access public
+        # --registry 是命令行参数，优先级高于仓库 .npmrc 里的 registry=。
+        # 带尾斜杠是为了和 setup-node 写入的鉴权键
+        # //registry.npmjs.org/:_authToken 精确匹配。
+        run: pnpm publish -r --no-git-checks --access public --registry https://registry.npmjs.org/
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'false'
+
+      - name: 核实包真的到了 npmjs.org 上
+        # 发布步骤 exit 0 不等于包能被别人装到。这里从 registry 反查一次。
+        if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
+        run: |
+          set -e
+          # 版本号从包里读，不写死——写死的常量迟早和现实脱节
+          ver=$(node -e '
+            const {execSync}=require("child_process"), fs=require("fs"), path=require("path");
+            for (const p of JSON.parse(execSync("pnpm ls -r --depth -1 --json",{encoding:"utf8"}))) {
+              const f=path.join(p.path,"package.json");
+              if(!fs.existsSync(f)) continue;
+              const k=JSON.parse(fs.readFileSync(f,"utf8"));
+              if(k.private||!k.name?.startsWith("@describeadmin/")) continue;
+              console.log(k.version); break;
+            }')
+          echo "核实版本 $ver"
+          [ -n "$ver" ] || { echo "::error::读不到版本号"; exit 1; }
+          fail=0
+          for pkg in @describeadmin/ui @describeadmin/ele-ui @describeadmin/core-design @describeadmin/request; do
+            got=$(npm view "$pkg@$ver" version --registry https://registry.npmjs.org/ 2>/dev/null || echo "")
+            if [ -z "$got" ]; then echo "::error::$pkg@$ver 在 npmjs.org 上查不到"; fail=1
+            else echo "  ✓ $pkg@$got"; fi
+          done
+          exit $fail
