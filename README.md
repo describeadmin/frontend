@@ -2,7 +2,15 @@
 
 describeadmin 的前端。由 [Vben Admin](https://github.com/vbenjs/vue-vben-admin) **5.7.0** 一次性取材后独立演进，UI 库为 Element Plus。派生关系与维护责任见 [NOTICE.md](./NOTICE.md)。
 
-## 快速开始
+**从零开始用这套框架，请看 [快速开始](https://github.com/describeadmin/docs/blob/main/QUICKSTART.md)。** 本文是本仓库自身的开发说明。
+
+## 分发形态
+
+`packages/` 下的 27 个包发布到 npm，作用域 `@describeadmin/*`，当前版本 `0.1.0`。业务方**依赖这些包**，而不是把它们复制进自己的仓库。
+
+`apps/admin` 是应用外壳，标了 `private`，不发布——它是业务方要拥有的部分。把外壳单独取出来的脚手架（`npm create @describeadmin/app`）尚未交付，在那之前业务方以本仓库的 `apps/admin` 为起点。
+
+## 快速开始（开发本仓库）
 
 ```bash
 pnpm install
@@ -18,9 +26,10 @@ pnpm dev            # http://localhost:5777
 ```
 apps/admin/          唯一应用（由官方 apps/web-ele 更名而来）
 packages/@core/      内核：布局、表单、弹窗、无样式组件原语（UI 库无关）
-packages/effects/    access / layouts / request / ui —— 计划发布到 npm 的四个包
-packages/            constants / icons / locales / stores / styles / types / utils
-internal/            构建与 lint 配置
+packages/effects/    access / layouts / request / ui / plugins / hooks
+packages/            constants / icons / locales / preferences / stores / styles / types / utils
+packages/ele-ui/     绑定 Element Plus 的组件层（peerDeps: element-plus + vue）
+internal/            构建与 lint 配置（private，不发布）
 ```
 
 ## 与后端的关系
