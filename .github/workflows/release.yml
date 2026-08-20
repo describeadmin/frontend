@@ -1,0 +1,104 @@
+# frontend 发布：@describeadmin/* 到 npm
+#
+# 需要在 GitHub 组织/仓库 Secrets 中配置：
+#   NPM_TOKEN   npm Access Token，类型必须是 Automation
+#               （Publish 类型带 2FA 交互，会让 CI 卡死）
+#
+# 触发：打 tag v* 自动发布；或手动触发（默认 dry-run，只打包校验不上传）。
+#
+# 【与 Maven Central 的区别】
+# npm 允许在 72 小时内 unpublish，因此这条链路不像 Central 那样完全不可逆。
+# 但一旦有人装过，unpublish 就会破坏对方的构建，实际上仍应当作不可逆对待。
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '只打包与校验，不上传到 npm'
+        type: boolean
+        default: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.18.0
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 校验 tag 与包版本一致
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -e
+          tag="${GITHUB_REF#refs/tags/v}"
+          ver=$(node -p "require('./packages/ui/package.json').version")
+          echo "tag=$tag  package=$ver"
+          [ "$tag" = "$ver" ] || { echo "::error::tag v$tag 与包版本 $ver 不一致，拒绝发布"; exit 1; }
+
+      - name: 构建全部包
+        run: pnpm build
+
+      - name: publint
+        # ⚠️ vsh publint 按 package.json 内容哈希缓存结果，
+        # 缓存命中时报的是【上一次】的结论，与当前 dist 无关。
+        # 不清缓存的话，dist 被删光也可能报「无问题」——这个门禁是反的。
+        run: |
+          rm -rf node_modules/.cache/publint
+          pnpm publint
+
+      - name: 校验每个待发布包的 dist 真的有内容
+        # publint 检查的是 package.json 的正确性，不保证 dist 非空。
+        # 二者缺一不可：exports 写得再对，dist 是空的，业务方装上去照样白屏。
+        run: |
+          set -e
+          node -e '
+            const {execSync} = require("child_process");
+            const fs = require("fs"), path = require("path");
+            const list = JSON.parse(execSync("pnpm ls -r --depth -1 --json", {encoding:"utf8"}));
+            let fail = 0, checked = 0;
+            for (const p of list) {
+              const pkgPath = path.join(p.path, "package.json");
+              if (!fs.existsSync(pkgPath)) continue;
+              const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+              if (pkg.private || !pkg.name?.startsWith("@describeadmin/")) continue;
+              checked++;
+              const dist = path.join(p.path, "dist");
+              if (!fs.existsSync(dist)) { console.error(`::error::${pkg.name} 没有 dist 目录`); fail = 1; continue; }
+              const bytes = fs.readdirSync(dist, {recursive:true})
+                .map(f => path.join(dist, f))
+                .filter(f => fs.statSync(f).isFile())
+                .reduce((s, f) => s + fs.statSync(f).size, 0);
+              if (bytes === 0) { console.error(`::error::${pkg.name} 的 dist 总字节数为 0`); fail = 1; continue; }
+              console.log(`  ✓ ${pkg.name.padEnd(40)} ${bytes} bytes`);
+            }
+            console.log(`共校验 ${checked} 个待发布包`);
+            if (checked === 0) { console.error("::error::没有找到任何待发布包，配置有误"); process.exit(1); }
+            process.exit(fail);
+          '
+
+      - name: 打包演练（不上传）
+        run: pnpm publish -r --dry-run --no-git-checks --access public
+
+      - name: 发布到 npm
+        if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
+        run: pnpm publish -r --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'false'
