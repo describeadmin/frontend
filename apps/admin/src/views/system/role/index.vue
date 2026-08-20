@@ -3,6 +3,7 @@ import type { SysMenu, SysRole } from '#/api';
 
 import { onMounted, reactive, ref } from 'vue';
 
+import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
 
 import {
@@ -28,7 +29,6 @@ import {
   getRoleMenusApi,
   updateRoleApi,
 } from '#/api';
-import ConfirmDialog from '#/components/confirm-dialog.vue';
 
 defineOptions({ name: 'SystemRole' });
 

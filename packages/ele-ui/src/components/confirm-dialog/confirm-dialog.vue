@@ -9,11 +9,11 @@ import { ElButton, ElDialog } from 'element-plus';
  * 自动化测试点不到确定按钮，删除类操作就等于没法被端到端验证。
  */
 interface Props {
+  loading?: boolean;
+  message?: string;
   /** data-testid 前缀，取模块名，如 `dept` → `dept-confirm-btn`。 */
   testid: string;
   title?: string;
-  message?: string;
-  loading?: boolean;
 }
 
 withDefaults(defineProps<Props>(), {

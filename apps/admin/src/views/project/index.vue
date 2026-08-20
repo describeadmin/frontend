@@ -3,6 +3,7 @@ import type { Project } from '#/api/project';
 
 import { onMounted, reactive, ref } from 'vue';
 
+import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
 
 import {
@@ -26,7 +27,6 @@ import {
   getProjectListApi,
   updateProjectApi,
 } from '#/api/project';
-import ConfirmDialog from '#/components/confirm-dialog.vue';
 
 defineOptions({ name: 'Project' });
 

@@ -3,6 +3,7 @@ import type { MenuType, SysMenu } from '#/api';
 
 import { computed, onMounted, reactive, ref } from 'vue';
 
+import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
 
 import {
@@ -28,7 +29,6 @@ import {
   getMenuTreeApi,
   updateMenuApi,
 } from '#/api';
-import ConfirmDialog from '#/components/confirm-dialog.vue';
 
 defineOptions({ name: 'SystemMenu' });
 

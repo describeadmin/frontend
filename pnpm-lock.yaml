@@ -600,6 +600,9 @@ importers:
       '@describeadmin/constants':
         specifier: workspace:*
         version: link:../../packages/constants
+      '@describeadmin/ele-ui':
+        specifier: workspace:*
+        version: link:../../packages/ele-ui
       '@describeadmin/hooks':
         specifier: workspace:*
         version: link:../../packages/effects/hooks
@@ -1212,6 +1215,10 @@ importers:
       vue:
         specifier: ^3.5.34
         version: 3.5.34(typescript@6.0.3)
+    devDependencies:
+      unplugin-vue:
+        specifier: 'catalog:'
+        version: 7.2.0(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.47.1)(vue@3.5.34(typescript@6.0.3))(yaml@2.9.0)
 
   packages/@core/ui-kit/tabs-ui:
     dependencies:
@@ -1264,6 +1271,10 @@ importers:
       vue:
         specifier: ^3.5.34
         version: 3.5.34(typescript@6.0.3)
+    devDependencies:
+      unplugin-vue:
+        specifier: 'catalog:'
+        version: 7.2.0(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.47.1)(vue@3.5.34(typescript@6.0.3))(yaml@2.9.0)
 
   packages/effects/common-ui:
     dependencies:
@@ -1337,6 +1348,9 @@ importers:
       '@vue/test-utils':
         specifier: 'catalog:'
         version: 2.4.10(@vue/compiler-dom@3.5.34)(@vue/server-renderer@3.5.34(vue@3.5.34(typescript@6.0.3)))(vue@3.5.34(typescript@6.0.3))
+      unplugin-vue:
+        specifier: 'catalog:'
+        version: 7.2.0(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.47.1)(vue@3.5.34(typescript@6.0.3))(yaml@2.9.0)
 
   packages/effects/hooks:
     dependencies:
@@ -1430,6 +1444,10 @@ importers:
       vue-router:
         specifier: 'catalog:'
         version: 5.0.7(@vue/compiler-sfc@3.5.34)(pinia@3.0.4(typescript@6.0.3)(vue@3.5.34(typescript@6.0.3)))(vue@3.5.34(typescript@6.0.3))
+    devDependencies:
+      unplugin-vue:
+        specifier: 'catalog:'
+        version: 7.2.0(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.47.1)(vue@3.5.34(typescript@6.0.3))(yaml@2.9.0)
 
   packages/effects/plugins:
     dependencies:
@@ -1520,6 +1538,10 @@ importers:
       vxe-table:
         specifier: 'catalog:'
         version: 4.18.13(vue@3.5.34(typescript@6.0.3))
+    devDependencies:
+      unplugin-vue:
+        specifier: 'catalog:'
+        version: 7.2.0(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.47.1)(vue@3.5.34(typescript@6.0.3))(yaml@2.9.0)
 
   packages/effects/request:
     dependencies:
@@ -1543,11 +1565,27 @@ importers:
         specifier: 'catalog:'
         version: 2.1.0(axios@1.16.1(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2))
 
+  packages/ele-ui:
+    devDependencies:
+      element-plus:
+        specifier: 'catalog:'
+        version: 2.14.0(vue@3.5.34(typescript@6.0.3))
+      unplugin-vue:
+        specifier: 'catalog:'
+        version: 7.2.0(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.47.1)(vue@3.5.34(typescript@6.0.3))(yaml@2.9.0)
+      vue:
+        specifier: ^3.5.34
+        version: 3.5.34(typescript@6.0.3)
+
   packages/icons:
     dependencies:
       '@describeadmin/core-icons':
         specifier: workspace:*
         version: link:../@core/base/icons
+    devDependencies:
+      unplugin-vue:
+        specifier: 'catalog:'
+        version: 7.2.0(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.47.1)(vue@3.5.34(typescript@6.0.3))(yaml@2.9.0)
 
   packages/locales:
     dependencies:

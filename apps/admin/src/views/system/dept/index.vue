@@ -3,6 +3,7 @@ import type { SysDept } from '#/api';
 
 import { onMounted, reactive, ref } from 'vue';
 
+import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
 
 import {
@@ -25,7 +26,6 @@ import {
   getDeptTreeApi,
   updateDeptApi,
 } from '#/api';
-import ConfirmDialog from '#/components/confirm-dialog.vue';
 
 defineOptions({ name: 'SystemDept' });
 

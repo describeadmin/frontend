@@ -24,6 +24,7 @@
   "dependencies": {
     "@describeadmin/access": "workspace:*",
     "@describeadmin/constants": "workspace:*",
+    "@describeadmin/ele-ui": "workspace:*",
     "@describeadmin/hooks": "workspace:*",
     "@describeadmin/icons": "workspace:*",
     "@describeadmin/layouts": "workspace:*",

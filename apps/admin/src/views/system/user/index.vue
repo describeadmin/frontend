@@ -3,6 +3,7 @@ import type { SysDept, SysRole, SysUser } from '#/api';
 
 import { onMounted, reactive, ref } from 'vue';
 
+import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
 
 import {
@@ -32,7 +33,6 @@ import {
   resetUserPasswordApi,
   updateUserApi,
 } from '#/api';
-import ConfirmDialog from '#/components/confirm-dialog.vue';
 
 defineOptions({ name: 'SystemUser' });
 
