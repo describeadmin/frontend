@@ -57,6 +57,7 @@
     }
   },
   "publishConfig": {
+    "access": "public",
     "exports": {
       "./constants": {
         "types": "./dist/constants/index.d.ts",

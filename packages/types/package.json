@@ -10,13 +10,35 @@
   },
   "license": "MIT",
   "type": "module",
+  "scripts": {
+    "build": "pnpm exec tsdown",
+    "stub": "pnpm run build"
+  },
+  "files": [
+    "dist",
+    "global.d.ts"
+  ],
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "default": "./src/index.ts"
+      "development": "./src/index.ts",
+      "production": "./src/index.ts",
+      "default": "./dist/index.mjs"
     },
     "./global": {
       "types": "./global.d.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "./global": {
+        "types": "./global.d.ts"
+      }
     }
   },
   "dependencies": {

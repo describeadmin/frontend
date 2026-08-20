@@ -18,8 +18,10 @@
     "dist",
     "src"
   ],
-  "main": "./dist/index.mjs",
-  "module": "./dist/index.mjs",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "exports": {
     "./bem": {
       "development": "./src/scss-bem/bem.scss",
@@ -33,13 +35,14 @@
       "types": "./src/index.ts",
       "development": "./src/index.ts",
       "production": "./src/index.ts",
-      "default": "./dist/design.css"
+      "default": "./dist/core-design.css"
     }
   },
   "publishConfig": {
+    "access": "public",
     "exports": {
       ".": {
-        "default": "./dist/index.mjs"
+        "default": "./dist/core-design.css"
       }
     }
   },

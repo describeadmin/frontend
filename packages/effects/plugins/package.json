@@ -10,29 +10,71 @@
   },
   "license": "MIT",
   "type": "module",
+  "scripts": {
+    "build": "pnpm exec tsdown",
+    "stub": "pnpm run build"
+  },
+  "files": [
+    "dist"
+  ],
   "sideEffects": [
     "**/*.css"
   ],
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "default": "./src/index.ts"
+      "development": "./src/index.ts",
+      "production": "./src/index.ts",
+      "default": "./dist/index.mjs"
     },
     "./echarts": {
       "types": "./src/echarts/index.ts",
-      "default": "./src/echarts/index.ts"
+      "development": "./src/echarts/index.ts",
+      "production": "./src/echarts/index.ts",
+      "default": "./dist/echarts.mjs"
     },
     "./tiptap": {
       "types": "./src/tiptap/index.ts",
-      "default": "./src/tiptap/index.ts"
+      "development": "./src/tiptap/index.ts",
+      "production": "./src/tiptap/index.ts",
+      "default": "./dist/tiptap.mjs"
     },
     "./vxe-table": {
       "types": "./src/vxe-table/index.ts",
-      "default": "./src/vxe-table/index.ts"
+      "development": "./src/vxe-table/index.ts",
+      "production": "./src/vxe-table/index.ts",
+      "default": "./dist/vxe-table.mjs"
     },
     "./motion": {
       "types": "./src/motion/index.ts",
-      "default": "./src/motion/index.ts"
+      "development": "./src/motion/index.ts",
+      "production": "./src/motion/index.ts",
+      "default": "./dist/motion.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "./echarts": {
+        "types": "./dist/echarts.d.ts",
+        "default": "./dist/echarts.mjs"
+      },
+      "./tiptap": {
+        "types": "./dist/tiptap.d.ts",
+        "default": "./dist/tiptap.mjs"
+      },
+      "./vxe-table": {
+        "types": "./dist/vxe-table.d.ts",
+        "default": "./dist/vxe-table.mjs"
+      },
+      "./motion": {
+        "types": "./dist/motion.d.ts",
+        "default": "./dist/motion.mjs"
+      }
     }
   },
   "dependencies": {
@@ -65,5 +107,8 @@
     "vue": "catalog:",
     "vxe-pc-ui": "catalog:",
     "vxe-table": "catalog:"
+  },
+  "devDependencies": {
+    "unplugin-vue": "catalog:"
   }
 }

@@ -16,6 +16,7 @@
   "files": [
     "dist"
   ],
+  "sideEffects": false,
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
   "exports": {
@@ -27,6 +28,7 @@
     }
   },
   "publishConfig": {
+    "access": "public",
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",
