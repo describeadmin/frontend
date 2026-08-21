@@ -1,1 +1,3 @@
+@import '../design-tokens/default.css';
+@import '../design-tokens/dark.css';
 @import '@describeadmin/tailwind-config/theme';

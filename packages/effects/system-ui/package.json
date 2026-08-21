@@ -50,6 +50,7 @@
   },
   "devDependencies": {
     "element-plus": "catalog:",
+    "unplugin-element-plus": "catalog:",
     "unplugin-vue": "catalog:",
     "vue": "catalog:"
   }

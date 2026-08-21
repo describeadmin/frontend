@@ -37,6 +37,21 @@ export default defineConfig({
     tailwindcss(),
     ElementPlus({
       format: 'esm',
+      /**
+       * `@describeadmin/system-ui` 等包里的组件用具名 import 引用
+       * `element-plus`（如 `import { ElCard } from 'element-plus'`），未经本插件转写
+       * 就拿不到对应组件的样式。这些包以真实 npm 依赖形式安装时源码落在
+       * node_modules 下，而本插件默认排除整个 node_modules——症状是组件能渲染、
+       * 布局却是无样式的纯文本，且不报任何错误。这里把 `@describeadmin/*` 从默认
+       * 排除范围里择出来，与 tailwind-config/theme.css 里 `@source '../../'`
+       * 那条为同一类问题（业务方消费场景下 node_modules 里的框架包需要被工具链
+       * 当作源码处理）。
+       */
+      exclude: [
+        /^(?!.*[/\\]@describeadmin[/\\]).*[/\\]node_modules[/\\]/,
+        /[/\\]\.git[/\\]/,
+        /[/\\]\.nuxt[/\\]/,
+      ],
     }),
   ],
   server: {
