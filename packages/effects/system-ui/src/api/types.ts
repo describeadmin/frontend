@@ -46,6 +46,11 @@ export interface SysRole extends AuditFields {
    * 4 本部门及以下 / 5 仅本人。
    */
   dataScope?: null | number;
+  /**
+   * 该角色登录后的默认首页路径，取值须为 `SysMenu.path` 中真实存在的路径。
+   * 为空表示不覆盖，使用前端全局 `preferences.app.defaultHomePath`。
+   */
+  homePath?: null | string;
   roleCode?: string;
   roleName?: string;
   sort?: null | number;

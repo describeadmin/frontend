@@ -1,7 +1,9 @@
 <script lang="ts" setup>
+import type { TreeNodeData } from 'element-plus/es/components/tree/src/tree.type';
+
 import type { SysDept, SysMenu, SysRole } from '../../api';
 
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
@@ -21,6 +23,7 @@ import {
   ElTableColumn,
   ElTooltip,
   ElTree,
+  ElTreeSelect,
 } from 'element-plus';
 
 import {
@@ -54,6 +57,7 @@ const formRef = ref();
 
 const form = reactive<SysRole>({
   dataScope: 1,
+  homePath: null,
   roleCode: '',
   roleName: '',
   sort: 0,
@@ -79,6 +83,42 @@ const checkedDeptIds = ref<number[]>([]);
 const deptRoleId = ref<null | number>(null);
 const deptTreeRef = ref();
 
+/** "首页"选择器用的完整菜单树，页面挂载时拉一次，供所有角色的编辑弹窗共用。 */
+const allMenuTree = ref<SysMenu[]>([]);
+
+interface HomePathMenuNode extends SysMenu {
+  children?: HomePathMenuNode[];
+  /** 是否可选：只有真实页面（MENU 且有 path）可选，目录/按钮只作分组展示。 */
+  selectable: boolean;
+  /**
+   * ElTreeSelect 的 node-key：可选节点直接用真实 path（登录后就是靠这个路径路由，
+   * 系统内路径本身就唯一）；不可选的分组节点用菜单 id 兜底，避免多个空 path 的
+   * 目录节点互相冲突。
+   */
+  treeKey: string;
+}
+
+/** 只保留真实页面节点可选，目录/按钮仅做分组——避免选到假路径，登录后 404。 */
+function buildHomePathTree(nodes: SysMenu[]): HomePathMenuNode[] {
+  const result: HomePathMenuNode[] = [];
+  for (const node of nodes) {
+    const children = buildHomePathTree(node.children ?? []);
+    const selectable = node.menuType === 'MENU' && !!node.path;
+    if (!selectable && children.length === 0) {
+      continue;
+    }
+    result.push({
+      ...node,
+      children,
+      selectable,
+      treeKey: selectable ? (node.path as string) : `group-${node.id}`,
+    });
+  }
+  return result;
+}
+
+const homePathTree = computed(() => buildHomePathTree(allMenuTree.value));
+
 async function load() {
   loading.value = true;
   try {
@@ -92,7 +132,13 @@ async function load() {
 
 function openCreate() {
   editingId.value = null;
-  Object.assign(form, { dataScope: 1, roleCode: '', roleName: '', sort: 0 });
+  Object.assign(form, {
+    dataScope: 1,
+    homePath: null,
+    roleCode: '',
+    roleName: '',
+    sort: 0,
+  });
   formVisible.value = true;
 }
 
@@ -100,6 +146,7 @@ function openEdit(row: SysRole) {
   editingId.value = row.id ?? null;
   Object.assign(form, {
     dataScope: row.dataScope ?? 1,
+    homePath: row.homePath ?? null,
     roleCode: row.roleCode ?? '',
     roleName: row.roleName ?? '',
     sort: row.sort ?? 0,
@@ -205,7 +252,10 @@ async function submitAssignDept() {
   }
 }
 
-onMounted(load);
+onMounted(async () => {
+  allMenuTree.value = await getMenuTreeApi();
+  await load();
+});
 </script>
 
 <template>
@@ -335,6 +385,23 @@ onMounted(load);
               :value="option.value"
             />
           </ElSelect>
+        </ElFormItem>
+        <ElFormItem label="首页" prop="homePath">
+          <ElTreeSelect
+            v-model="form.homePath"
+            :data="homePathTree"
+            :props="{
+              children: 'children',
+              disabled: (data: TreeNodeData) =>
+                !(data as HomePathMenuNode).selectable,
+              label: 'menuName',
+            }"
+            node-key="treeKey"
+            check-strictly
+            clearable
+            placeholder="不选则使用全局默认首页"
+            data-testid="role-home-path-select"
+          />
         </ElFormItem>
       </ElForm>
       <template #footer>

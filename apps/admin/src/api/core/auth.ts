@@ -29,6 +29,8 @@ export namespace AuthApi {
   /** 后端 `LoginUser` 的原样映射。 */
   export interface BackendLoginUser {
     authType: string;
+    /** 按角色合并出的默认首页路径，未设置时为 null，由前端落回全局 defaultHomePath。 */
+    homePath?: null | string;
     nickname: string;
     permissions: string[];
     roles: string[];
@@ -81,7 +83,7 @@ export function toUserInfo(user: AuthApi.BackendLoginUser): UserInfo {
   return {
     avatar: '',
     desc: user.authType,
-    homePath: '',
+    homePath: user.homePath ?? '',
     realName: user.nickname || user.username,
     roles: user.roles ?? [],
     token: '',
