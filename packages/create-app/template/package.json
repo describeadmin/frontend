@@ -1,23 +1,13 @@
 {
-  "name": "@describeadmin/admin",
-  "version": "0.1.0",
+  "name": "describeadmin-app-template",
+  "version": "0.0.1",
   "private": true,
-  "homepage": "https://github.com/describeadmin/frontend",
-  "bugs": "https://github.com/describeadmin/frontend/issues",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/describeadmin/frontend.git",
-    "directory": "apps/admin"
-  },
-  "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "pnpm vite build --mode production",
-    "build:analyze": "pnpm vite build --mode analyze",
-    "dev": "pnpm vite --mode development",
+    "build": "vite build --mode production",
+    "dev": "vite --mode development",
     "preview": "vite preview",
-    "typecheck": "vue-tsc --noEmit --skipLibCheck",
-    "test:e2e": "node e2e/smoke.mjs"
+    "typecheck": "vue-tsc --noEmit --skipLibCheck"
   },
   "imports": {
     "#/*": "./src/*"
@@ -47,7 +37,13 @@
     "vue-router": "catalog:"
   },
   "devDependencies": {
-    "playwright": "catalog:",
-    "unplugin-element-plus": "catalog:"
+    "@tailwindcss/vite": "catalog:",
+    "@types/node": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "sass": "catalog:",
+    "typescript": "catalog:",
+    "unplugin-element-plus": "catalog:",
+    "vite": "catalog:",
+    "vue-tsc": "catalog:"
   }
 }

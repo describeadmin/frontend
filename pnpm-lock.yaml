@@ -630,6 +630,9 @@ importers:
       '@describeadmin/styles':
         specifier: workspace:*
         version: link:../../packages/styles
+      '@describeadmin/system-ui':
+        specifier: workspace:*
+        version: link:../../packages/effects/system-ui
       '@describeadmin/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -942,6 +945,9 @@ importers:
 
   packages/@core/base/design:
     dependencies:
+      '@describeadmin/tailwind-config':
+        specifier: workspace:*
+        version: link:../../../../internal/tailwind-config
       '@iconify/json':
         specifier: 'catalog:'
         version: 2.2.476
@@ -1254,6 +1260,15 @@ importers:
         specifier: workspace:*
         version: link:../@core/base/shared
 
+  packages/create-app:
+    dependencies:
+      '@clack/prompts':
+        specifier: 'catalog:'
+        version: 1.4.0
+      cac:
+        specifier: 'catalog:'
+        version: 7.0.0
+
   packages/effects/access:
     dependencies:
       '@describeadmin/preferences':
@@ -1564,6 +1579,34 @@ importers:
       axios-mock-adapter:
         specifier: 'catalog:'
         version: 2.1.0(axios@1.16.1(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2))
+
+  packages/effects/system-ui:
+    dependencies:
+      '@describeadmin/ele-ui':
+        specifier: workspace:*
+        version: link:../../ele-ui
+      '@describeadmin/request':
+        specifier: workspace:*
+        version: link:../request
+      '@describeadmin/stores':
+        specifier: workspace:*
+        version: link:../../stores
+      '@describeadmin/types':
+        specifier: workspace:*
+        version: link:../../types
+      '@describeadmin/ui':
+        specifier: workspace:*
+        version: link:../common-ui
+    devDependencies:
+      element-plus:
+        specifier: 'catalog:'
+        version: 2.14.0(vue@3.5.34(typescript@6.0.3))
+      unplugin-vue:
+        specifier: 'catalog:'
+        version: 7.2.0(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.47.1)(vue@3.5.34(typescript@6.0.3))(yaml@2.9.0)
+      vue:
+        specifier: ^3.5.34
+        version: 3.5.34(typescript@6.0.3)
 
   packages/ele-ui:
     devDependencies:

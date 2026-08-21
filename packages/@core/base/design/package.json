@@ -47,6 +47,7 @@
     }
   },
   "dependencies": {
+    "@describeadmin/tailwind-config": "workspace:*",
     "@iconify/json": "catalog:"
   }
 }

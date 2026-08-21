@@ -1,7 +1,6 @@
 {
   "name": "@describeadmin/tailwind-config",
   "version": "0.1.0",
-  "private": true,
   "homepage": "https://github.com/describeadmin/frontend",
   "bugs": "https://github.com/describeadmin/frontend/issues",
   "repository": {
@@ -28,6 +27,9 @@
     "./theme": {
       "default": "./src/theme.css"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@iconify/tailwind4": "catalog:",

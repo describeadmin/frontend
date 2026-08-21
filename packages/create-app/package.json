@@ -1,0 +1,39 @@
+{
+  "name": "@describeadmin/create-app",
+  "version": "0.1.0",
+  "homepage": "https://github.com/describeadmin/frontend",
+  "bugs": "https://github.com/describeadmin/frontend/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/describeadmin/frontend.git",
+    "directory": "packages/create-app"
+  },
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm exec tsdown",
+    "stub": "pnpm run build"
+  },
+  "files": [
+    "dist",
+    "template"
+  ],
+  "bin": {
+    "create-app": "./bin/create-app.mjs"
+  },
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@clack/prompts": "catalog:",
+    "cac": "catalog:"
+  }
+}
