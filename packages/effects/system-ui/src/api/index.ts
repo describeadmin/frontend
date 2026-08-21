@@ -12,10 +12,15 @@
  * 调用方本来也不该用这些接口的返回值。
  */
 import type {
+  ActiveSession,
   PageQuery,
   PageResult,
+  SysConfig,
   SysDept,
+  SysDictData,
+  SysDictType,
   SysMenu,
+  SysOperLog,
   SysRole,
   SysUser,
 } from './types';
@@ -85,6 +90,16 @@ export async function deleteRoleApi(id: number) {
   return getSystemApiClient().delete(`/system/role/${id}`);
 }
 
+/** 该角色自定义数据权限的部门 id 列表，只在 `dataScope === CUSTOM(2)` 时有意义。 */
+export async function getRoleDeptsApi(id: number) {
+  return getSystemApiClient().get<number[]>(`/system/role/${id}/depts`);
+}
+
+/** 整体覆盖角色的自定义数据权限部门列表，与 {@link assignRoleMenusApi} 同一"重建"语义。 */
+export async function assignRoleDeptsApi(id: number, deptIds: number[]) {
+  return getSystemApiClient().put(`/system/role/${id}/depts`, deptIds);
+}
+
 export async function getRoleMenusApi(id: number) {
   return getSystemApiClient().get<number[]>(`/system/role/${id}/menus`);
 }
@@ -128,4 +143,114 @@ export async function updateDeptApi(id: number, data: SysDept) {
 
 export async function deleteDeptApi(id: number) {
   return getSystemApiClient().delete(`/system/dept/${id}`);
+}
+
+// ------------------------------------------------------------------- 字典类型
+
+export async function getDictTypeListApi(params: PageQuery) {
+  return getSystemApiClient().get<PageResult<SysDictType>>(
+    '/system/dict/type',
+    {
+      params,
+    },
+  );
+}
+
+export async function createDictTypeApi(data: SysDictType) {
+  return getSystemApiClient().post<SysDictType>('/system/dict/type', data);
+}
+
+export async function updateDictTypeApi(id: number, data: SysDictType) {
+  return getSystemApiClient().put<SysDictType>(`/system/dict/type/${id}`, data);
+}
+
+export async function deleteDictTypeApi(id: number) {
+  return getSystemApiClient().delete(`/system/dict/type/${id}`);
+}
+
+// ------------------------------------------------------------------- 字典数据
+
+/**
+ * 未按 `dictType` 做服务端过滤——后端 `SysDictDataController` 未覆写
+ * `buildListWrapper`。调用方传大 `size` 整批拉取后自行按 `dictType` 客户端过滤。
+ */
+export async function getDictDataListApi(params: PageQuery) {
+  return getSystemApiClient().get<PageResult<SysDictData>>(
+    '/system/dict/data',
+    {
+      params,
+    },
+  );
+}
+
+export async function createDictDataApi(data: SysDictData) {
+  return getSystemApiClient().post<SysDictData>('/system/dict/data', data);
+}
+
+export async function updateDictDataApi(id: number, data: SysDictData) {
+  return getSystemApiClient().put<SysDictData>(`/system/dict/data/${id}`, data);
+}
+
+export async function deleteDictDataApi(id: number) {
+  return getSystemApiClient().delete(`/system/dict/data/${id}`);
+}
+
+// ------------------------------------------------------------------- 参数配置
+
+export async function getConfigListApi(params: PageQuery) {
+  return getSystemApiClient().get<PageResult<SysConfig>>('/system/config', {
+    params,
+  });
+}
+
+export async function createConfigApi(data: SysConfig) {
+  return getSystemApiClient().post<SysConfig>('/system/config', data);
+}
+
+export async function updateConfigApi(id: number, data: SysConfig) {
+  return getSystemApiClient().put<SysConfig>(`/system/config/${id}`, data);
+}
+
+export async function deleteConfigApi(id: number) {
+  return getSystemApiClient().delete(`/system/config/${id}`);
+}
+
+// ------------------------------------------------------------------- 操作日志
+
+export interface OperLogQuery extends PageQuery {
+  end?: string;
+  module?: string;
+  operatorName?: string;
+  start?: string;
+  status?: number;
+}
+
+export async function getOperLogListApi(params: OperLogQuery) {
+  return getSystemApiClient().get<PageResult<SysOperLog>>('/system/oper-log', {
+    params,
+  });
+}
+
+export async function deleteOperLogApi(id: number) {
+  return getSystemApiClient().delete(`/system/oper-log/${id}`);
+}
+
+/** 清空全部操作日志。 */
+export async function cleanOperLogApi() {
+  return getSystemApiClient().delete('/system/oper-log/clean');
+}
+
+// ------------------------------------------------------------------- 在线用户
+
+/**
+ * 在线会话列表。数据直接来自 `TokenStore`，没有分页——默认的
+ * `InMemoryTokenStore` 只持有当前实例的会话，规模天然有限。
+ */
+export async function getOnlineListApi() {
+  return getSystemApiClient().get<ActiveSession[]>('/system/online');
+}
+
+/** 强制某用户下线，吊销其全部令牌，返回实际吊销的令牌数。 */
+export async function forceLogoutApi(userId: number) {
+  return getSystemApiClient().delete<number>(`/system/online/${userId}`);
 }

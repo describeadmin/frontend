@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { SysMenu, SysRole } from '../../api';
+import type { SysDept, SysMenu, SysRole } from '../../api';
 
 import { onMounted, reactive, ref } from 'vue';
 
@@ -14,23 +14,33 @@ import {
   ElInput,
   ElInputNumber,
   ElMessage,
+  ElOption,
   ElPagination,
+  ElSelect,
   ElTable,
   ElTableColumn,
+  ElTooltip,
   ElTree,
 } from 'element-plus';
 
 import {
+  assignRoleDeptsApi,
   assignRoleMenusApi,
   createRoleApi,
+  DATA_SCOPE_OPTIONS,
   deleteRoleApi,
+  getDeptTreeApi,
   getMenuTreeApi,
+  getRoleDeptsApi,
   getRoleListApi,
   getRoleMenusApi,
   updateRoleApi,
 } from '../../api';
 
 defineOptions({ name: 'SystemRole' });
+
+/** DataScopeType.CUSTOM 的 code，见后端 DataScopeType 枚举。 */
+const DATA_SCOPE_CUSTOM = 2;
 
 const loading = ref(false);
 const rows = ref<SysRole[]>([]);
@@ -42,7 +52,12 @@ const submitting = ref(false);
 const editingId = ref<null | number>(null);
 const formRef = ref();
 
-const form = reactive<SysRole>({ roleCode: '', roleName: '', sort: 0 });
+const form = reactive<SysRole>({
+  dataScope: 1,
+  roleCode: '',
+  roleName: '',
+  sort: 0,
+});
 
 const rules = {
   roleCode: [{ required: true, message: '请输入角色标识', trigger: 'blur' }],
@@ -58,6 +73,12 @@ const checkedMenuIds = ref<number[]>([]);
 const menuRoleId = ref<null | number>(null);
 const menuTreeRef = ref();
 
+const deptVisible = ref(false);
+const deptTree = ref<SysDept[]>([]);
+const checkedDeptIds = ref<number[]>([]);
+const deptRoleId = ref<null | number>(null);
+const deptTreeRef = ref();
+
 async function load() {
   loading.value = true;
   try {
@@ -71,13 +92,14 @@ async function load() {
 
 function openCreate() {
   editingId.value = null;
-  Object.assign(form, { roleCode: '', roleName: '', sort: 0 });
+  Object.assign(form, { dataScope: 1, roleCode: '', roleName: '', sort: 0 });
   formVisible.value = true;
 }
 
 function openEdit(row: SysRole) {
   editingId.value = row.id ?? null;
   Object.assign(form, {
+    dataScope: row.dataScope ?? 1,
     roleCode: row.roleCode ?? '',
     roleName: row.roleName ?? '',
     sort: row.sort ?? 0,
@@ -152,6 +174,37 @@ async function submitAssignMenu() {
   }
 }
 
+async function openAssignDept(row: SysRole) {
+  deptRoleId.value = row.id ?? null;
+  const [tree, owned] = await Promise.all([
+    getDeptTreeApi(),
+    getRoleDeptsApi(row.id as number),
+  ]);
+  deptTree.value = tree;
+  checkedDeptIds.value = owned;
+  deptVisible.value = true;
+}
+
+async function submitAssignDept() {
+  if (deptRoleId.value === null) {
+    return;
+  }
+  submitting.value = true;
+  try {
+    // 半选的父节点也要提交，理由与 submitAssignMenu 一致：只交全选节点会让
+    // 「只授了子部门」的角色在部门树里丢掉父级挂载点
+    const ids = [
+      ...deptTreeRef.value.getCheckedKeys(),
+      ...deptTreeRef.value.getHalfCheckedKeys(),
+    ] as number[];
+    await assignRoleDeptsApi(deptRoleId.value, ids);
+    ElMessage.success('授权成功');
+    deptVisible.value = false;
+  } finally {
+    submitting.value = false;
+  }
+}
+
 onMounted(load);
 </script>
 
@@ -174,9 +227,17 @@ onMounted(load);
     >
       <ElTableColumn prop="roleName" label="角色名称" min-width="160" />
       <ElTableColumn prop="roleCode" label="角色标识" min-width="160" />
+      <ElTableColumn label="数据范围" width="120">
+        <template #default="{ row }">
+          {{
+            DATA_SCOPE_OPTIONS.find((option) => option.value === row.dataScope)
+              ?.label ?? '-'
+          }}
+        </template>
+      </ElTableColumn>
       <ElTableColumn prop="sort" label="排序" width="80" />
       <ElTableColumn prop="createTime" label="创建时间" min-width="180" />
-      <ElTableColumn label="操作" width="240" fixed="right">
+      <ElTableColumn label="操作" width="320" fixed="right">
         <template #default="{ row }">
           <ElButton
             link
@@ -186,6 +247,20 @@ onMounted(load);
           >
             分配菜单
           </ElButton>
+          <ElTooltip
+            :disabled="row.dataScope === DATA_SCOPE_CUSTOM"
+            content="仅数据范围为「自定义部门」的角色可分配"
+          >
+            <ElButton
+              link
+              type="primary"
+              :disabled="row.dataScope !== DATA_SCOPE_CUSTOM"
+              data-testid="role-assign-dept-btn"
+              @click="openAssignDept(row)"
+            >
+              分配数据权限
+            </ElButton>
+          </ElTooltip>
           <ElButton
             link
             type="primary"
@@ -248,6 +323,19 @@ onMounted(load);
             data-testid="role-sort-input"
           />
         </ElFormItem>
+        <ElFormItem label="数据范围" prop="dataScope">
+          <ElSelect
+            v-model="form.dataScope"
+            data-testid="role-data-scope-select"
+          >
+            <ElOption
+              v-for="option in DATA_SCOPE_OPTIONS"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </ElSelect>
+        </ElFormItem>
       </ElForm>
       <template #footer>
         <ElButton data-testid="role-cancel-btn" @click="formVisible = false">
@@ -293,6 +381,41 @@ onMounted(load);
           :loading="submitting"
           data-testid="role-menu-submit-btn"
           @click="submitAssignMenu"
+        >
+          确定
+        </ElButton>
+      </template>
+    </ElDialog>
+
+    <ElDialog
+      v-model="deptVisible"
+      title="分配数据权限"
+      width="520px"
+      append-to-body
+      data-testid="role-dept-dialog"
+    >
+      <ElTree
+        ref="deptTreeRef"
+        :data="deptTree"
+        :props="{ children: 'children', label: 'deptName' }"
+        :default-checked-keys="checkedDeptIds"
+        node-key="id"
+        show-checkbox
+        default-expand-all
+        data-testid="role-dept-tree"
+      />
+      <template #footer>
+        <ElButton
+          data-testid="role-dept-cancel-btn"
+          @click="deptVisible = false"
+        >
+          取消
+        </ElButton>
+        <ElButton
+          type="primary"
+          :loading="submitting"
+          data-testid="role-dept-submit-btn"
+          @click="submitAssignDept"
         >
           确定
         </ElButton>

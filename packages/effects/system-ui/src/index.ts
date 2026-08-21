@@ -22,8 +22,12 @@ export * from './api';
  */
 export const systemPageMap: ComponentRecordType = {
   '/dashboard/index.vue': () => import('./views/dashboard/index.vue'),
+  '/system/config/index.vue': () => import('./views/config/index.vue'),
   '/system/dept/index.vue': () => import('./views/dept/index.vue'),
+  '/system/dict/index.vue': () => import('./views/dict/index.vue'),
   '/system/menu/index.vue': () => import('./views/menu/index.vue'),
+  '/system/online/index.vue': () => import('./views/online/index.vue'),
+  '/system/oper-log/index.vue': () => import('./views/oper-log/index.vue'),
   '/system/role/index.vue': () => import('./views/role/index.vue'),
   '/system/user/index.vue': () => import('./views/user/index.vue'),
 };

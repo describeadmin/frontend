@@ -41,10 +41,24 @@ export interface SysUser extends AuditFields {
 }
 
 export interface SysRole extends AuditFields {
+  /**
+   * 数据权限范围，取值见 `DataScopeType`：1 全部 / 2 自定义部门 / 3 本部门 /
+   * 4 本部门及以下 / 5 仅本人。
+   */
+  dataScope?: null | number;
   roleCode?: string;
   roleName?: string;
   sort?: null | number;
 }
+
+/** 对应后端 `DataScopeType` 枚举，供角色表单的数据范围下拉复用。 */
+export const DATA_SCOPE_OPTIONS = [
+  { label: '全部数据', value: 1 },
+  { label: '自定义部门', value: 2 },
+  { label: '仅本部门', value: 3 },
+  { label: '本部门及以下', value: 4 },
+  { label: '仅本人', value: 5 },
+] as const;
 
 export type MenuType = 'BUTTON' | 'DIR' | 'MENU';
 
@@ -69,4 +83,62 @@ export interface SysDept extends AuditFields {
   phone?: null | string;
   sort?: null | number;
   status?: null | number;
+}
+
+export interface SysDictType extends AuditFields {
+  dictName?: string;
+  dictType?: string;
+  /** 1 启用 / 0 停用。 */
+  status?: null | number;
+}
+
+/** 通过 {@link SysDictType.dictType} 关联到所属字典类型。 */
+export interface SysDictData extends AuditFields {
+  dictLabel?: string;
+  dictType?: string;
+  dictValue?: string;
+  sort?: null | number;
+  status?: null | number;
+}
+
+export interface SysConfig extends AuditFields {
+  configKey?: string;
+  /** 是否内置：Y/N，仅作展示用，非必填。 */
+  configType?: null | string;
+  configValue?: string;
+  configName?: string;
+}
+
+/**
+ * 操作日志。刻意不继承 {@link AuditFields}——后端 `SysOperLog` 不继承
+ * `BaseEntity`（只追加、不给用户改的审计表，没有逻辑删除/乐观锁语义）。
+ */
+export interface SysOperLog {
+  costTime?: null | number;
+  createTime?: null | string;
+  description?: string;
+  errorMsg?: null | string;
+  httpMethod?: null | string;
+  id?: number;
+  module?: string;
+  operatorId?: null | number;
+  operatorIp?: null | string;
+  operatorName?: null | string;
+  requestParam?: null | string;
+  requestUrl?: null | string;
+  /** 1 成功 / 0 失败。 */
+  status?: number;
+}
+
+/**
+ * 在线会话的只读快照。刻意不含令牌本身，见后端 `ActiveSession` 类注释。
+ * 会话粒度而非用户粒度：同一用户多设备登录会出现多条。
+ */
+export interface ActiveSession {
+  authType: string;
+  expiresAt: string;
+  issuedAt: string;
+  nickname: string;
+  userId: number;
+  username: string;
 }
