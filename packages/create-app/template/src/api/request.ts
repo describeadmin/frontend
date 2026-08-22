@@ -16,6 +16,7 @@ import { provideSystemApiClient } from '@describeadmin/system-ui';
 
 import { ElMessage } from 'element-plus';
 
+import { refreshTokenApi } from '#/api/core/auth';
 import { useAuthStore } from '#/store';
 
 const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
@@ -47,17 +48,25 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
   /**
    * 刷新 token 逻辑。
    *
-   * 后端用的是不透明令牌，没有 refresh 端点，因此 preferences 里
-   * enableRefreshToken 保持 false，这个函数不会被调用。
-   * 之所以不删掉而是留一个会抛错的实现：万一有人把偏好翻成 true，
-   * 应该在第一次令牌过期时立刻炸出明确原因，而不是静默去请求一个 404 的地址。
+   * docs/LOGIN_MODULE_AUDIT.md E 项：后端已实现 access/refresh 双令牌（
+   * framework-security-starter 的 TokenStore.issueWithRefresh/refresh），
+   * 这里从"确定会抛错的桩实现"换成真实调用。`authenticateResponseInterceptor`
+   * 的排队重放逻辑本身是现成的，不用改——只是此前一直没有真正被触发过。
+   *
+   * refreshToken 为空（后端 describeadmin.security.refresh-token.enabled=false，
+   * 或本次登录走的 provider 未支持）时直接抛错，让调用方走 doReAuthenticate 强制重登，
+   * 而不是拿 null 去请求后端换来一个更难懂的 400。
    */
   async function doRefreshToken(): Promise<string> {
-    throw new Error(
-      '后端使用不透明令牌，未提供 /auth/refresh。' +
-        '请保持 preferences.app.enableRefreshToken = false；' +
-        '确需无感续期时应先在 framework-security-starter 侧实现刷新令牌。',
-    );
+    const accessStore = useAccessStore();
+    const refreshToken = accessStore.refreshToken;
+    if (!refreshToken) {
+      throw new Error('没有可用的 refresh token，需要重新登录。');
+    }
+    const result = await refreshTokenApi(refreshToken);
+    accessStore.setAccessToken(result.token);
+    accessStore.setRefreshToken(result.refreshToken ?? null);
+    return result.token;
   }
 
   function formatToken(token: null | string) {

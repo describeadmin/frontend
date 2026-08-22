@@ -26,10 +26,10 @@ export const overridesPreferences = defineOverridesPreferences({
     defaultHomePath: '/dashboard/workbench',
 
     /**
-     * 后端用的是不透明令牌，没有 refresh 端点，保持关闭。
-     * 详见 src/api/request.ts 里 doRefreshToken 的说明。
+     * docs/LOGIN_MODULE_AUDIT.md E 项：后端已实现 access/refresh 双令牌，
+     * src/api/request.ts 的 doRefreshToken 已从桩实现换成真实调用，这里随之打开。
      */
-    enableRefreshToken: false,
+    enableRefreshToken: true,
 
     name: import.meta.env.VITE_APP_TITLE,
   },

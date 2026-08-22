@@ -37,12 +37,15 @@ export const useAuthStore = defineStore('auth', () => {
     let userInfo: null | UserInfo = null;
     try {
       loginLoading.value = true;
-      const { accessToken } = await loginApi(params);
+      const { accessToken, refreshToken } = await loginApi(params);
 
       // 如果成功获取到 accessToken
       if (accessToken) {
         // 将 accessToken 存储到 accessStore 中
         accessStore.setAccessToken(accessToken);
+        // refreshToken 可能为空（后端关闭了 describeadmin.security.refresh-token.enabled）——
+        // 存 null 而不是 undefined，doRefreshToken 据此判断要不要直接引导重新登录
+        accessStore.setRefreshToken(refreshToken ?? null);
 
         // 用户信息与权限码来自同一个 /auth/me，一次取全。
         // 上游模板在这里并发打两个接口，对我们的后端就是对同一端点请求两次
