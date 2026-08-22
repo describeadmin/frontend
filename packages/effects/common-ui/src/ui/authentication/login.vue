@@ -25,12 +25,15 @@ defineOptions({
 
 const props = withDefaults(defineProps<Props>(), {
   codeLoginPath: '/auth/code-login',
+  emailLoginPath: '/auth/email-login',
   forgetPasswordPath: '/auth/forget-password',
   formSchema: () => [],
   loading: false,
   qrCodeLoginPath: '/auth/qrcode-login',
   registerPath: '/auth/register',
   showCodeLogin: true,
+  // 默认关闭，见 AuthenticationProps.showEmailLogin 的说明
+  showEmailLogin: false,
   showForgetPassword: true,
   showQrcodeLogin: true,
   showRegister: true,
@@ -137,6 +140,7 @@ defineExpose({
       }"
       :loading="loading"
       aria-label="login"
+      data-testid="login-submit-btn"
       class="w-full"
       @click="handleSubmit"
     >
@@ -162,6 +166,17 @@ defineExpose({
         @click="handleGo(qrCodeLoginPath)"
       >
         {{ $t('authentication.qrcodeLogin') }}
+      </VbenButton>
+    </div>
+
+    <div v-if="showEmailLogin" class="mt-2 mb-2">
+      <VbenButton
+        class="w-full"
+        variant="outline"
+        data-testid="login-email-btn"
+        @click="handleGo(emailLoginPath)"
+      >
+        {{ $t('authentication.emailLogin') }}
       </VbenButton>
     </div>
 

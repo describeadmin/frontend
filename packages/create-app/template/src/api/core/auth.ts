@@ -22,6 +22,12 @@ export namespace AuthApi {
   /** 后端 `LoginResult` 的原样映射。 */
   export interface BackendLoginResult {
     expiresIn: number;
+    refreshExpiresIn?: number;
+    /**
+     * 刷新令牌，`describeadmin.security.refresh-token.enabled=false` 时为空。
+     * 为空时不应该再调用 {@link refreshTokenApi}，应直接引导用户重新登录。
+     */
+    refreshToken?: string;
     token: string;
     user: BackendLoginUser;
   }
@@ -41,6 +47,7 @@ export namespace AuthApi {
   /** Vben 内核期望的登录返回结构。 */
   export interface LoginResult {
     accessToken: string;
+    refreshToken?: string;
   }
 }
 
@@ -54,13 +61,30 @@ export async function getAuthProvidersApi() {
  *
  * 后端返回 `{ token, expiresIn, user }`，Vben 内核认的是 `{ accessToken }`，
  * 差异在这一层收敛：不改后端契约去迁就框架，也不改框架内核去迁就后端。
+ * `refreshToken` 一并透传——后端关闭了刷新令牌开关时这里是 `undefined`，
+ * 调用方（store/auth.ts）据此决定要不要存。
  */
 export async function loginApi(data: AuthApi.LoginParams) {
   const result = await requestClient.post<AuthApi.BackendLoginResult>(
     '/auth/login',
     { type: 'password', ...data },
   );
-  return { accessToken: result.token } satisfies AuthApi.LoginResult;
+  return {
+    accessToken: result.token,
+    refreshToken: result.refreshToken,
+  } satisfies AuthApi.LoginResult;
+}
+
+/**
+ * 用 refresh token 换发新的 access/refresh 令牌对。
+ *
+ * 对应后端 `POST /api/auth/refresh`——该端点本身免认证（挂权限校验会自相矛盾，
+ * 见 AuthController 的注释），校验完全下沉在后端 `TokenStore.refresh()` 内部。
+ */
+export async function refreshTokenApi(refreshToken: string) {
+  return requestClient.post<AuthApi.BackendLoginResult>('/auth/refresh', {
+    refreshToken,
+  });
 }
 
 /** 登出。后端吊销的是本次请求携带的那一个令牌，不影响该用户的其他会话。 */

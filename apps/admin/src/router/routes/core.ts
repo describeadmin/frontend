@@ -56,40 +56,10 @@ const coreRoutes: RouteRecordRaw[] = [
           title: $t('page.auth.login'),
         },
       },
-      {
-        name: 'CodeLogin',
-        path: 'code-login',
-        component: () => import('#/views/_core/authentication/code-login.vue'),
-        meta: {
-          title: $t('page.auth.codeLogin'),
-        },
-      },
-      {
-        name: 'QrCodeLogin',
-        path: 'qrcode-login',
-        component: () =>
-          import('#/views/_core/authentication/qrcode-login.vue'),
-        meta: {
-          title: $t('page.auth.qrcodeLogin'),
-        },
-      },
-      {
-        name: 'ForgetPassword',
-        path: 'forget-password',
-        component: () =>
-          import('#/views/_core/authentication/forget-password.vue'),
-        meta: {
-          title: $t('page.auth.forgetPassword'),
-        },
-      },
-      {
-        name: 'Register',
-        path: 'register',
-        component: () => import('#/views/_core/authentication/register.vue'),
-        meta: {
-          title: $t('page.auth.register'),
-        },
-      },
+      // docs/LOGIN_MODULE_AUDIT.md A 项：CodeLogin/QrCodeLogin/ForgetPassword/Register
+      // 四条路由已删除——对应能力后端都不存在（只有 password 一种内置登录方式），
+      // 留着路由意味着直接访问 URL 仍能看到一个"什么都做不了"的空白页面，
+      // 只关掉 login.vue 里的入口按钮并不足够。
     ],
   },
 ];

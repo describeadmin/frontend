@@ -14,6 +14,11 @@ interface AuthenticationProps {
   loading?: boolean;
 
   /**
+   * @zh_CN 邮箱验证码登录路径
+   */
+  emailLoginPath?: string;
+
+  /**
    * @zh_CN 二维码登录路径
    */
   qrCodeLoginPath?: string;
@@ -31,6 +36,15 @@ interface AuthenticationProps {
    * @zh_CN 是否显示忘记密码
    */
   showForgetPassword?: boolean;
+
+  /**
+   * @zh_CN 是否显示邮箱验证码登录
+   *
+   * 默认关闭：与其余几个 show* 开关默认打开不同——核心不内置任何验证码类登录方式，
+   * 是否显示这个入口应该由业务方按自己是否引入了对应插件显式决定，
+   * 而不是像 showCodeLogin 那样"先开着，能力没做完也留个死壳"。
+   */
+  showEmailLogin?: boolean;
 
   /**
    * @zh_CN 是否显示二维码登录

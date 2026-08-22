@@ -74,9 +74,22 @@ function handleSubmit(values: Record<string, any>) {
 </script>
 
 <template>
+  <!--
+    docs/LOGIN_MODULE_AUDIT.md A 项：手机验证码登录/二维码登录/注册/忘记密码/第三方登录
+    目前都没有对应的后端能力（后端只有 password 一种内置方式），上游模板默认全部打开，
+    留下的是"看起来能点、点了什么都不会发生"的死壳。这里显式关闭，对应的
+    app 级包装页（code-login.vue、qrcode-login.vue、register.vue、forget-password.vue）
+    与它们的路由已一并删除，而不是只隐藏入口——直接访问 URL 仍然能看到空白页面
+    同样算"死壳"。
+  -->
   <AuthenticationLogin
     :form-schema="formSchema"
     :loading="authStore.loginLoading"
+    :show-code-login="false"
+    :show-qrcode-login="false"
+    :show-register="false"
+    :show-third-party-login="false"
+    :show-forget-password="false"
     @submit="handleSubmit"
   />
 </template>

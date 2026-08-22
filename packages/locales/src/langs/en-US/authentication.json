@@ -33,6 +33,7 @@
   "emailValidErrorTip": "The email format you entered is incorrect",
   "sendResetLink": "Send Reset Link",
   "email": "Email",
+  "emailLogin": "Email Login",
   "qrcodeSubtitle": "Scan the QR code with your phone to login",
   "qrcodePrompt": "Click 'Confirm' after scanning to complete login",
   "qrcodeLogin": "QR Code Login",
