@@ -50,6 +50,8 @@ const formRef = ref();
 
 const form = reactive({
   deptId: undefined as number | undefined,
+  email: '',
+  mobile: '',
   nickname: '',
   password: '',
   status: 1,
@@ -90,6 +92,8 @@ function openCreate() {
   editingId.value = null;
   Object.assign(form, {
     deptId: undefined,
+    email: '',
+    mobile: '',
     nickname: '',
     password: '',
     status: 1,
@@ -103,6 +107,8 @@ function openEdit(row: SysUser) {
   editingId.value = row.id ?? null;
   Object.assign(form, {
     deptId: row.deptId ?? undefined,
+    email: row.email ?? '',
+    mobile: row.mobile ?? '',
     nickname: row.nickname ?? '',
     // 编辑时不改密码，改密码走「重置密码」，避免把哈希值当明文回填
     password: '',
@@ -120,16 +126,20 @@ async function submit() {
     if (editingId.value === null) {
       await createUserApi({
         deptId: form.deptId,
+        email: form.email || undefined,
+        mobile: form.mobile || undefined,
         nickname: form.nickname,
         password: form.password,
         username: form.username,
       });
       ElMessage.success('新增成功');
     } else {
-      // 不提交 password：后端 BaseController 的 update 会整体覆盖实体，
-      // 带上空密码会把已有哈希冲掉
+      // 不提交 password：后端 SysUserController.update 已用 @TableField(updateStrategy
+      // = NOT_NULL) 锁住密码列，但这里仍不传，保持"改密码只走重置密码"的单一路径
       await updateUserApi(editingId.value, {
         deptId: form.deptId,
+        email: form.email || undefined,
+        mobile: form.mobile || undefined,
         nickname: form.nickname,
         status: form.status,
         username: form.username,
@@ -314,6 +324,20 @@ onMounted(async () => {
             v-model="form.nickname"
             data-testid="user-nickname-input"
             placeholder="请输入昵称"
+          />
+        </ElFormItem>
+        <ElFormItem label="手机号" prop="mobile">
+          <ElInput
+            v-model="form.mobile"
+            data-testid="user-mobile-input"
+            placeholder="选填，重复的手机号会被拒绝"
+          />
+        </ElFormItem>
+        <ElFormItem label="邮箱" prop="email">
+          <ElInput
+            v-model="form.email"
+            data-testid="user-email-input"
+            placeholder="选填，重复的邮箱会被拒绝"
           />
         </ElFormItem>
         <ElFormItem v-if="editingId === null" label="初始密码" prop="password">

@@ -34,6 +34,10 @@ export interface SysUser extends AuditFields {
   deptId?: null | number;
   /** 非持久化字段，由后端联表带出，不要提交回去。 */
   deptName?: null | string;
+  /** 可空，非空时后端在应用层保证唯一；是否存在对应的登录方式取决于有没有装配插件。 */
+  email?: null | string;
+  /** 可空，非空时后端在应用层保证唯一，理由同 {@link email}。 */
+  mobile?: null | string;
   nickname?: null | string;
   /** 1 启用 / 0 停用。用 0/1 而非 boolean —— MySQL 中 boolean 实为 TINYINT(1) 别名。 */
   status?: null | number;
