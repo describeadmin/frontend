@@ -40,7 +40,8 @@ export namespace AuthApi {
     nickname: string;
     permissions: string[];
     roles: string[];
-    userId: number;
+    /** 后端把 Long 序列化成字符串，避免雪花 ID 被 JS 舍入。 */
+    userId: string;
     username: string;
   }
 
@@ -142,7 +143,8 @@ interface BackendMenu {
   children?: BackendMenu[];
   component?: null | string;
   icon?: null | string;
-  id: number;
+  /** 同 userId：后端统一把 Long 序列化成字符串。 */
+  id: string;
   menuName: string;
   menuType: string;
   path?: null | string;
