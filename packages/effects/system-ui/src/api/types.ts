@@ -112,7 +112,10 @@ export interface SysDictData extends AuditFields {
 
 export interface SysConfig extends AuditFields {
   configKey?: string;
-  /** 是否内置：Y/N，仅作展示用，非必填。 */
+  /**
+   * 是否内置：Y/N。只读——只由种子数据设置，前端表单不提供录入项，后端 save 也会
+   * 强制清空调用方传入的值；内置参数（Y）不允许删除，由后端 SysConfigService 拒绝。
+   */
   configType?: null | string;
   configValue?: string;
   configName?: string;

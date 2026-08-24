@@ -37,10 +37,11 @@ const submitting = ref(false);
 const editingId = ref<null | number>(null);
 const formRef = ref();
 
+// configType（是否内置）不在表单里——只由种子数据设置，API 新增的参数一律是自定义参数，
+// 用户不需要也不应该能手动指定；后端 save 也会强制清空该字段，见 SysConfigService。
 const form = reactive<SysConfig>({
   configKey: '',
   configName: '',
-  configType: '',
   configValue: '',
 });
 
@@ -69,7 +70,6 @@ function openCreate() {
   Object.assign(form, {
     configKey: '',
     configName: '',
-    configType: '',
     configValue: '',
   });
   formVisible.value = true;
@@ -80,7 +80,6 @@ function openEdit(row: SysConfig) {
   Object.assign(form, {
     configKey: row.configKey ?? '',
     configName: row.configName ?? '',
-    configType: row.configType ?? '',
     configValue: row.configValue ?? '',
     version: row.version,
   });
@@ -145,7 +144,11 @@ onMounted(load);
       <ElTableColumn prop="configName" label="参数名称" min-width="160" />
       <ElTableColumn prop="configKey" label="参数键名" min-width="200" />
       <ElTableColumn prop="configValue" label="参数键值" min-width="200" />
-      <ElTableColumn prop="configType" label="类型" width="100" />
+      <ElTableColumn label="类型" width="100">
+        <template #default="{ row }">
+          {{ row.configType === 'Y' ? '内置' : '自定义' }}
+        </template>
+      </ElTableColumn>
       <ElTableColumn prop="createTime" label="创建时间" min-width="180" />
       <ElTableColumn label="操作" width="160" fixed="right">
         <template #default="{ row }">
@@ -160,6 +163,8 @@ onMounted(load);
           <ElButton
             link
             type="danger"
+            :disabled="row.configType === 'Y'"
+            :title="row.configType === 'Y' ? '内置参数不允许删除' : undefined"
             data-testid="config-delete-btn"
             @click="askDelete(row)"
           >
@@ -210,13 +215,6 @@ onMounted(load);
             v-model="form.configValue"
             data-testid="config-config-value-input"
             placeholder="请输入参数键值"
-          />
-        </ElFormItem>
-        <ElFormItem label="类型" prop="configType">
-          <ElInput
-            v-model="form.configType"
-            data-testid="config-config-type-input"
-            placeholder="仅展示用，如 Y/N 标记是否内置，非必填"
           />
         </ElFormItem>
       </ElForm>
