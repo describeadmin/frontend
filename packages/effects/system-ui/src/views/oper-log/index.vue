@@ -137,7 +137,7 @@ onMounted(load);
         v-model="filter.module"
         placeholder="模块，如 system:dept"
         clearable
-        class="w-48"
+        class="!w-48"
         data-testid="oper-log-module-input"
         @keyup.enter="search"
       />
@@ -145,7 +145,7 @@ onMounted(load);
         v-model="filter.operatorName"
         placeholder="操作人"
         clearable
-        class="w-40"
+        class="!w-40"
         data-testid="oper-log-operator-name-input"
         @keyup.enter="search"
       />
@@ -153,7 +153,7 @@ onMounted(load);
         v-model="filter.status"
         placeholder="状态"
         clearable
-        class="w-32"
+        class="!w-32"
         data-testid="oper-log-status-select"
       >
         <ElOption label="成功" :value="1" />
