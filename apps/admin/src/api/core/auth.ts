@@ -65,6 +65,20 @@ export namespace AuthApi {
     accessToken: string;
     refreshToken?: string;
   }
+
+  /**
+   * 后端 `GET /api/auth/profile` 返回的当前用户资料（个人中心-基本设置用）。
+   *
+   * 只建模用得到的字段——后端直接返回 `SysUser` 实体，还带 deptId/status 等
+   * 个人中心不关心的字段，原样透传即可，不必逐个补全类型。
+   */
+  export interface OwnProfile {
+    email?: null | string;
+    id: string;
+    mobile?: null | string;
+    nickname: string;
+    username: string;
+  }
 }
 
 /** 当前后端启用了哪些登录方式。 */
@@ -161,6 +175,46 @@ export async function getUserInfoApi(): Promise<UserInfo> {
 export async function getAccessCodesApi(): Promise<string[]> {
   const me = await getMeApi();
   return me.permissions ?? [];
+}
+
+/**
+ * 当前登录用户的完整资料（姓名/手机号/邮箱），个人中心-基本设置回显用。
+ *
+ * 与 {@link getMeApi} 的区别：`LoginUser` 是跨登录方式共享的鉴权对象，不带 mobile/email
+ * 这类具体业务字段；这里对应后端专门给个人中心开的 `GET /api/auth/profile`。
+ */
+export async function getOwnProfileApi() {
+  return requestClient.get<AuthApi.OwnProfile>('/auth/profile');
+}
+
+/**
+ * 自助修改姓名/手机号/邮箱。
+ *
+ * 用户名与角色不接受在这里修改——后端 `PUT /api/auth/profile` 本身就只读取这三个字段，
+ * 传别的字段也不会生效，因此前端也不提供对应的输入项。
+ */
+export async function updateOwnProfileApi(data: {
+  email?: string;
+  mobile?: string;
+  nickname: string;
+}) {
+  return requestClient.put('/auth/profile', data);
+}
+
+/**
+ * 自助修改密码。
+ *
+ * 成功后后端会吊销当前用户的全部令牌（含发起本次请求所用的这一个），
+ * 调用方必须紧接着引导用户用新密码重新登录，不能指望原地继续使用旧的登录态。
+ */
+export async function changePasswordApi(
+  oldPassword: string,
+  newPassword: string,
+) {
+  return requestClient.put('/auth/password', {
+    newPassword,
+    oldPassword,
+  });
 }
 
 /** 后端 `SysMenu` 的原样映射。 */

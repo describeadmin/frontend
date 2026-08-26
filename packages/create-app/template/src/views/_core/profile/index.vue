@@ -5,10 +5,10 @@ import { useUserStore } from '@describeadmin/stores';
 import { Profile } from '@describeadmin/ui';
 
 import ProfileBase from './base-setting.vue';
-import ProfileNotificationSetting from './notification-setting.vue';
 import ProfilePasswordSetting from './password-setting.vue';
-import ProfileSecuritySetting from './security-setting.vue';
 
+// "安全设置"没有对应功能，已删除；"新消息提醒"功能尚未实现，
+// notification-setting.vue 保留在目录里但暂不接入这里，等消息通知能力上线后再挂回来。
 const userStore = useUserStore();
 
 const tabsValue = ref<string>('basic');
@@ -19,16 +19,8 @@ const tabs = ref([
     value: 'basic',
   },
   {
-    label: '安全设置',
-    value: 'security',
-  },
-  {
     label: '修改密码',
     value: 'password',
-  },
-  {
-    label: '新消息提醒',
-    value: 'notice',
   },
 ]);
 </script>
@@ -41,9 +33,7 @@ const tabs = ref([
   >
     <template #content>
       <ProfileBase v-if="tabsValue === 'basic'" />
-      <ProfileSecuritySetting v-if="tabsValue === 'security'" />
       <ProfilePasswordSetting v-if="tabsValue === 'password'" />
-      <ProfileNotificationSetting v-if="tabsValue === 'notice'" />
     </template>
   </Profile>
 </template>

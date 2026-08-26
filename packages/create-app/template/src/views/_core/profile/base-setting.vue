@@ -1,65 +1,85 @@
 <script setup lang="ts">
-import type { BasicOption } from '@describeadmin/types';
-
 import type { VbenFormSchema } from '#/adapter/form';
 
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
-import { ProfileBaseSetting } from '@describeadmin/ui';
+import { ProfileBaseSetting, z } from '@describeadmin/ui';
 
-import { getUserInfoApi } from '#/api';
+import { ElMessage } from 'element-plus';
+
+import { getOwnProfileApi, updateOwnProfileApi } from '#/api';
 
 const profileBaseSettingRef = ref();
 
-const MOCK_ROLES_OPTIONS: BasicOption[] = [
+// 用户名/角色不接受在个人中心修改：用户名做只读展示（disabled），角色干脆不放进表单。
+const formSchema: VbenFormSchema[] = [
   {
-    label: '管理员',
-    value: 'super',
+    fieldName: 'username',
+    component: 'Input',
+    label: '用户名',
+    componentProps: {
+      disabled: true,
+    },
   },
   {
-    label: '用户',
-    value: 'user',
+    fieldName: 'nickname',
+    component: 'Input',
+    label: '姓名',
+    rules: z
+      .string({ required_error: '请输入姓名' })
+      .min(1, { message: '请输入姓名' }),
   },
   {
-    label: '测试',
-    value: 'test',
+    fieldName: 'mobile',
+    component: 'Input',
+    label: '手机号',
+    componentProps: {
+      placeholder: '请输入手机号',
+    },
+    rules: z
+      .string()
+      .optional()
+      .refine((value) => !value || /^1[3-9]\d{9}$/.test(value), {
+        message: '手机号格式不正确',
+      }),
+  },
+  {
+    fieldName: 'email',
+    component: 'Input',
+    label: '邮箱',
+    componentProps: {
+      placeholder: '请输入邮箱',
+    },
+    rules: z
+      .string()
+      .optional()
+      .refine(
+        (value) => !value || z.string().email().safeParse(value).success,
+        {
+          message: '邮箱格式不正确',
+        },
+      ),
   },
 ];
 
-const formSchema = computed((): VbenFormSchema[] => {
-  return [
-    {
-      fieldName: 'realName',
-      component: 'Input',
-      label: '姓名',
-    },
-    {
-      fieldName: 'username',
-      component: 'Input',
-      label: '用户名',
-    },
-    {
-      fieldName: 'roles',
-      component: 'Select',
-      componentProps: {
-        mode: 'tags',
-        options: MOCK_ROLES_OPTIONS,
-      },
-      label: '角色',
-    },
-    {
-      fieldName: 'introduction',
-      component: 'Textarea',
-      label: '个人简介',
-    },
-  ];
-});
+async function handleSubmit(values: Record<string, any>) {
+  await updateOwnProfileApi({
+    email: values.email,
+    mobile: values.mobile,
+    nickname: values.nickname,
+  });
+  ElMessage.success('保存成功');
+}
 
 onMounted(async () => {
-  const data = await getUserInfoApi();
+  const data = await getOwnProfileApi();
   profileBaseSettingRef.value.getFormApi().setValues(data);
 });
 </script>
 <template>
-  <ProfileBaseSetting ref="profileBaseSettingRef" :form-schema="formSchema" />
+  <ProfileBaseSetting
+    ref="profileBaseSettingRef"
+    :form-schema="formSchema"
+    @submit="handleSubmit"
+  />
 </template>
