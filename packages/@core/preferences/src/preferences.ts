@@ -10,7 +10,10 @@ import type {
 
 import { markRaw, reactive, readonly, watch } from 'vue';
 
-import { StorageManager } from '@describeadmin/core-shared/cache';
+import {
+  MemoryStorageDriver,
+  StorageManager,
+} from '@describeadmin/core-shared/cache';
 import { isMacOs, merge } from '@describeadmin/core-shared/utils';
 
 import {
@@ -40,7 +43,11 @@ class PreferenceManager {
   private state: Preferences;
 
   constructor() {
-    this.cache = new StorageManager();
+    // 构造函数只是给 this.cache 一个占位值（用不带持久化的 MemoryStorageDriver，
+    // 不让默认的 LocalStorageDriver 在没有 namespace 前缀时触发"清空/枚举会波及
+    // 整个 localStorage"的告警）——initPreferences 会用真正的 namespace 前缀立刻
+    // 替换掉它，构造函数与 initPreferences 之间不会有代码读写这份缓存。
+    this.cache = new StorageManager({ driver: new MemoryStorageDriver() });
     // 构造函数不再同步读取缓存，使用默认值初始化
     // 真正的缓存加载在 initPreferences 中完成（已经是 async）
     this.state = reactive<Preferences>({ ...defaultPreferences });
