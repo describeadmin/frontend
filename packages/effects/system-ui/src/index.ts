@@ -11,17 +11,18 @@ export * from './api';
  * `generateRoutesByBackend` 的 normalizeViewPath 规范化（去掉 `./`/`../` 前缀、
  * 补前导 `/`、剥掉前导 `/views`）后即为下面这些 key，`.vue` 后缀不受该函数影响。
  *
- * 消费方（应用外壳）把这份 map 展开合并进自己的 `pageMap`：
+ * 消费方（应用外壳）把这份 map 展开合并进自己的 `pageMap`——`systemPageMap` 必须
+ * 展开在前，让业务方本地同名页面（如自定义了 `views/system/user/index.vue`）
+ * 覆盖框架默认实现，反过来会被静默吃掉且不会报错：
  *
  * ```ts
  * const pageMap: ComponentRecordType = {
- *   ...import.meta.glob('../views/**\/*.vue'),
  *   ...systemPageMap,
+ *   ...import.meta.glob('../views/**\/*.vue'),
  * };
  * ```
  */
 export const systemPageMap: ComponentRecordType = {
-  '/dashboard/index.vue': () => import('./views/dashboard/index.vue'),
   '/system/config/index.vue': () => import('./views/config/index.vue'),
   '/system/dept/index.vue': () => import('./views/dept/index.vue'),
   '/system/dict/index.vue': () => import('./views/dict/index.vue'),

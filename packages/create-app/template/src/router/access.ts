@@ -16,9 +16,11 @@ import { $t } from '#/locales';
 const forbiddenComponent = () => import('#/views/_core/fallback/forbidden.vue');
 
 async function generateAccess(options: GenerateMenuAndRoutesOptions) {
+  // systemPageMap 展开在前：同一 key 时业务方本地 views 覆盖框架默认页面，
+  // 而不是反过来被框架默认页面隐性吃掉（曾经的 dashboard/index.vue 就踩过这个坑）
   const pageMap: ComponentRecordType = {
-    ...import.meta.glob('../views/**/*.vue'),
     ...systemPageMap,
+    ...import.meta.glob('../views/**/*.vue'),
   };
 
   const layoutMap: ComponentRecordType = {
