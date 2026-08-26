@@ -36,7 +36,20 @@ const coreRoutes: RouteRecordRaw[] = [
     name: 'Root',
     path: '/',
     redirect: preferences.app.defaultHomePath,
-    children: [],
+    children: [
+      // basic.vue 右上角头像下拉菜单「个人中心」项 router.push({ name: 'Profile' })
+      // 依赖这条路由存在；此前 children 一直是空数组，点击会在控制台报
+      // "No match for {"name":"Profile"}" 且无任何页面反应。
+      {
+        name: 'Profile',
+        path: 'profile',
+        component: () => import('#/views/_core/profile/index.vue'),
+        meta: {
+          hideInMenu: true,
+          title: $t('page.auth.profile'),
+        },
+      },
+    ],
   },
   {
     component: AuthPageLayout,
