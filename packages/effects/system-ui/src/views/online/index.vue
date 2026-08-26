@@ -54,10 +54,12 @@ onMounted(load);
 </script>
 
 <template>
-  <Page
-    description="在线会话数据来自框架的 TokenStore，没有对应的数据库表；默认的 InMemoryTokenStore 只持有本实例会话"
-    title="在线用户"
-  >
+  <Page title="在线用户">
+    <!--
+      在线会话数据来自框架的 TokenStore，没有对应的数据库表；默认的 InMemoryTokenStore 只持有
+      本实例会话——多实例部署时这条对运维有实际意义，但措辞是实现细节，不适合直接展示给最终用户，
+      故不放进 Page 的 description。
+    -->
     <ElTable
       v-loading="loading"
       :data="rows"

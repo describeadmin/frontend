@@ -117,10 +117,8 @@ onMounted(load);
 </script>
 
 <template>
-  <Page
-    description="操作日志由框架的 framework-system-starter 提供，BaseController+ 的写操作与 @OperLog 标注端点自动记录"
-    title="操作日志"
-  >
+  <Page title="操作日志">
+    <!-- 操作日志由框架的 framework-system-starter 提供，BaseController+ 的写操作与 @OperLog 标注端点自动记录——实现说明，不面向最终用户。 -->
     <template #extra>
       <ElButton
         type="danger"

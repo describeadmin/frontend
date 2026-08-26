@@ -268,10 +268,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Page
-    description="字典类型与字典数据由框架的 framework-system-starter 提供，byType 查询读穿 CacheProvider"
-    title="字典管理"
-  >
+  <Page title="字典管理">
+    <!-- 字典类型与字典数据由框架的 framework-system-starter 提供，byType 查询读穿 CacheProvider——实现说明，不面向最终用户。 -->
     <div class="flex gap-4">
       <div class="w-2/5">
         <div class="mb-2 flex items-center justify-between">
@@ -325,7 +323,7 @@ onMounted(async () => {
             :total="typeTotal"
             :page-sizes="[10, 20, 50]"
             layout="total, prev, pager, next"
-            small
+            size="small"
             data-testid="dict-type-pagination"
             @current-change="loadTypes"
             @size-change="loadTypes"

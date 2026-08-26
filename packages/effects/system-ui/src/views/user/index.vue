@@ -227,10 +227,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Page
-    description="用户体系由框架的 framework-system-starter 提供，业务方无需实现"
-    title="用户管理"
-  >
+  <Page title="用户管理">
+    <!-- 用户体系由框架的 framework-system-starter 提供，业务方无需实现——这是给开发者看的实现说明，不面向最终用户，故不放进 Page 的 description。 -->
     <template #extra>
       <ElButton type="primary" data-testid="user-add-btn" @click="openCreate">
         新增

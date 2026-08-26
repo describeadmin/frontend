@@ -125,10 +125,8 @@ onMounted(load);
 </script>
 
 <template>
-  <Page
-    description="参数配置由框架的 framework-system-starter 提供，读写均走穿 CacheProvider"
-    title="参数配置"
-  >
+  <Page title="参数配置">
+    <!-- 参数配置由框架的 framework-system-starter 提供，读写均走穿 CacheProvider——实现说明，不面向最终用户。 -->
     <template #extra>
       <ElButton type="primary" data-testid="config-add-btn" @click="openCreate">
         新增

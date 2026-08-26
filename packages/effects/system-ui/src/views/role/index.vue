@@ -259,10 +259,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Page
-    description="角色与菜单授权由框架的 framework-system-starter 提供"
-    title="角色管理"
-  >
+  <Page title="角色管理">
+    <!-- 角色与菜单授权由框架的 framework-system-starter 提供——实现说明，不面向最终用户。 -->
     <template #extra>
       <ElButton type="primary" data-testid="role-add-btn" @click="openCreate">
         新增

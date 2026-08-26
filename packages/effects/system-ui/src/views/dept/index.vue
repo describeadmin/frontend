@@ -149,10 +149,8 @@ onMounted(load);
 </script>
 
 <template>
-  <Page
-    description="部门树由框架的 framework-system-starter 提供，业务方无需实现"
-    title="部门管理"
-  >
+  <Page title="部门管理">
+    <!-- 部门树由框架的 framework-system-starter 提供，业务方无需实现——实现说明，不面向最终用户。 -->
     <template #extra>
       <ElButton
         type="primary"
