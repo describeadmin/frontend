@@ -8,6 +8,9 @@ import { requestClient } from '#/api/request';
 export namespace AuthApi {
   /** 登录入参。type 之外的字段整体透传给后端对应的 AuthProvider。 */
   export interface LoginParams {
+    /** 达到渐进式验证码的触发阈值后必填；未达阈值时后端忽略这两个字段。 */
+    captchaCode?: string;
+    captchaId?: string;
     password?: string;
     /**
      * 登录方式，取值来自 `/auth/providers`。
@@ -17,6 +20,18 @@ export namespace AuthApi {
      */
     type?: string;
     username?: string;
+  }
+
+  /**
+   * 后端 `CaptchaChallenge` 的原样映射。
+   *
+   * `type` 目前唯一取值 `"image"`；后端换成滑块/第三方验证码插件后这里的取值会变化，
+   * 前端应按 `type` 分支渲染，而不是假设永远是图片。
+   */
+  export interface CaptchaChallenge {
+    captchaId: string;
+    payload: Record<string, any>;
+    type: string;
   }
 
   /** 后端 `LoginResult` 的原样映射。 */
@@ -55,6 +70,16 @@ export namespace AuthApi {
 /** 当前后端启用了哪些登录方式。 */
 export async function getAuthProvidersApi() {
   return requestClient.get<string[]>('/auth/providers');
+}
+
+/**
+ * 获取一次新的验证码挑战。
+ *
+ * 对应后端 `GET /api/auth/captcha`，免认证——登录之前显然还没有令牌。
+ * `type="image"` 时 `payload.image` 是 `data:image/png;base64,...` 形式，可直接当 `<img src>` 用。
+ */
+export async function getCaptchaApi() {
+  return requestClient.get<AuthApi.CaptchaChallenge>('/auth/captcha');
 }
 
 /**
