@@ -45,3 +45,18 @@ defineProps<{
     </div>
   </div>
 </template>
+
+<style scoped>
+/*
+  切换登录方式（如 Login ↔ EmailLogin）时，去掉 out-in 后离场与进场的两张表单
+  会同时存在于文档流里、上下堆叠，露出"两张表单都可见"的中间态。
+  这里让离场的那张在过渡期间脱离文档流、绝对定位覆盖在进场表单之上——
+  等价于 out-in 的视觉效果，但不触发本文件上方注释记录的
+  out-in + KeepAlive 卡死。left/right:0 让它与原本 mx-auto 居中的位置对齐。
+*/
+:deep(.slide-right-leave-active) {
+  position: absolute;
+  right: 0;
+  left: 0;
+}
+</style>
