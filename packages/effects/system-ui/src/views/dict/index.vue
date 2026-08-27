@@ -263,7 +263,12 @@ async function confirmDeleteData() {
 }
 
 onMounted(async () => {
-  await Promise.all([loadTypes(), loadAllDictData()]);
+  try {
+    await Promise.all([loadTypes(), loadAllDictData()]);
+  } catch {
+    // 已经由请求层的全局拦截器处理（弹出提示、401 时跳转登录页），这里只需要
+    // 避免异常继续冒泡成 Vue 的 "Unhandled error during execution of mounted hook"。
+  }
 });
 </script>
 

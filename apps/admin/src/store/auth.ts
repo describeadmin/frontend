@@ -15,6 +15,7 @@ import { ElNotification } from 'element-plus';
 import { defineStore } from 'pinia';
 
 import { getMeApi, loginApi, logoutApi, toUserInfo } from '#/api';
+import { resetAuthExpiredNotified } from '#/api/auth-expired-notify';
 import { $t } from '#/locales';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -23,6 +24,11 @@ export const useAuthStore = defineStore('auth', () => {
   const router = useRouter();
 
   const loginLoading = ref(false);
+  // 并发去重：token 过期时页面上往往有多个请求同时收到 401，
+  // authenticateResponseInterceptor 对每一个都会独立调用 doReAuthenticate → logout()。
+  // 多次并发执行 resetAllStores() + router.replace() 会互相打断路由跳转，
+  // 表现为“卡在原地不跳转”（同一根因见 docs/LOGIN_MODULE_AUDIT.md 改密码那条竞态记录）。
+  let logoutPromise: null | Promise<void> = null;
 
   /**
    * 异步处理登录操作
@@ -43,6 +49,8 @@ export const useAuthStore = defineStore('auth', () => {
       if (accessToken) {
         // 将 accessToken 存储到 accessStore 中
         accessStore.setAccessToken(accessToken);
+        // 上一次登录失效期间弹过的提示不该延续到这次新的登录态里
+        resetAuthExpiredNotified();
         // refreshToken 可能为空（后端关闭了 describeadmin.security.refresh-token.enabled）——
         // 存 null 而不是 undefined，doRefreshToken 据此判断要不要直接引导重新登录
         accessStore.setRefreshToken(refreshToken ?? null);
@@ -83,23 +91,35 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout(redirect: boolean = true) {
-    try {
-      await logoutApi();
-    } catch {
-      // 不做任何处理
+    // 已有一次 logout 在执行中：直接复用它的结果，不要重新触发
+    // resetAllStores()/router.replace()，避免多次并发调用互相打断跳转。
+    if (logoutPromise) {
+      return logoutPromise;
     }
-    resetAllStores();
-    accessStore.setLoginExpired(false);
+    logoutPromise = (async () => {
+      try {
+        await logoutApi();
+      } catch {
+        // 不做任何处理
+      }
+      resetAllStores();
+      accessStore.setLoginExpired(false);
 
-    // 回登录页带上当前路由地址
-    await router.replace({
-      path: LOGIN_PATH,
-      query: redirect
-        ? {
-            redirect: encodeURIComponent(router.currentRoute.value.fullPath),
-          }
-        : {},
-    });
+      // 回登录页带上当前路由地址
+      await router.replace({
+        path: LOGIN_PATH,
+        query: redirect
+          ? {
+              redirect: encodeURIComponent(router.currentRoute.value.fullPath),
+            }
+          : {},
+      });
+    })();
+    try {
+      await logoutPromise;
+    } finally {
+      logoutPromise = null;
+    }
   }
 
   /**

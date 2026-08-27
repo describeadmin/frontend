@@ -65,7 +65,17 @@ interface ResponseInterceptorConfig<T = any> {
   rejected?: (error: any) => any;
 }
 
-type MakeErrorMessageFn = (message: string, error: any) => void;
+type MakeErrorMessageFn = (
+  message: string,
+  error: any,
+  /**
+   * 本次错误是否属于"登录失效"语义（HTTP 401，或业务错误码等于调用方传入的
+   * `unauthorizedCode`）。为 `true` 时 `message` 已经是统一文案，调用方不应再用
+   * `error.response.data.message` 之类的后端自定义措辞覆盖它——否则同一件事会因为
+   * 触发路径不同（原始请求的 401 / 刷新令牌失败的业务错误）而弹出不一样的提示。
+   */
+  meta?: { isAuthExpired?: boolean },
+) => void;
 
 interface HttpResponse<T = any> {
   /**

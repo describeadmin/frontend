@@ -3,7 +3,7 @@ import type {
   UserInfo,
 } from '@describeadmin/types';
 
-import { requestClient } from '#/api/request';
+import { authLifecycleRequestClient, requestClient } from '#/api/request';
 
 export namespace AuthApi {
   /** 登录入参。type 之外的字段整体透传给后端对应的 AuthProvider。 */
@@ -120,16 +120,27 @@ export async function loginApi(data: AuthApi.LoginParams) {
  *
  * 对应后端 `POST /api/auth/refresh`——该端点本身免认证（挂权限校验会自相矛盾，
  * 见 AuthController 的注释），校验完全下沉在后端 `TokenStore.refresh()` 内部。
+ *
+ * **必须用 `authLifecycleRequestClient`，不能用 `requestClient`**：这个调用本身就是
+ * `authenticateResponseInterceptor` 失败之后触发的收尾动作，若再挂同一套拦截器会在
+ * `isRefreshing` 临界区内递归重入，详见 `authLifecycleRequestClient` 处的注释。
  */
 export async function refreshTokenApi(refreshToken: string) {
-  return requestClient.post<AuthApi.BackendLoginResult>('/auth/refresh', {
-    refreshToken,
-  });
+  return authLifecycleRequestClient.post<AuthApi.BackendLoginResult>(
+    '/auth/refresh',
+    { refreshToken },
+  );
 }
 
-/** 登出。后端吊销的是本次请求携带的那一个令牌，不影响该用户的其他会话。 */
+/**
+ * 登出。后端吊销的是本次请求携带的那一个令牌，不影响该用户的其他会话。
+ *
+ * 同 {@link refreshTokenApi}，必须用 `authLifecycleRequestClient`：token 过期触发的
+ * 自动重新登录会在令牌已清空的情况下调用这里，此时 401 是预期结果，不能再被
+ * `authenticateResponseInterceptor` 排队等待一次不会再发生的令牌刷新。
+ */
 export async function logoutApi() {
-  return requestClient.post('/auth/logout');
+  return authLifecycleRequestClient.post('/auth/logout');
 }
 
 /**
