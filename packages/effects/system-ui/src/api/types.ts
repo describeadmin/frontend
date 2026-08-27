@@ -148,7 +148,11 @@ export interface SysOperLog {
  */
 export interface ActiveSession {
   authType: string;
+  /** 登录时的设备描述，如 `Chrome · Windows`；识别不出为 null。 */
+  device: null | string;
   expiresAt: string;
+  /** 登录时的客户端 IP；实现未记录来源时为 null。 */
+  ip: null | string;
   issuedAt: string;
   nickname: string;
   userId: number;

@@ -243,11 +243,14 @@ export async function cleanOperLogApi() {
 // ------------------------------------------------------------------- 在线用户
 
 /**
- * 在线会话列表。数据直接来自 `TokenStore`，没有分页——默认的
- * `InMemoryTokenStore` 只持有当前实例的会话，规模天然有限。
+ * 在线会话列表（分页）。数据来自后端的 `TokenStore` 快照，由 `SysOnlineController`
+ * 在应用层切片——没有对应数据库表，翻页会重复一次全量枚举，但这是低频管理页、
+ * 在线会话数天然有界，可以接受。
  */
-export async function getOnlineListApi() {
-  return getSystemApiClient().get<ActiveSession[]>('/system/online');
+export async function getOnlineListApi(params: PageQuery) {
+  return getSystemApiClient().get<PageResult<ActiveSession>>('/system/online', {
+    params,
+  });
 }
 
 /** 强制某用户下线，吊销其全部令牌，返回实际吊销的令牌数。 */
