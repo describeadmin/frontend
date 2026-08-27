@@ -54,6 +54,12 @@ export namespace AuthApi {
     homePath?: null | string;
     nickname: string;
     permissions: string[];
+    /**
+     * 是否要求先强制修改密码：管理员建号 / 重置密码后为 true，或密码已过
+     * `sys.password.max-age-days` 设定的有效期。为 true 时前端只能进强制改密页，
+     * 后端 `PasswordResetRequiredFilter` 也会把其它请求挡成 40105。
+     */
+    pwdResetRequired?: boolean;
     roles: string[];
     /** 后端把 Long 序列化成字符串，避免雪花 ID 被 JS 舍入。 */
     userId: string;

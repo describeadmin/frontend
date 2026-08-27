@@ -85,6 +85,13 @@ function setupAccessGuard(router: Router) {
       return to;
     }
 
+    // 强制改密：被标记的用户只能停在强制改密页，其它任何目标都拽回去。
+    // 刷新页面时 pwdResetRequired 由下方 fetchUserInfo() 恢复，那一趟先放行，
+    // 生成路由后的二次导航会在这里被拦住。
+    if (authStore.pwdResetRequired && to.name !== 'PasswordResetRequired') {
+      return { name: 'PasswordResetRequired', replace: true };
+    }
+
     // 是否已经生成过动态路由
     if (accessStore.isAccessChecked) {
       return true;

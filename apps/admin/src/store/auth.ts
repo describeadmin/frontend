@@ -24,6 +24,12 @@ export const useAuthStore = defineStore('auth', () => {
   const router = useRouter();
 
   const loginLoading = ref(false);
+  /**
+   * 当前登录用户是否被要求先强制改密（管理员建号 / 重置密码后，或密码过有效期）。
+   * 登录与 fetchUserInfo 时从 /auth/me 的 pwdResetRequired 刷新；路由守卫据此把用户
+   * 钉在强制改密页，改密成功、重新登录后自然回到 false。
+   */
+  const pwdResetRequired = ref(false);
   // 并发去重：token 过期时页面上往往有多个请求同时收到 401，
   // authenticateResponseInterceptor 对每一个都会独立调用 doReAuthenticate → logout()。
   // 多次并发执行 resetAllStores() + router.replace() 会互相打断路由跳转，
@@ -59,11 +65,15 @@ export const useAuthStore = defineStore('auth', () => {
         // 上游模板在这里并发打两个接口，对我们的后端就是对同一端点请求两次
         const me = await getMeApi();
         userInfo = toUserInfo(me);
+        pwdResetRequired.value = me.pwdResetRequired === true;
 
         userStore.setUserInfo(userInfo);
         accessStore.setAccessCodes(me.permissions ?? []);
 
-        if (accessStore.loginExpired) {
+        if (pwdResetRequired.value) {
+          // 被要求强制改密：不弹登录成功提示，直接进强制改密页；其余请求后端也会挡成 40105
+          await router.push({ name: 'PasswordResetRequired' });
+        } else if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
         } else {
           onSuccess
@@ -73,7 +83,7 @@ export const useAuthStore = defineStore('auth', () => {
               );
         }
 
-        if (userInfo?.realName) {
+        if (!pwdResetRequired.value && userInfo?.realName) {
           ElNotification({
             message: `${$t('authentication.loginSuccessDesc')}:${userInfo?.realName}`,
             title: $t('authentication.loginSuccess'),
@@ -104,6 +114,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
       resetAllStores();
       accessStore.setLoginExpired(false);
+      pwdResetRequired.value = false;
 
       // 回登录页带上当前路由地址
       await router.replace({
@@ -131,6 +142,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchUserInfo() {
     const me = await getMeApi();
     const userInfo = toUserInfo(me);
+    pwdResetRequired.value = me.pwdResetRequired === true;
     userStore.setUserInfo(userInfo);
     accessStore.setAccessCodes(me.permissions ?? []);
     return userInfo;
@@ -138,6 +150,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function $reset() {
     loginLoading.value = false;
+    pwdResetRequired.value = false;
   }
 
   return {
@@ -146,5 +159,6 @@ export const useAuthStore = defineStore('auth', () => {
     fetchUserInfo,
     loginLoading,
     logout,
+    pwdResetRequired,
   };
 });

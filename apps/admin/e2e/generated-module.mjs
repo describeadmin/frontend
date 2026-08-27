@@ -9,8 +9,11 @@ import process from 'node:process';
 
 import { chromium } from 'playwright';
 
+import { resolvePassword } from './_password.mjs';
+
 const BASE = process.env.APP_URL ?? 'http://localhost:5777';
 const MODULE = process.env.MODULE ?? 'project';
+const PASSWORD = resolvePassword();
 
 const results = [];
 function check(name, ok, detail = '') {
@@ -34,7 +37,7 @@ const NEW_NAME = `生成器验证项目-${Date.now() % 100_000}`;
 try {
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.fill('[data-testid="login-username-input"]', 'admin');
-  await page.fill('[data-testid="login-password-input"]', 'admin123');
+  await page.fill('[data-testid="login-password-input"]', PASSWORD);
   await page.keyboard.press('Enter');
   await page.waitForURL(/dashboard|system/, { timeout: 20_000 });
   await page.waitForTimeout(1500);

@@ -69,6 +69,18 @@ const coreRoutes: RouteRecordRaw[] = [
           title: $t('page.auth.login'),
         },
       },
+      {
+        // 强制修改密码。管理员建号 / 重置密码后，或密码过有效期，用户登录后被
+        // 路由守卫钉在这里，改密成功前去不了任何其它页面（后端也会把其它请求挡成 40105）。
+        name: 'PasswordResetRequired',
+        path: 'password-reset-required',
+        component: () =>
+          import('#/views/_core/authentication/password-reset-required.vue'),
+        meta: {
+          hideInTab: true,
+          title: '修改密码',
+        },
+      },
       // docs/LOGIN_MODULE_AUDIT.md A 项：CodeLogin/QrCodeLogin/ForgetPassword/Register
       // 四条路由已删除——对应能力后端都不存在（只有 password 一种内置登录方式），
       // 留着路由意味着直接访问 URL 仍能看到一个"什么都做不了"的空白页面，

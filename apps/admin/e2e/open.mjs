@@ -10,9 +10,11 @@ import process from 'node:process';
 
 import { chromium } from 'playwright';
 
+import { resolvePassword } from './_password.mjs';
+
 const BASE = process.env.APP_URL ?? 'http://localhost:5777';
 const USERNAME = process.env.APP_USER ?? 'admin';
-const PASSWORD = process.env.APP_PASSWORD ?? 'admin123';
+const PASSWORD = resolvePassword();
 
 // 独立用户目录：不碰你日常用的 Chrome 配置，也让登录态在下次打开时还在
 const profileDir = path.join(
