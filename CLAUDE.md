@@ -23,13 +23,13 @@
 
 | 项 | 取值 | 说明 |
 | --- | --- | --- |
-| 构建 JDK | **21** | 通过 Maven Toolchains 指定，不依赖 `PATH` |
+| 构建 JDK | **17+** | 任意 JDK ≥ 17 均可；由 enforcer 的 `requireJavaVersion` 兜底，不再用 toolchains 钉版本 |
 | 编译目标 | **`maven.compiler.release=17`** | 产物必须能在 Java 17 上运行 |
 | Spring Boot | **3.5.16** | 不要升级到 4.x，理由见方案 2.2.1 |
 | Jackson | **2.x**（`com.fasterxml.jackson.*`） | 不要使用 `tools.jackson.*`（那是 Jackson 3） |
 | Node / pnpm | node `^22.18 \|\| ^24.12`，pnpm `>=11` |  |
 
-**不要用 `java -version` 判断构建 JDK**——本项目通过 toolchains 选择 JDK， `PATH` 上是什么与构建用什么无关。首次配置见 `scripts/toolchains.xml.sample`。
+**构建 JDK 只要求 ≥ 17**——`maven.compiler.release=17` 已保证产物在 Java 17 上运行，构建用 17 / 21 / 25 都行，`PATH` 上默认是哪个 `java` 无所谓（低于 17 会被 enforcer 拦下）。`framework` / 各插件 / `codegen` 均**不再用 `maven-toolchains-plugin`**——钉死具体版本只会让没配 `~/.m2/toolchains.xml` 的人以 `Cannot find matching toolchain` 直接构建失败，比它要防的坑更劝退（见 develop_plan.md 2.2.2 与 VERSION_BASELINE 第八轮）。唯一仍配 toolchains 的是 `sample-app`，它刻意钉 JDK 17，用最低支持版本验证兼容承诺。
 
 **版本核查纪律**：任何依赖版本以 `https://repo1.maven.org/maven2/**/maven-metadata.xml` 和 `https://registry.npmjs.org/<pkg>` 为准。 **禁止使用 `search.maven.org/solrsearch`**——该索引已陈旧，且会对真实存在的制品返回 `numFound=0`。
 
@@ -229,7 +229,7 @@ public Result<Void> resetPassword(...) { ... }
 
 核心只保留**契约 + 零依赖的默认实现**（现成范式：`CacheProvider` + `InMemoryCacheProvider`、 `TokenStore` + `InMemoryTokenStore`）。核心模块的重依赖由 framework 父 POM 的 `enforce-core-thin` 这条 enforcer 规则在构建期堵死。
 
-**插件一律独立成仓**，不作为 `framework` 仓的 module —— 版本线与发布都不绑定框架。插件 POM **不继承 `framework-parent`**，改为 `import framework-bom`：那正是业务方消费框架的姿势，插件用同一套姿势才能提前暴露业务方会遇到的问题。代价是构建配置要自带一份（toolchains、`release=17`、surefire 编码、enforcer 的 JDBC 与 Jackson 两条），但**不带** `enforce-core-thin` —— 插件的职责就是引入那些重依赖。
+**插件一律独立成仓**，不作为 `framework` 仓的 module —— 版本线与发布都不绑定框架。插件 POM **不继承 `framework-parent`**，改为 `import framework-bom`：那正是业务方消费框架的姿势，插件用同一套姿势才能提前暴露业务方会遇到的问题。代价是构建配置要自带一份（`release=17`、surefire 编码、enforcer 的 `requireJavaVersion` + JDBC 驱动 + Jackson 3 三条），但**不带** `enforce-core-thin` —— 插件的职责就是引入那些重依赖。
 
 由此还有两条容易出错的：
 
@@ -306,7 +306,7 @@ Tailwind v4（`@import 'tailwindcss'`）把自己生成的全部工具类放进 
 # 拉取全部仓库到工作区
 ./scripts/clone-all.sh
 
-# 构建（依赖 toolchains，与 PATH 上的 java 无关）
+# 构建（任意 JDK ≥ 17 即可，无需 toolchains）
 mvn -f framework/pom.xml clean install
 
 # 跳过 GPG 签名的本地安装
