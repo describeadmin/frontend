@@ -73,6 +73,19 @@ const coreRoutes: RouteRecordRaw[] = [
       // 四条路由已删除——对应能力后端都不存在（只有 password 一种内置登录方式），
       // 留着路由意味着直接访问 URL 仍能看到一个"什么都做不了"的空白页面，
       // 只关掉 login.vue 里的入口按钮并不足够。
+      {
+        // 邮箱验证码登录。前端始终注册这条路由，让"装了 framework-auth-email-starter
+        // 插件就能用"成立、业务方不用改前端；入口按钮的显隐由 login.vue 的
+        // :providers（/auth/providers 是否含 "email"）门控。未装插件时直达该 URL
+        // 会渲染一个提交必失败的表单，这是可接受的取舍——它背后有真实的后端信号
+        // 门控，不同于 CodeLogin/QrCodeLogin 那种从来没有后端的纯死壳。
+        name: 'EmailLogin',
+        path: 'email-login',
+        component: () => import('#/views/_core/authentication/email-login.vue'),
+        meta: {
+          title: $t('page.auth.emailLogin'),
+        },
+      },
     ],
   },
 ];

@@ -97,6 +97,21 @@ export async function getCaptchaApi() {
 }
 
 /**
+ * 发送邮箱登录验证码。
+ *
+ * 对应 framework-auth-email-starter 插件的 `POST /api/auth/email/code`——
+ * 该端点在后端 permit-all 白名单里，因此不需要携带登录态即可调用。
+ * 无论邮箱是否已注册，只要没有触发限流都会返回成功（防账号枚举），
+ * 前端不应该据此判断"这个邮箱是不是已经注册过"。
+ *
+ * 未引入邮箱插件时后端没有这个端点，调用会 404——邮箱登录入口本身
+ * 由 `/auth/providers` 是否含 `email` 门控（见 login.vue），正常不会走到这里。
+ */
+export async function sendEmailCodeApi(email: string) {
+  return requestClient.post('/auth/email/code', { email });
+}
+
+/**
  * 登录。
  *
  * 后端返回 `{ token, expiresIn, user }`，Vben 内核认的是 `{ accessToken }`，

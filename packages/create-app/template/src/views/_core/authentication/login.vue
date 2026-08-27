@@ -21,11 +21,9 @@ const CAPTCHA_INVALID_CODE = 40_104;
  * 后端启用的登录方式，来自 `/api/auth/providers`。
  *
  * **不要把登录方式硬编码在本页面里**——这是插件化在前端侧成立的关键
- * （develop_plan.md 3.2）。引入 framework-auth-zhengwuding-starter 后
- * 这里会自动多出一项，前后端都不需要改代码。
- *
- * 目前框架只内置 password 一种，因此暂时只渲染用户名密码表单；
- * 出现第二种方式时，在这里按 providers 渲染切换入口即可。
+ * （develop_plan.md 3.2）。原样透传给 <AuthenticationLogin> 的 :providers，
+ * 由框架组件按其中是否含 "email" 决定要不要渲染邮箱登录入口——
+ * 引入 framework-auth-email-starter 插件后前后端都不用改代码。
  */
 const providers = ref<string[]>(['password']);
 
@@ -114,7 +112,11 @@ const formSchema = computed((): VbenFormSchema[] => {
  * （渐进式触发，见 requireCaptcha），本页面不再有"防不住攻击者、只防得住自己人"的控件。
  */
 function handleSubmit(values: Record<string, any>) {
-  const payload: Record<string, any> = { ...values, type: providers.value[0] };
+  // 这张表单固定是用户名+密码，提交类型硬编码为 'password'——用
+  // providers.value[0] 当替身是脆弱耦合：一旦 provider 数量超过 1，
+  // "排在第一个"不再天然等于"这张表单该提交的类型"，只是恰好因为内置
+  // password 的 order() 排最前才凑巧成立
+  const payload: Record<string, any> = { ...values, type: 'password' };
   if (requireCaptcha.value) {
     payload.captchaId = captchaId.value;
   }
@@ -145,6 +147,7 @@ function handleSubmit(values: Record<string, any>) {
   <AuthenticationLogin
     :form-schema="formSchema"
     :loading="authStore.loginLoading"
+    :providers="providers"
     :show-code-login="false"
     :show-qrcode-login="false"
     :show-register="false"

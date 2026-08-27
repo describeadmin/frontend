@@ -19,6 +19,20 @@ interface AuthenticationProps {
   emailLoginPath?: string;
 
   /**
+   * @zh_CN 后端启用的登录方式列表，取值来自 `GET /api/auth/providers`
+   *
+   * 传入后由它驱动第二种登录方式入口的显隐——目前只认 `email` 这一项
+   * （框架内也只有邮箱插件是真实存在的第二种能力）：列表里含 `email`
+   * 就渲染邮箱登录入口，不含就不渲染。业务方 `login.vue` 只需把接口结果
+   * 原样透传进来，不用自己判断；引入新的登录插件后前端也不必改
+   * （develop_plan.md 3.2）。
+   *
+   * 与 `showEmailLogin` 的关系：显式传 `showEmailLogin` 优先级更高（用于强制
+   * 打开/关闭）；只传 `providers` 时按上面的规则自动推导。
+   */
+  providers?: string[];
+
+  /**
    * @zh_CN 二维码登录路径
    */
   qrCodeLoginPath?: string;

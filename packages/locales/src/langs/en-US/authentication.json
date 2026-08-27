@@ -37,6 +37,7 @@
   "sendResetLink": "Send Reset Link",
   "email": "Email",
   "emailLogin": "Email Login",
+  "emailLoginSubtitle": "Enter your email to receive a login security code",
   "qrcodeSubtitle": "Scan the QR code with your phone to login",
   "qrcodePrompt": "Click 'Confirm' after scanning to complete login",
   "qrcodeLogin": "QR Code Login",

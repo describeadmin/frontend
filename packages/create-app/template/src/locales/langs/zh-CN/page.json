@@ -1,6 +1,7 @@
 {
   "auth": {
     "login": "登录",
+    "emailLogin": "邮箱登录",
     "profile": "个人中心"
   },
   "dashboard": {

@@ -1,6 +1,7 @@
 {
   "auth": {
     "login": "Login",
+    "emailLogin": "Email Login",
     "profile": "Profile"
   },
   "dashboard": {

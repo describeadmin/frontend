@@ -37,6 +37,7 @@
   "sendResetLink": "发送重置链接",
   "email": "邮箱",
   "emailLogin": "邮箱登录",
+  "emailLoginSubtitle": "请输入您的邮箱以接收登录验证码",
   "qrcodeSubtitle": "请用手机扫描二维码登录",
   "qrcodePrompt": "扫码后点击 '确认'，即可完成登录",
   "qrcodeLogin": "扫码登录",

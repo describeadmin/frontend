@@ -91,6 +91,17 @@ onMounted(() => {
 defineExpose({
   getFormApi: () => formApi,
 });
+
+/**
+ * 邮箱登录入口是否显示。
+ *
+ * 显式传 `showEmailLogin` 优先（强制开/关）；否则看 `providers` 里是否含 `email`
+ * ——业务方把 `GET /api/auth/providers` 的结果原样透传进来即可，装了邮箱插件
+ * 自动出现入口，没装就不出现，前端不用改代码。
+ */
+const showEmailEntry = computed(
+  () => props.showEmailLogin || !!props.providers?.includes('email'),
+);
 </script>
 
 <template>
@@ -169,7 +180,7 @@ defineExpose({
       </VbenButton>
     </div>
 
-    <div v-if="showEmailLogin" class="mt-2 mb-2">
+    <div v-if="showEmailEntry" class="mt-2 mb-2">
       <VbenButton
         class="w-full"
         variant="outline"
