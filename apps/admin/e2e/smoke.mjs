@@ -8,7 +8,10 @@ import process from 'node:process';
 
 import { chromium } from 'playwright';
 
+import { resolvePassword } from './_password.mjs';
+
 const BASE = 'http://localhost:5777';
+const PASSWORD = resolvePassword();
 const OUT = process.argv[2] ?? '.';
 
 const results = [];
@@ -50,7 +53,7 @@ try {
 
   // ---------------------------------------------------------------- 登录
   await page.fill('[data-testid="login-username-input"]', 'admin');
-  await page.fill('[data-testid="login-password-input"]', 'admin123');
+  await page.fill('[data-testid="login-password-input"]', PASSWORD);
   await page.keyboard.press('Enter');
 
   await page.waitForURL(/dashboard|system/, { timeout: 20_000 });

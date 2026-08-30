@@ -17,6 +17,18 @@ export default defineConfig(async () => {
       plugins: [
         ElementPlus({
           format: 'esm',
+          /**
+           * 默认排除整个 node_modules，会漏转写 `@describeadmin/system-ui` 等包里
+           * `import { ElCard } from 'element-plus'` 这类具名 import——业务方以真实
+           * npm 依赖形式安装这些包时（sample-frontend 用 pnpm pack 模拟过一次，
+           * 已实测触发），组件能渲染但拿不到样式，且不报错。详见
+           * create-app/template/vite.config.ts 同一处配置的注释。
+           */
+          exclude: [
+            /^(?!.*[/\\]@describeadmin[/\\]).*[/\\]node_modules[/\\]/,
+            /[/\\]\.git[/\\]/,
+            /[/\\]\.nuxt[/\\]/,
+          ],
         }),
       ],
       server: {

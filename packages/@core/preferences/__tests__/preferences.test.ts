@@ -86,6 +86,27 @@ describe('preferences', () => {
     expect(preferenceManager.getPreferences()).toEqual(expected);
   });
 
+  it('restores cached preferences over initial config on init', async () => {
+    const namespace = 'cachedNamespace';
+    vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
+      if (key === `${namespace}-preferences`) {
+        return JSON.stringify({
+          value: { sidebar: { width: 999 }, theme: { mode: 'dark' } },
+        });
+      }
+      return null;
+    });
+
+    await preferenceManager.initPreferences({
+      namespace,
+      overrides: { theme: { mode: 'light' } } as any,
+    });
+
+    // 缓存里的用户选择应覆盖 overrides 与默认值，而不是相反
+    expect(preferenceManager.getPreferences().theme.mode).toBe('dark');
+    expect(preferenceManager.getPreferences().sidebar.width).toBe(999);
+  });
+
   it('updates theme mode correctly', () => {
     preferenceManager.updatePreferences({
       theme: {

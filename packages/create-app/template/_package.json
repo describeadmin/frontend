@@ -1,0 +1,49 @@
+{
+  "name": "describeadmin-app-template",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build --mode production",
+    "dev": "vite --mode development",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit --skipLibCheck"
+  },
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "dependencies": {
+    "@describeadmin/access": "workspace:*",
+    "@describeadmin/constants": "workspace:*",
+    "@describeadmin/ele-ui": "workspace:*",
+    "@describeadmin/hooks": "workspace:*",
+    "@describeadmin/icons": "workspace:*",
+    "@describeadmin/layouts": "workspace:*",
+    "@describeadmin/locales": "workspace:*",
+    "@describeadmin/plugins": "workspace:*",
+    "@describeadmin/preferences": "workspace:*",
+    "@describeadmin/request": "workspace:*",
+    "@describeadmin/stores": "workspace:*",
+    "@describeadmin/styles": "workspace:*",
+    "@describeadmin/system-ui": "workspace:*",
+    "@describeadmin/types": "workspace:*",
+    "@describeadmin/ui": "workspace:*",
+    "@describeadmin/utils": "workspace:*",
+    "@vueuse/core": "catalog:",
+    "dayjs": "catalog:",
+    "element-plus": "catalog:",
+    "pinia": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "@types/node": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "sass": "catalog:",
+    "typescript": "catalog:",
+    "unplugin-element-plus": "catalog:",
+    "vite": "catalog:",
+    "vue-tsc": "catalog:"
+  }
+}

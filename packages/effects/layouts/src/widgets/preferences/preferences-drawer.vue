@@ -561,6 +561,8 @@ function handleCustomPreferencesUpdate(updates: CustomPreferencesRecord) {
 </template>
 
 <style scoped>
+@reference "@describeadmin/tailwind-config/theme";
+
 :deep(.sticky-tabs-header [role='tablist']) {
   @apply -top-3 z-9999 sticky;
 }

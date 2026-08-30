@@ -10,6 +10,11 @@
 @source '../../../docs/';
 @source '../../../playground/';
 
+/* 业务方场景：`@describeadmin/*` 以真实 npm 依赖形式安装时，上面四条 monorepo 专用
+ * 路径不存在（会被静默忽略），改用这一条扫描 node_modules 下整个 @describeadmin
+ * 作用域——ele-ui/system-ui 等包自带的 Tailwind 工具类才能被业务方的构建扫描到。 */
+@source '../../';
+
 /* Dark mode uses .dark class selector, not prefers-color-scheme */
 @custom-variant dark (&:is(.dark *));
 

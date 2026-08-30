@@ -3,11 +3,13 @@ import type { Recordable } from '@describeadmin/types';
 
 import type { VbenFormSchema } from '@describeadmin/core-form-ui';
 
-import { computed, reactive } from 'vue';
+import { computed, reactive, watch } from 'vue';
 
 import { useVbenForm } from '@describeadmin/core-form-ui';
 import { VbenButton } from '@describeadmin/core-shadcn-ui';
 import { $t } from '@describeadmin/locales';
+
+import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 
 interface Props {
   formSchema?: VbenFormSchema[];
@@ -33,6 +35,19 @@ const [Form, formApi] = useVbenForm(
     schema: computed(() => props.formSchema),
     showDefaultActions: false,
   }),
+);
+
+// 窄屏（含被压缩的 PC 窗口）下 label 与输入框并排会挤压输入框，
+// 改用 vertical（label 在上）；宽屏维持原有横向对齐。见 password-setting.vue 同款处理。
+const breakpoints = useBreakpoints(breakpointsTailwind);
+const isNarrow = breakpoints.smaller('md');
+
+watch(
+  isNarrow,
+  (narrow) => {
+    formApi.setState({ layout: narrow ? 'vertical' : 'horizontal' });
+  },
+  { immediate: true },
 );
 
 async function handleSubmit() {

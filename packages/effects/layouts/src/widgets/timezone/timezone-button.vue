@@ -80,6 +80,8 @@ const handleClick = () => {
 </template>
 
 <style scoped>
+@reference "@describeadmin/tailwind-config/theme";
+
 .timezone-container {
   @apply pl-5;
 }

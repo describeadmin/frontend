@@ -1,8 +1,18 @@
 import { defineConfig } from 'tsdown';
+import ElementPlus from 'unplugin-element-plus/rolldown';
 import Vue from 'unplugin-vue/rolldown';
 
 export default defineConfig({
   clean: true,
+  /**
+   * tsdown 的 CSS 支持默认关闭 inject：Vue SFC 的 style 块虽然会被抽成单独的
+   * css 文件，但编译产物里不会保留指向它的 import 语句（只留一行注释占位），
+   * CSS 因此在消费方那边彻底丢失且不报任何错——组件正常渲染，样式却整体缺失。
+   * 开启后编译产物会带上真正的样式 import。
+   */
+  css: {
+    inject: true,
+  },
   deps: {
     skipNodeModulesBundle: true,
   },
@@ -16,6 +26,11 @@ export default defineConfig({
     js: '.mjs',
   }),
   platform: 'neutral',
-  plugins: [Vue({ isProduction: true })],
+  /**
+   * 同 @describeadmin/system-ui 的 tsdown.config.ts：组件里具名 import 的
+   * element-plus 组件必须在本包自己构建时就转写成带样式的按需引入，消费方以
+   * 真实 npm 依赖安装本包后，Vite 依赖预构建不会再给转写机会。
+   */
+  plugins: [Vue({ isProduction: true }), ElementPlus({ format: 'esm' })],
   unbundle: true,
 });

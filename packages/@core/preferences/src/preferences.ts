@@ -10,7 +10,10 @@ import type {
 
 import { markRaw, reactive, readonly, watch } from 'vue';
 
-import { StorageManager } from '@describeadmin/core-shared/cache';
+import {
+  MemoryStorageDriver,
+  StorageManager,
+} from '@describeadmin/core-shared/cache';
 import { isMacOs, merge } from '@describeadmin/core-shared/utils';
 
 import {
@@ -40,7 +43,11 @@ class PreferenceManager {
   private state: Preferences;
 
   constructor() {
-    this.cache = new StorageManager();
+    // 构造函数只是给 this.cache 一个占位值（用不带持久化的 MemoryStorageDriver，
+    // 不让默认的 LocalStorageDriver 在没有 namespace 前缀时触发"清空/枚举会波及
+    // 整个 localStorage"的告警）——initPreferences 会用真正的 namespace 前缀立刻
+    // 替换掉它，构造函数与 initPreferences 之间不会有代码读写这份缓存。
+    this.cache = new StorageManager({ driver: new MemoryStorageDriver() });
     // 构造函数不再同步读取缓存，使用默认值初始化
     // 真正的缓存加载在 initPreferences 中完成（已经是 async）
     this.state = reactive<Preferences>({ ...defaultPreferences });
@@ -131,12 +138,17 @@ class PreferenceManager {
       this.customPreferencesExtension,
     );
 
-    // 加载缓存的偏好设置，并仅用缓存补齐初始化配置中未显式设置的字段
+    // 加载缓存的偏好设置：用户上次的选择优先，initialPreferences 只补齐缓存里
+    // 缺失的字段。defaultPreferences 是全字段填满的，若把 initialPreferences 放在
+    // 前面，defu 永远不会从 cachedPreferences 取任何值，持久化就形同虚设。
+    // 下方 custom 偏好的合并顺序与此一致（缓存在前）。
+    // 代码里改了 overridesPreferences 默认值却想让老用户生效时，bump VITE_APP_VERSION
+    // 即可——namespace 带版本号，换版本等于换 key，旧缓存自然失效。
     const cachedPreferences = (await this.loadFromCache()) || {};
     const mergedPreference = merge(
       {},
-      this.initialPreferences, // 初始化配置优先，缓存仅补齐缺失字段
       cachedPreferences,
+      this.initialPreferences,
     );
 
     // 更新偏好设置

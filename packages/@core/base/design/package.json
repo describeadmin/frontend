@@ -1,6 +1,6 @@
 {
   "name": "@describeadmin/core-design",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "homepage": "https://github.com/describeadmin/frontend",
   "bugs": "https://github.com/describeadmin/frontend/issues",
   "repository": {
@@ -47,6 +47,7 @@
     }
   },
   "dependencies": {
+    "@describeadmin/tailwind-config": "workspace:*",
     "@iconify/json": "catalog:"
   }
 }

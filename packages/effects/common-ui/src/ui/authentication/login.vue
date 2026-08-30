@@ -25,12 +25,15 @@ defineOptions({
 
 const props = withDefaults(defineProps<Props>(), {
   codeLoginPath: '/auth/code-login',
+  emailLoginPath: '/auth/email-login',
   forgetPasswordPath: '/auth/forget-password',
   formSchema: () => [],
   loading: false,
   qrCodeLoginPath: '/auth/qrcode-login',
   registerPath: '/auth/register',
   showCodeLogin: true,
+  // 默认关闭，见 AuthenticationProps.showEmailLogin 的说明
+  showEmailLogin: false,
   showForgetPassword: true,
   showQrcodeLogin: true,
   showRegister: true,
@@ -88,6 +91,17 @@ onMounted(() => {
 defineExpose({
   getFormApi: () => formApi,
 });
+
+/**
+ * 邮箱登录入口是否显示。
+ *
+ * 显式传 `showEmailLogin` 优先（强制开/关）；否则看 `providers` 里是否含 `email`
+ * ——业务方把 `GET /api/auth/providers` 的结果原样透传进来即可，装了邮箱插件
+ * 自动出现入口，没装就不出现，前端不用改代码。
+ */
+const showEmailEntry = computed(
+  () => props.showEmailLogin || !!props.providers?.includes('email'),
+);
 </script>
 
 <template>
@@ -137,6 +151,7 @@ defineExpose({
       }"
       :loading="loading"
       aria-label="login"
+      data-testid="login-submit-btn"
       class="w-full"
       @click="handleSubmit"
     >
@@ -162,6 +177,17 @@ defineExpose({
         @click="handleGo(qrCodeLoginPath)"
       >
         {{ $t('authentication.qrcodeLogin') }}
+      </VbenButton>
+    </div>
+
+    <div v-if="showEmailEntry" class="mt-2 mb-2">
+      <VbenButton
+        class="w-full"
+        variant="outline"
+        data-testid="login-email-btn"
+        @click="handleGo(emailLoginPath)"
+      >
+        {{ $t('authentication.emailLogin') }}
       </VbenButton>
     </div>
 
