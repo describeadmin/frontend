@@ -42,7 +42,13 @@ function copyDir(src: string, dst: string): void {
   mkdirSync(dst, { recursive: true });
   for (const entry of readdirSync(src)) {
     const srcPath = join(src, entry);
-    const dstPath = join(dst, entry);
+    // 模板清单以 `_package.json` 命名随包发布，展开时才落成 `package.json`：
+    // 随包的嵌套 `package.json` 会被 publint（strict）判定为「imports 字段被忽略」而报错，
+    // 而这个 imports（`#/*`）在模板成为项目根之后是生效且必须的。同 create-vite 的 `_gitignore`。
+    const dstPath = join(
+      dst,
+      entry === '_package.json' ? 'package.json' : entry,
+    );
     if (statSync(srcPath).isDirectory()) {
       copyDir(srcPath, dstPath);
     } else {

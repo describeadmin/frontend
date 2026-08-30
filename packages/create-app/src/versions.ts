@@ -10,7 +10,7 @@
  * 发布链路打通后，`getDescribeadminVersion` 应改为查询 npm registry，
  * 而不是继续读这个硬编码常量——切换点只有这一个函数，方便以后改。
  */
-const DESCRIBEADMIN_VERSION = '0.1.0';
+const DESCRIBEADMIN_VERSION = '0.2.0';
 
 export function getDescribeadminVersion(): string {
   return DESCRIBEADMIN_VERSION;
