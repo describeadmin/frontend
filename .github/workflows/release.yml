@@ -85,9 +85,11 @@ jobs:
           rm -rf node_modules/.cache/publint
           pnpm publint
 
-      - name: 校验每个待发布包的 dist 真的有内容
-        # publint 检查的是 package.json 的正确性，不保证 dist 非空。
-        # 二者缺一不可：exports 写得再对，dist 是空的，业务方装上去照样白屏。
+      - name: 校验每个待发布包的发布内容真的有字节
+        # publint 检查的是 package.json 的正确性，不保证发布载荷非空。
+        # 二者缺一不可：exports 写得再对，载荷是空的，业务方装上去照样白屏。
+        # 载荷目录以 package.json 的 files 为准——多数包发 dist，少数配置包（如
+        # tailwind-config）刻意发 src 源码给下游打包器处理，不应被要求有 dist。
         run: |
           set -e
           node -e '
@@ -95,20 +97,31 @@ jobs:
             const fs = require("fs"), path = require("path");
             const list = JSON.parse(execSync("pnpm ls -r --depth -1 --json", {encoding:"utf8"}));
             let fail = 0, checked = 0;
+            const dirBytes = (d) => {
+              const st = fs.statSync(d);
+              if (st.isFile()) return st.size;
+              return fs.readdirSync(d, {recursive:true})
+                .map(f => path.join(d, f))
+                .filter(f => fs.statSync(f).isFile())
+                .reduce((s, f) => s + fs.statSync(f).size, 0);
+            };
             for (const p of list) {
               const pkgPath = path.join(p.path, "package.json");
               if (!fs.existsSync(pkgPath)) continue;
               const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
               if (pkg.private || !pkg.name?.startsWith("@describeadmin/")) continue;
               checked++;
-              const dist = path.join(p.path, "dist");
-              if (!fs.existsSync(dist)) { console.error(`::error::${pkg.name} 没有 dist 目录`); fail = 1; continue; }
-              const bytes = fs.readdirSync(dist, {recursive:true})
-                .map(f => path.join(dist, f))
-                .filter(f => fs.statSync(f).isFile())
-                .reduce((s, f) => s + fs.statSync(f).size, 0);
-              if (bytes === 0) { console.error(`::error::${pkg.name} 的 dist 总字节数为 0`); fail = 1; continue; }
-              console.log(`  ✓ ${pkg.name.padEnd(40)} ${bytes} bytes`);
+              const shipDirs = Array.isArray(pkg.files) && pkg.files.length ? pkg.files : ["dist"];
+              let bytes = 0, present = false;
+              for (const rel of shipDirs) {
+                const abs = path.join(p.path, rel);
+                if (!fs.existsSync(abs)) continue;
+                present = true;
+                bytes += dirBytes(abs);
+              }
+              if (!present) { console.error(`::error::${pkg.name} 的 files 声明的目录/文件都不存在: ${shipDirs.join(", ")}`); fail = 1; continue; }
+              if (bytes === 0) { console.error(`::error::${pkg.name} 的发布载荷总字节数为 0`); fail = 1; continue; }
+              console.log(`  ✓ ${pkg.name.padEnd(40)} ${bytes} bytes  [${shipDirs.join(",")}]`);
             }
             console.log(`共校验 ${checked} 个待发布包`);
             if (checked === 0) { console.error("::error::没有找到任何待发布包，配置有误"); process.exit(1); }
