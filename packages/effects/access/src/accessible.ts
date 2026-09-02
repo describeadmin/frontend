@@ -3,6 +3,7 @@ import type { Component, DefineComponent } from 'vue';
 import type {
   AccessModeType,
   GenerateMenuAndRoutesOptions,
+  MenuRecordRaw,
   RouteRecordRaw,
 } from '@describeadmin/types';
 
@@ -18,10 +19,18 @@ import {
   mapTree,
 } from '@describeadmin/utils';
 
+// 必须显式标注返回类型：不标注时，`accessibleMenus` 的类型要靠 dts 打包器穿透
+// `@describeadmin/utils` 的 `generateMenus` 去解析 `MenuRecordRaw`（定义在更下游的
+// `@describeadmin/core-typings`，非本包直接依赖），打包器解析失败会把它静默降级成
+// `undefined[]`——框架自身 typecheck 全绿，业务方装 dist 却报 TS2345。
+// 显式写出、且只引用本包直接依赖（`@describeadmin/types`）能解析到的类型即可根治。
 async function generateAccessible(
   mode: AccessModeType,
   options: GenerateMenuAndRoutesOptions,
-) {
+): Promise<{
+  accessibleMenus: MenuRecordRaw[];
+  accessibleRoutes: RouteRecordRaw[];
+}> {
   const { router } = options;
 
   options.routes = cloneDeep(options.routes);

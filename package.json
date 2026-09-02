@@ -18,6 +18,7 @@
     "check:circular": "vsh check-circular",
     "check:cspell": "cspell lint \"**/*.ts\" \"**/README.md\" \".changeset/*.md\" --no-progress",
     "check:dep": "vsh check-dep",
+    "check:consumer-type": "node scripts/check-consumer-typecheck.mjs",
     "check:type": "turbo run typecheck",
     "clean": "node ./scripts/clean.mjs",
     "commit": "czg",

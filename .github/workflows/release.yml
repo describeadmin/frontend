@@ -85,6 +85,15 @@ jobs:
           rm -rf node_modules/.cache/publint
           pnpm publint
 
+      - name: 消费侧类型检查（用 pack 出的 tarball 跑一次真实 typecheck）
+        # 框架自身的 `turbo run typecheck` 只查源码 src/，发布出去的 dist/*.d.ts
+        # 由 tsdown/unplugin-dts 生成，生成过程不校验类型正确性——某类型只在返回类型里
+        # 间接引用时会被静默降级成 `undefined[]`（真实案例：@describeadmin/access 的
+        # accessibleMenus，业务方 pnpm typecheck 因此报 TS2345）。
+        # 这里用 create-app 模板作为消费者，经 pnpm pack + overrides 强制解析 dist，
+        # 抓出这类只在"消费者视角"暴露的问题。前置条件 `pnpm build` 已在上一步完成。
+        run: node scripts/check-consumer-typecheck.mjs
+
       - name: 校验每个待发布包的发布内容真的有字节
         # publint 检查的是 package.json 的正确性，不保证发布载荷非空。
         # 二者缺一不可：exports 写得再对，载荷是空的，业务方装上去照样白屏。

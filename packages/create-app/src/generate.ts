@@ -15,6 +15,12 @@ import { externalVersions, getDescribeadminVersion } from './versions';
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const templateRoot = join(packageRoot, 'template');
 
+// 模板清单以下划线前缀命名随包发布，展开时才落成真实文件名，见 copyDir 内注释。
+const TEMPLATE_RENAMES = new Map([
+  ['_gitignore', '.gitignore'],
+  ['_package.json', 'package.json'],
+]);
+
 export interface GenerateOptions {
   projectName: string;
   targetDir: string;
@@ -44,11 +50,9 @@ function copyDir(src: string, dst: string): void {
     const srcPath = join(src, entry);
     // 模板清单以 `_package.json` 命名随包发布，展开时才落成 `package.json`：
     // 随包的嵌套 `package.json` 会被 publint（strict）判定为「imports 字段被忽略」而报错，
-    // 而这个 imports（`#/*`）在模板成为项目根之后是生效且必须的。同 create-vite 的 `_gitignore`。
-    const dstPath = join(
-      dst,
-      entry === '_package.json' ? 'package.json' : entry,
-    );
+    // 而这个 imports（`#/*`）在模板成为项目根之后是生效且必须的。同 create-vite 的 `_gitignore`：
+    // `.gitignore` 改为 `_gitignore` 随包发布，展开时再落成 `.gitignore`。
+    const dstPath = join(dst, TEMPLATE_RENAMES.get(entry) ?? entry);
     if (statSync(srcPath).isDirectory()) {
       copyDir(srcPath, dstPath);
     } else {
