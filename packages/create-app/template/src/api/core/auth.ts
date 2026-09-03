@@ -284,9 +284,17 @@ function toRouteRecords(menus: BackendMenu[]): RouteRecordStringComponent[] {
       .map((menu) => {
         const path = menu.path as string;
         const children = toRouteRecords(menu.children ?? []);
+        const isContainer = children.length > 0;
         return {
-          children: children.length > 0 ? children : undefined,
-          component: menu.component ?? 'BasicLayout',
+          children: isContainer ? children : undefined,
+          // 有子菜单的节点只是路由容器，不下发页面组件——子页面透传到父级
+          // <router-view>，vue-router 会自动跳过这一层。框架的 generateAccessible
+          // 只对「顶层」容器 delete component（见 effects/access/src/accessible.ts），
+          // 三级及以上的中间容器不归它管；这里若兜底成 'BasicLayout'，就会在
+          // BasicLayout 里再套一层 BasicLayout，侧边栏 / 头部重复渲染，页面布局错乱。
+          component: isContainer
+            ? undefined
+            : (menu.component ?? 'BasicLayout'),
           meta: {
             hideInMenu: menu.visible === 0,
             icon: menu.icon ?? undefined,
