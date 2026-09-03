@@ -31,4 +31,4 @@ pnpm -F @describeadmin/admin run test:e2e
 
 ## 与 codegen 的关系
 
-本文件是**手写**的冒烟用例。`codegen` 为每个业务模块生成的结构化测试 Spec（`test-specs/<模块>.yaml`）用的是同一套 `data-testid` 约定，下一步要做的执行器会消费那些 Spec，而不是再手写一遍。
+本文件是**手写**的冒烟用例。`codegen` 为每个业务模块生成的页面遵循同一套 `data-testid` 命名约定（`<模块>-<对象>-<动作>`），针对生成模块补测试时按这套锚点定位即可。
