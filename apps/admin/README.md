@@ -12,7 +12,7 @@
 
 本应用的用途是：本地 `pnpm -F @describeadmin/admin dev` 时，给 `packages/*` 一个真实能跑起来的宿主——路由、权限、系统管理页面全部通过依赖 `@describeadmin/system-ui`、`@describeadmin/access` 等包获得，框架团队自己也在用这个应用验证包是否真的可用（"吃自己的狗粮"）。
 
-它连接真实后端（`sample-app`，或业务方自己的后端），不带 mock。
+它连接真实后端（一个 `describeadmin-archetype` 生成的工程，或业务方自己的后端），不带 mock。
 
 ## 跑起来
 
@@ -20,4 +20,4 @@
 pnpm -F @describeadmin/admin dev
 ```
 
-默认代理到本地 `sample-app`（监听 8090），登录账号见 `sample-app` 的说明。
+默认代理到本地 8090（`VITE_PROXY_TARGET` 可覆盖）。起一个 `describeadmin-archetype` 生成的后端工程、用 `local` profile 运行即监听该端口；首次启动时 dev-seed 生成的管理员口令见其工作目录的 `.passwd`。

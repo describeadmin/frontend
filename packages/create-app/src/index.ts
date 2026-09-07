@@ -66,7 +66,7 @@ async function main() {
           '  pnpm install',
           '  pnpm dev',
           '',
-          '默认代理到 http://localhost:8090（后端 sample-app 或你自己的服务），',
+          '默认代理到 http://localhost:8090（archetype 生成的后端或你自己的服务），',
           '可用 VITE_PROXY_TARGET 环境变量覆盖。',
         ].join('\n'),
       );

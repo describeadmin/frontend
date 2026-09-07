@@ -7,8 +7,7 @@ docker run -d --name da-mysql -p 3307:3306 \
   -e MYSQL_USER=app -e MYSQL_PASSWORD=app \
   mysql:5.7 --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
 
-# 2. 起后端（sample-app 仓库，local profile 监听 8090）
-mvn -f sample-app/pom.xml spring-boot:run -Dspring-boot.run.profiles=local
+pom.xml spring-boot:run -Dspring-boot.run.profiles=local/pom.xml spring-boot:run -Dspring-boot.run.profiles=local
 
 # 3. 起前端
 pnpm dev
