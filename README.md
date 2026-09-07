@@ -6,9 +6,15 @@ describeadmin 的前端。由 [Vben Admin](https://github.com/vbenjs/vue-vben-ad
 
 ## 分发形态
 
-`packages/` 下的 27 个包发布到 npm，作用域 `@describeadmin/*`，当前版本 `0.1.0`。业务方**依赖这些包**，而不是把它们复制进自己的仓库。
+`packages/` 下的 `@describeadmin/*` 包发布到 npm，按 `.changeset/config.json` 的 fixed 分组**锁步同版本**（当前 `0.2.x`）。业务方**依赖这些包**，而不是把它们复制进自己的仓库。
 
-`apps/admin` 是应用外壳，标了 `private`，不发布——它是业务方要拥有的部分。把外壳单独取出来的脚手架（`npm create @describeadmin/app`）尚未交付，在那之前业务方以本仓库的 `apps/admin` 为起点。
+`apps/admin` 是框架自己的联调 playground，标了 `private`、不发布。业务方**不以它为起点**——应用外壳由脚手架交付：
+
+```bash
+npm create @describeadmin/app my-app
+```
+
+生成的是收走系统管理四页面（`@describeadmin/system-ui`）之后的薄外壳，只保留每个应用都要自己拥有的 router / access / layouts / adapter 装配。实现包是 `packages/create-app`。
 
 ## 快速开始（开发本仓库）
 
@@ -58,3 +64,12 @@ pnpm -F @describeadmin/admin run typecheck
 pnpm -F @describeadmin/admin run test:e2e # 端到端冒烟（需后端已启动）
 pnpm exec eslint packages apps internal
 ```
+
+## 相关文档
+
+编码规范与设计方案都在 **`describeadmin/docs`** 仓——做本仓开发时把它与 `docs` 仓并列检出：
+
+- `docs/CLAUDE.md` —— 编码规范（`4.4` data-testid、`4.9` Tailwind/Element Plus 层叠层陷阱等）
+- `docs/develop_plan.md` 第四章 —— 前端架构与 Vben 取材方式
+- `docs/QUICKSTART.md` —— 业务方从零接入
+- `docs/PROGRESS.md` —— 当前进度
