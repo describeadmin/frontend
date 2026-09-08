@@ -29,8 +29,24 @@ const routes: RouteRecordRaw[] = [
   fallbackNotFoundRoute,
 ];
 
-/** 基本路由列表，这些路由不需要进入权限拦截 */
-const coreRouteNames = traverseTreeValues(coreRoutes, (route) => route.name);
+/**
+ * 基本路由列表，这些路由不需要进入权限拦截。
+ *
+ * ⚠️ 只收集 Root 自身与 /auth 子树，遍历前刻意把 Root 的 children 摘掉——
+ * Root 下的业务子路由（Profile 等）**必须**走权限流程。
+ *
+ * 原因：guard.ts 命中这份白名单就直接 return true，而这个早退发生在
+ * generateAccess() 之前；accessMenus 又不持久化（stores/modules/access.ts 的
+ * persist.pick 不含它）。于是直接刷新 /profile 会得到「页面渲染正常、侧边栏一个
+ * 菜单都没有」——顺带动态路由也没注册、面包屑为空、未登录敲 URL 还能看到空壳布局。
+ * traverseTreeValues 是深度遍历，Profile 挂在 Root.children 下就会被收进来。
+ */
+const coreRouteNames = traverseTreeValues(
+  coreRoutes.map((route) =>
+    route.name === 'Root' ? { ...route, children: [] } : route,
+  ),
+  (route) => route.name,
+);
 
 /** 有权限校验的路由列表，包含动态路由和静态路由 */
 const accessRoutes = [...dynamicRoutes, ...staticRoutes];

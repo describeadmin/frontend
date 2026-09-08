@@ -251,6 +251,8 @@ export async function changePasswordApi(
 
 /** 后端 `SysMenu` 的原样映射。 */
 interface BackendMenu {
+  /** 侧边栏高亮路径，隐藏页面用它把选中态落回所属菜单。 */
+  activePath?: null | string;
   children?: BackendMenu[];
   component?: null | string;
   icon?: null | string;
@@ -296,6 +298,10 @@ function toRouteRecords(menus: BackendMenu[]): RouteRecordStringComponent[] {
             ? undefined
             : (menu.component ?? 'BasicLayout'),
           meta: {
+            // 隐藏页面（独立的新增/编辑页）把侧边栏选中态落回所属列表菜单，
+            // 否则进去之后侧边栏一项都不高亮、面包屑也断在父级。
+            activePath: menu.activePath ?? undefined,
+            // visible=0 只是不进侧边栏，路由照常生成——能不能访问由后端授权决定。
             hideInMenu: menu.visible === 0,
             icon: menu.icon ?? undefined,
             order: menu.sort ?? 0,

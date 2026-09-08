@@ -72,6 +72,8 @@ export const DATA_SCOPE_OPTIONS = [
 export type MenuType = 'BUTTON' | 'DIR' | 'MENU';
 
 export interface SysMenu extends AuditFields {
+  /** 侧边栏高亮路径，隐藏页面填其所属菜单的 path。 */
+  activePath?: null | string;
   children?: SysMenu[];
   component?: null | string;
   icon?: null | string;

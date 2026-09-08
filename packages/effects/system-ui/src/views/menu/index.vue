@@ -42,6 +42,7 @@ const formRef = ref();
 
 /** 同 dept：表单模型与实体分开，避免为可空字段在每个控件上做 null 处理。 */
 interface MenuForm {
+  activePath: string;
   component: string;
   icon: string;
   menuName: string;
@@ -55,6 +56,7 @@ interface MenuForm {
 }
 
 const form = reactive<MenuForm>({
+  activePath: '',
   component: '',
   icon: '',
   menuName: '',
@@ -74,6 +76,32 @@ const rules = {
 const confirmVisible = ref(false);
 const deletingId = ref<null | number>(null);
 
+const tableRef = ref();
+const expanded = ref(false);
+
+/**
+ * 展开 / 收起全部。
+ *
+ * 树表默认全收起（不用 default-expand-all）——菜单一多整页塞满就找不到东西了。
+ * 但全收起之后没有快速展开的手段，所以配一个开关。
+ *
+ * 用 ElTable 的 toggleRowExpansion 而不是受控的 expand-row-keys：后者在用户手动
+ * 展开某行后不会回写数组，于是「收起全部」在数组本就是 [] 时不产生变化、点了没反应。
+ */
+function toggleExpandAll() {
+  const next = !expanded.value;
+  const walk = (rows: SysMenu[]) => {
+    rows.forEach((row) => {
+      if (row.children?.length) {
+        tableRef.value?.toggleRowExpansion(row, next);
+        walk(row.children);
+      }
+    });
+  };
+  walk(tree.value);
+  expanded.value = next;
+}
+
 const parentOptions = ref<SysMenu[]>([]);
 
 /** BUTTON 是权限点，不产生路由，因此路径与组件两栏对它无意义。 */
@@ -89,6 +117,8 @@ async function load() {
   loading.value = true;
   try {
     tree.value = await getMenuTreeApi();
+    // 数据重建后 ElTable 的展开态全部丢失，按钮文案要跟着回到「展开全部」
+    expanded.value = false;
     parentOptions.value = [
       { children: tree.value, id: 0, menuName: '顶层菜单' } as SysMenu,
     ];
@@ -100,6 +130,7 @@ async function load() {
 function openCreate(parentId: number = 0) {
   editingId.value = null;
   Object.assign(form, {
+    activePath: '',
     component: '',
     icon: '',
     menuName: '',
@@ -116,6 +147,7 @@ function openCreate(parentId: number = 0) {
 function openEdit(row: SysMenu) {
   editingId.value = row.id ?? null;
   Object.assign(form, {
+    activePath: row.activePath ?? '',
     component: row.component ?? '',
     icon: row.icon ?? '',
     menuName: row.menuName ?? '',
@@ -137,6 +169,7 @@ async function submit() {
     const payload: SysMenu = {
       ...form,
       // 按钮不参与路由，路径与组件强制置空，避免留下会生成坏路由的脏数据
+      activePath: isButton.value ? null : form.activePath || null,
       component: isButton.value ? null : form.component || null,
       path: isButton.value ? null : form.path || null,
     };
@@ -187,6 +220,9 @@ onMounted(async () => {
     title="菜单管理"
   >
     <template #extra>
+      <ElButton data-testid="menu-expand-toggle-btn" @click="toggleExpandAll">
+        {{ expanded ? '收起全部' : '展开全部' }}
+      </ElButton>
       <ElButton
         type="primary"
         data-testid="menu-add-btn"
@@ -196,11 +232,13 @@ onMounted(async () => {
       </ElButton>
     </template>
 
+    <!-- 刻意不加 default-expand-all：菜单一多整页塞满，找不到东西。默认全收起，
+         需要时用头部的「展开全部」。 -->
     <ElTable
+      ref="tableRef"
       v-loading="loading"
       :data="tree"
       row-key="id"
-      default-expand-all
       :tree-props="{ children: 'children' }"
       data-testid="menu-table"
     >
@@ -223,6 +261,13 @@ onMounted(async () => {
       <ElTableColumn prop="permCode" label="权限标识" min-width="180" />
       <ElTableColumn prop="path" label="路由路径" min-width="160" />
       <ElTableColumn prop="component" label="组件路径" min-width="180" />
+      <ElTableColumn label="显示" width="80">
+        <template #default="{ row }">
+          <ElTag v-if="row.menuType === 'BUTTON'" type="info">—</ElTag>
+          <ElTag v-else-if="row.visible === 0" type="warning">隐藏</ElTag>
+          <ElTag v-else type="success">显示</ElTag>
+        </template>
+      </ElTableColumn>
       <ElTableColumn prop="sort" label="排序" width="80" />
       <ElTableColumn label="操作" width="220" fixed="right">
         <template #default="{ row }">
@@ -322,12 +367,30 @@ onMounted(async () => {
           />
         </ElFormItem>
         <ElFormItem v-if="!isButton" label="显示" prop="visible">
-          <ElSwitch
-            v-model="form.visible"
-            :active-value="1"
-            :inactive-value="0"
-            data-testid="menu-visible-input"
-          />
+          <div class="flex flex-col">
+            <ElSwitch
+              v-model="form.visible"
+              :active-value="1"
+              :inactive-value="0"
+              data-testid="menu-visible-input"
+            />
+            <span class="text-muted-foreground mt-1 text-xs">
+              关闭后不出现在侧边栏，但页面仍可访问（前提是角色已授权）。
+              独立的新增/编辑页就这么建。
+            </span>
+          </div>
+        </ElFormItem>
+        <ElFormItem v-if="!isButton && form.visible === 0" label="高亮菜单">
+          <div class="flex flex-col">
+            <ElInput
+              v-model="form.activePath"
+              data-testid="menu-active-path-input"
+              placeholder="如 /system/user"
+            />
+            <span class="text-muted-foreground mt-1 text-xs">
+              填所属列表页的路由路径。不填的话，进入本页后侧边栏没有任何一项高亮。
+            </span>
+          </div>
         </ElFormItem>
       </ElForm>
       <template #footer>
