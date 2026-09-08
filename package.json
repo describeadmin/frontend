@@ -1,6 +1,6 @@
 {
   "name": "describeadmin-frontend",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "describeadmin 前端：由 Vben Admin 5.7.0 一次性取材后独立演进",
   "private": true,
   "homepage": "https://github.com/describeadmin/frontend",
