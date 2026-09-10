@@ -71,10 +71,28 @@ const deletingId = ref<null | number>(null);
 /** 顶层选项 0 必须显式给出：后端用 parent_id = 0 表示根，而不是 NULL。 */
 const parentOptions = ref<SysDept[]>([]);
 
+/**
+ * 后端把 Long 序列化成字符串（雪花 ID 安全，见 CLAUDE.md §4.8），部门树的 id / parentId
+ * 因此是 "0" / "1" … ElTreeSelect 用严格相等匹配 node-key，字符串 "0" 配不上合成根节点的
+ * 数字 0，编辑顶层部门时「上级部门」框只显示原始的 "0"。在消费前统一转回数字。
+ */
+function normalizeIds(nodes: SysDept[]) {
+  for (const node of nodes) {
+    if (node.id !== null && node.id !== undefined) {
+      node.id = Number(node.id);
+    }
+    if (node.parentId !== null && node.parentId !== undefined) {
+      node.parentId = Number(node.parentId);
+    }
+    if (node.children?.length) normalizeIds(node.children);
+  }
+}
+
 async function load() {
   loading.value = true;
   try {
     tree.value = await getDeptTreeApi();
+    normalizeIds(tree.value);
     parentOptions.value = [
       { children: tree.value, deptName: '顶层部门', id: 0 } as SysDept,
     ];

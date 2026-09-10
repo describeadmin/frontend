@@ -113,10 +113,29 @@ const TYPE_LABEL: Record<MenuType, string> = {
   MENU: '菜单',
 };
 
+/**
+ * 后端把 Long 序列化成字符串（雪花 ID 安全，见 CLAUDE.md §4.8），菜单树的 id / parentId
+ * 因此是 "0" / "1" … ElTreeSelect 用严格相等匹配 node-key，字符串 "0" 配不上合成根节点的
+ * 数字 0，编辑顶层菜单时「上级菜单」框只显示原始的 "0"。在消费前统一转回数字，让
+ * form.parentId / 树节点 id / 合成根 三者类型一致。
+ */
+function normalizeIds(nodes: SysMenu[]) {
+  for (const node of nodes) {
+    if (node.id !== null && node.id !== undefined) {
+      node.id = Number(node.id);
+    }
+    if (node.parentId !== null && node.parentId !== undefined) {
+      node.parentId = Number(node.parentId);
+    }
+    if (node.children?.length) normalizeIds(node.children);
+  }
+}
+
 async function load() {
   loading.value = true;
   try {
     tree.value = await getMenuTreeApi();
+    normalizeIds(tree.value);
     // 数据重建后 ElTable 的展开态全部丢失，按钮文案要跟着回到「展开全部」
     expanded.value = false;
     parentOptions.value = [
