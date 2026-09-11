@@ -74,6 +74,13 @@ async function bootstrap(namespace: string) {
   });
 
   app.mount('#app');
+
+  // 等首次路由导航完全落定（含 guard.ts 权限守卫里的 fetchUserInfo + generateAccess
+  // 这段异步初始化）再返回，main.ts 紧随其后的 unmountGlobalLoading() 才不会在
+  // 访问态/动态路由还没就绪时就摘掉全局 loading 遮罩——否则用户会在这段窗口期看到
+  // 界面已可交互但菜单还没准备好，点击链接时不仅弹出「加载菜单中」提示，还可能因为
+  // 与守卫内部这次导航产生竞态而需要再点一次才能真正进入页面。
+  await router.isReady();
 }
 
 export { bootstrap };

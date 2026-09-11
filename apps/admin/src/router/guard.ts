@@ -45,6 +45,16 @@ function setupCommonGuard(router: Router) {
  * @param router
  */
 function setupAccessGuard(router: Router) {
+  // 并发去重：刷新后地址栏当前路径触发的"启动导航"，和用户手速点击菜单触发的
+  // "目标导航"可能几乎同时进入这里，此时 accessStore.isAccessChecked 都还是
+  // false——不去重的话两次导航会各自触发一次 fetchUserInfo + generateAccess，
+  // 表现为 access.ts 里"加载菜单中"提示偶发出现两次，且先进入的那次导航被后一次
+  // 取代后其重定向结果直接作废，首次点击像是没反应，等竞态结束、isAccessChecked
+  // 真正置为 true 后，第二次点击才会命中下面的快速路径进入页面。做法与
+  // store/auth.ts 的 logoutPromise 同一个模式：缓存 in-flight 的 Promise，
+  // 晚到的导航直接复用同一次执行的结果，而不是重新发起一次。
+  let accessCheckPromise: null | ReturnType<typeof generateAccess> = null;
+
   router.beforeEach(async (to, from) => {
     const accessStore = useAccessStore();
     const userStore = useUserStore();
@@ -103,8 +113,10 @@ function setupAccessGuard(router: Router) {
       const userInfo = userStore.userInfo || (await authStore.fetchUserInfo());
       const userRoles = userInfo.roles ?? [];
 
-      // 生成菜单和路由
-      const { accessibleMenus, accessibleRoutes } = await generateAccess({
+      // 生成菜单和路由：同一时刻只真正执行一次，后到的导航直接复用这个 Promise，
+      // 不再各自调一次 generateAccess（内部会再打一次 getAllMenusApi 并重复
+      // router.addRoute）。
+      accessCheckPromise ??= generateAccess({
         roles: userRoles,
         router,
         // 则会在菜单中显示，但是访问会被重定向到403
@@ -112,6 +124,7 @@ function setupAccessGuard(router: Router) {
       });
 
       // 保存菜单信息和路由信息
+      const { accessibleMenus, accessibleRoutes } = await accessCheckPromise;
       accessStore.setAccessMenus(accessibleMenus);
       accessStore.setAccessRoutes(accessibleRoutes);
       accessStore.setIsAccessChecked(true);
@@ -133,6 +146,8 @@ function setupAccessGuard(router: Router) {
       // 具有误导性：跳转登录页其实已经成功了。真正的异常仍打到控制台，不会被吃掉。
       console.error('权限守卫执行失败，已取消本次导航：', error);
       return false;
+    } finally {
+      accessCheckPromise = null;
     }
   });
 }
