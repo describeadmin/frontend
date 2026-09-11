@@ -48,7 +48,12 @@
   },
   "iconPicker": {
     "placeholder": "Select an icon",
-    "search": "Search icon..."
+    "search": "Search icon...",
+    "clear": "Clear",
+    "loading": "Loading icons...",
+    "loadFailed": "Failed to load icons, check your network and retry",
+    "retry": "Retry",
+    "notInSet": "Current icon is not in the icon set, please pick another"
   },
   "jsonViewer": {
     "copy": "Copy",

@@ -48,7 +48,12 @@
   },
   "iconPicker": {
     "placeholder": "选择一个图标",
-    "search": "搜索图标..."
+    "search": "搜索图标...",
+    "clear": "清空",
+    "loading": "正在加载图标...",
+    "loadFailed": "图标加载失败，请检查网络后重试",
+    "retry": "重试",
+    "notInSet": "当前图标不在图标集中，请重新选择"
   },
   "jsonViewer": {
     "copy": "复制",

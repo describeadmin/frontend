@@ -4,7 +4,7 @@ import type { MenuType, SysMenu } from '../../api';
 import { computed, onMounted, reactive, ref } from 'vue';
 
 import { ConfirmDialog } from '@describeadmin/ele-ui';
-import { Page } from '@describeadmin/ui';
+import { IconPicker, Page, VbenIcon } from '@describeadmin/ui';
 
 import {
   ElButton,
@@ -262,7 +262,21 @@ onMounted(async () => {
       data-testid="menu-table"
     >
       <ElTableColumn prop="menuName" label="菜单名称" min-width="180" />
-      <ElTableColumn label="类型" width="90">
+      <ElTableColumn align="center" label="图标" width="70">
+        <template #default="{ row }">
+          <!-- 与侧边栏同一个渲染组件，这里看到什么、菜单里就是什么。
+               必须带 inline-block：Tailwind 的 preflight 把 svg 设成了 display: block，
+               块级元素不吃单元格的 text-align: center，会一直贴在格子左边，
+               看起来就是「表头居中、图标靠左」。 -->
+          <VbenIcon
+            v-if="row.icon"
+            :icon="row.icon"
+            class="inline-block size-4"
+          />
+          <span v-else class="text-muted-foreground">—</span>
+        </template>
+      </ElTableColumn>
+      <ElTableColumn align="center" label="类型" width="90">
         <template #default="{ row }">
           <ElTag
             :type="
@@ -280,7 +294,7 @@ onMounted(async () => {
       <ElTableColumn prop="permCode" label="权限标识" min-width="180" />
       <ElTableColumn prop="path" label="路由路径" min-width="160" />
       <ElTableColumn prop="component" label="组件路径" min-width="180" />
-      <ElTableColumn label="显示" width="80">
+      <ElTableColumn align="center" label="显示" width="80">
         <template #default="{ row }">
           <ElTag v-if="row.menuType === 'BUTTON'" type="info">—</ElTag>
           <ElTag v-else-if="row.visible === 0" type="warning">隐藏</ElTag>
@@ -371,11 +385,20 @@ onMounted(async () => {
             placeholder="相对 src/views，不带 .vue；目录填 BasicLayout"
           />
         </ElFormItem>
+        <!-- 图标不再让人手填 `lucide:xxx`：从面板里选，值仍是同一个 iconify 名称。
+             readonly 挡住手输（清空走面板内的按钮，EP 的 clearable 在 readonly 下不显示）；
+             z-index 必须抬高到 3000——ElDialog 的弹层从 2000 起自增，否则面板会被压在弹窗下面。 -->
         <ElFormItem v-if="!isButton" label="图标" prop="icon">
-          <ElInput
+          <IconPicker
             v-model="form.icon"
+            clearable
             data-testid="menu-icon-input"
-            placeholder="如 lucide:users"
+            :input-component="ElInput"
+            icon-slot="append"
+            :page-size="48"
+            prefix="lucide"
+            :readonly="true"
+            :z-index="3000"
           />
         </ElFormItem>
         <ElFormItem label="排序" prop="sort">

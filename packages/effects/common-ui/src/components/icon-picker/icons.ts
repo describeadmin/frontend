@@ -14,7 +14,8 @@ interface IconifyResponse {
   aliases?: Recordable<string>;
 }
 
-const PENDING_REQUESTS: Recordable<Promise<string[]>> = {};
+/** 在途请求：同一个图标集同时只会真正发出一次请求 */
+const PENDING_REQUESTS = new Map<string, Promise<string[]>>();
 
 /**
  * 通过Iconify接口获取图标集数据。
@@ -24,33 +25,43 @@ const PENDING_REQUESTS: Recordable<Promise<string[]>> = {};
  * @returns 图标集中包含的所有图标名称
  */
 export async function fetchIconsData(prefix: string): Promise<string[]> {
-  if (Reflect.has(ICONS_MAP, prefix) && ICONS_MAP[prefix]) {
-    return ICONS_MAP[prefix];
+  const cached = ICONS_MAP[prefix];
+  if (cached) {
+    return cached;
   }
-  if (Reflect.has(PENDING_REQUESTS, prefix) && PENDING_REQUESTS[prefix]) {
-    return PENDING_REQUESTS[prefix];
+  const pending = PENDING_REQUESTS.get(prefix);
+  if (pending) {
+    return pending;
   }
-  PENDING_REQUESTS[prefix] = (async () => {
+  const request = (async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1000 * 10);
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1000 * 10);
       const response: IconifyResponse = await fetch(
         `https://api.iconify.design/collection?prefix=${prefix}`,
         { signal: controller.signal },
       ).then((res) => res.json());
-      clearTimeout(timeoutId);
       const list = response.uncategorized || [];
       if (response.categories) {
         for (const category in response.categories) {
           list.push(...(response.categories[category] || []));
         }
       }
-      ICONS_MAP[prefix] = list.map((v) => `${prefix}:${v}`);
+      const icons = list.map((v) => `${prefix}:${v}`);
+      ICONS_MAP[prefix] = icons;
+      return icons;
     } catch (error) {
       console.error(`Failed to fetch icons for prefix ${prefix}:`, error);
-      return [] as string[];
+      // 失败的 Promise 必须从在途表里摘掉，否则调用方重试时会命中这个已 reject 的
+      // 旧 Promise，永远不产生新请求——「重试」点了没反应就是这么来的。
+      PENDING_REQUESTS.delete(prefix);
+      // 向上抛：此前是吞掉并返回空数组，界面只能显示「暂无数据」，
+      // 与「图标集里确实没有匹配项」完全无法区分。
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-    return ICONS_MAP[prefix];
   })();
-  return PENDING_REQUESTS[prefix];
+  PENDING_REQUESTS.set(prefix, request);
+  return request;
 }
