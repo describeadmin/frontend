@@ -271,11 +271,11 @@ async function initComponentAdapter() {
     },
     // 自定义默认按钮
     DefaultButton: (props, { attrs, slots }) => {
-      return h(ElButton, { ...props, attrs, type: 'info' }, slots);
+      return h(ElButton, { ...props, ...attrs, type: 'info' }, slots);
     },
     // 自定义主要按钮
     PrimaryButton: (props, { attrs, slots }) => {
-      return h(ElButton, { ...props, attrs, type: 'primary' }, slots);
+      return h(ElButton, { ...props, ...attrs, type: 'primary' }, slots);
     },
     Divider: ElDivider,
     IconPicker: withDefaultPlaceholder(IconPicker, 'select', {
@@ -307,7 +307,7 @@ async function initComponentAdapter() {
       );
     },
     Select: (props, { attrs, slots }) => {
-      return h(ElSelectV2, { ...props, attrs }, slots);
+      return h(ElSelectV2, { ...props, ...attrs }, slots);
     },
     Space: ElSpace,
     Switch: ElSwitch,
