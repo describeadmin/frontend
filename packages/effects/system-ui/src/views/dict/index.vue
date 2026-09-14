@@ -106,9 +106,13 @@ const typeSearchSchema: SearchFormSchema[] = [
 
 const { SearchFormBar: TypeSearchFormBar } = useSearchForm({
   testid: 'dict-type',
-  // 面板窄（w-2/5），字段直接平铺不折叠
+  // 面板窄（w-2/5），字段直接平铺不折叠。actionLayout 用 'inline' + 列数=字段数+1，
+  // 让搜索/清空按钮紧跟在最后一个字段后面、稳定落在同一行——默认的 'rowEnd' 会把
+  // 按钮固定卡在网格最后一列，两个字段正好占满 2 列时按钮挤不进当前行、被迫换行，
+  // 这张检索栏就会比右边字典数据的检索栏多一行、两侧列表的表头也跟着错位。
   collapsible: false,
-  wrapperClass: 'grid-cols-1 sm:grid-cols-2',
+  wrapperClass: 'grid-cols-1 sm:grid-cols-3',
+  actionLayout: 'inline',
   schema: typeSearchSchema,
   async onSearch(values) {
     Object.assign(typeFilter, values);
@@ -220,8 +224,12 @@ const dataSearchSchema: SearchFormSchema[] = [
 
 const { SearchFormBar: DataSearchFormBar } = useSearchForm({
   testid: 'dict-data',
+  // 面板宽（flex-1），只有一个字段时默认的 'rowEnd' 会把按钮拉到网格最后一列，
+  // 中间空出一大截——同样改用 'inline' + 列数=字段数+1（4 列，1 字段只占用 1/4
+  // 宽度），按钮紧跟字段，检索栏不再被拉得又矮又空。
   collapsible: false,
-  wrapperClass: 'grid-cols-1 sm:grid-cols-2',
+  wrapperClass: 'grid-cols-1 sm:grid-cols-4',
+  actionLayout: 'inline',
   schema: dataSearchSchema,
   onSearch(values) {
     Object.assign(dataFilter, values);

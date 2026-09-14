@@ -33,6 +33,15 @@ export interface UseSearchFormOptions {
   wrapperClass?: string;
   labelWidth?: number;
   /**
+   * 操作按钮（搜索/清空）在网格里的排布方式，默认 `rowEnd`——固定在网格最后一列，
+   * 字段数不能整除列数时会自动换到下一行。**字段较少、又和另一个更宽的检索栏
+   * 并排展示**（如字典管理左右两个面板）时，`rowEnd` 会把按钮推到很靠右/单独一行，
+   * 两个检索栏因此不等高、下面的列表也跟着错位——这种场景改传 `'inline'`
+   * （按钮紧跟在最后一个字段后面，按自然流排布），同时把 `wrapperClass` 的列数
+   * 设为「字段数 + 1」，让按钮和字段稳定同一行。
+   */
+  actionLayout?: 'inline' | 'newLine' | 'rowEnd';
+  /**
    * 是否显示「展开/收起」折叠按钮。不传时自动判断：字段数 <= 4 就不显示，
    * 所有字段直接平铺；字段数更多才需要折叠。
    */
@@ -76,6 +85,7 @@ export function useSearchForm(options: UseSearchFormOptions) {
     wrapperClass = 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
     labelWidth = 90,
     collapsible = schema.length > 4,
+    actionLayout = 'rowEnd',
     onSearch,
     onReset,
   } = options;
@@ -87,6 +97,7 @@ export function useSearchForm(options: UseSearchFormOptions) {
     collapsedRows,
     showDefaultActions: true,
     actionButtonsReverse: true,
+    actionLayout,
     submitButtonOptions: { show: false },
     resetButtonOptions: { show: false },
     wrapperClass,
