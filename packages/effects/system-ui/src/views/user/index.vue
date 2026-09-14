@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { SysDept, SysRole, SysUser } from '../../api';
+import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { onMounted, reactive, ref } from 'vue';
 
@@ -33,6 +34,7 @@ import {
   resetUserPasswordApi,
   updateUserApi,
 } from '../../api';
+import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemUser' });
 
@@ -40,6 +42,69 @@ const loading = ref(false);
 const rows = ref<SysUser[]>([]);
 const total = ref(0);
 const page = reactive({ current: 1, size: 10 });
+
+const filter = reactive<{
+  mobile: string;
+  nickname: string;
+  status: null | number;
+  username: string;
+}>({
+  mobile: '',
+  nickname: '',
+  status: null,
+  username: '',
+});
+
+const searchSchema: SearchFormSchema[] = [
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'user-search-username-input' },
+    fieldName: 'username',
+    label: '用户名',
+  },
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'user-search-nickname-input' },
+    fieldName: 'nickname',
+    label: '昵称',
+  },
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'user-search-mobile-input' },
+    fieldName: 'mobile',
+    label: '手机号',
+  },
+  {
+    component: 'Select',
+    componentProps: {
+      'data-testid': 'user-search-status-select',
+      options: [
+        { label: '启用', value: 1 },
+        { label: '停用', value: 0 },
+      ],
+    },
+    fieldName: 'status',
+    label: '状态',
+  },
+];
+
+const { SearchFormBar } = useSearchForm({
+  testid: 'user',
+  schema: searchSchema,
+  async onSearch(values) {
+    Object.assign(filter, values);
+    page.current = 1;
+    await load();
+  },
+  async onReset() {
+    filter.username = '';
+    filter.nickname = '';
+    filter.mobile = '';
+    filter.status = null;
+    page.current = 1;
+    await load();
+  },
+});
 
 const deptTree = ref<SysDept[]>([]);
 
@@ -80,7 +145,13 @@ const checkedRoleIds = ref<number[]>([]);
 async function load() {
   loading.value = true;
   try {
-    const result = await getUserListApi({ ...page });
+    const result = await getUserListApi({
+      ...page,
+      mobile: filter.mobile || undefined,
+      nickname: filter.nickname || undefined,
+      status: filter.status ?? undefined,
+      username: filter.username || undefined,
+    });
     rows.value = result.records;
     total.value = result.total;
   } finally {
@@ -239,6 +310,8 @@ onMounted(async () => {
         新增
       </ElButton>
     </template>
+
+    <SearchFormBar />
 
     <ElTable
       v-loading="loading"

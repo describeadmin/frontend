@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { ActiveSession } from '../../api';
+import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { onMounted, reactive, ref } from 'vue';
 
@@ -15,6 +16,7 @@ import {
 } from 'element-plus';
 
 import { forceLogoutApi, getOnlineListApi } from '../../api';
+import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemOnline' });
 
@@ -22,6 +24,32 @@ const loading = ref(false);
 const rows = ref<ActiveSession[]>([]);
 const total = ref(0);
 const page = reactive({ current: 1, size: 10 });
+
+const filter = reactive<{ username: string }>({ username: '' });
+
+const searchSchema: SearchFormSchema[] = [
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'online-search-username-input' },
+    fieldName: 'username',
+    label: '用户名',
+  },
+];
+
+const { SearchFormBar } = useSearchForm({
+  testid: 'online',
+  schema: searchSchema,
+  async onSearch(values) {
+    Object.assign(filter, values);
+    page.current = 1;
+    await load();
+  },
+  async onReset() {
+    filter.username = '';
+    page.current = 1;
+    await load();
+  },
+});
 
 const submitting = ref(false);
 const confirmVisible = ref(false);
@@ -31,7 +59,10 @@ const loggingOutName = ref('');
 async function load() {
   loading.value = true;
   try {
-    const result = await getOnlineListApi({ ...page });
+    const result = await getOnlineListApi({
+      ...page,
+      username: filter.username || undefined,
+    });
     rows.value = result.records;
     total.value = result.total;
   } finally {
@@ -79,6 +110,8 @@ onMounted(async () => {
       本实例会话——多实例部署时这条对运维有实际意义，但措辞是实现细节，不适合直接展示给最终用户，
       故不放进 Page 的 description。分页由后端 SysOnlineController 对全量快照切片得到。
     -->
+    <SearchFormBar />
+
     <ElTable
       v-loading="loading"
       :data="rows"

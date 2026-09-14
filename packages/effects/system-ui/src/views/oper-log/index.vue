@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { SysOperLog } from '../../api';
+import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { onMounted, reactive, ref } from 'vue';
 
@@ -8,12 +9,8 @@ import { Page } from '@describeadmin/ui';
 
 import {
   ElButton,
-  ElDatePicker,
-  ElInput,
   ElMessage,
-  ElOption,
   ElPagination,
-  ElSelect,
   ElTable,
   ElTableColumn,
   ElTag,
@@ -24,6 +21,7 @@ import {
   deleteOperLogApi,
   getOperLogListApi,
 } from '../../api';
+import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemOperLog' });
 
@@ -33,15 +31,91 @@ const total = ref(0);
 const page = reactive({ current: 1, size: 10 });
 
 const filter = reactive<{
+  end: string;
   module: string;
   operatorName: string;
-  range: [string, string] | null;
+  start: string;
   status: null | number;
 }>({
+  end: '',
   module: '',
   operatorName: '',
-  range: null,
+  start: '',
   status: null,
+});
+
+/**
+ * 搜索栏改用 `useSearchForm` 统一封装，见该文件顶部的说明——折叠检索栏 +
+ * 搜索/清空按钮 + 外层卡片背景不用每个列表页自己拼一遍。时间范围拆成开始/结束
+ * 两个独立的 `DatePicker` 字段，而不是一个 `daterange` 型字段：后者要靠
+ * adapter 把单个 fieldName 拆成 `[name, name_end]` 两个值再提交，这条路径在本仓
+ * 还没有别的页面验证过；拆成两个平级字段直接对应 `OperLogQuery.start`/`.end`，
+ * 是更少假设、更好核实的写法。
+ */
+const searchSchema: SearchFormSchema[] = [
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'oper-log-search-module-input' },
+    fieldName: 'module',
+    label: '模块',
+  },
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'oper-log-search-operator-name-input' },
+    fieldName: 'operatorName',
+    label: '操作人',
+  },
+  {
+    component: 'Select',
+    componentProps: {
+      'data-testid': 'oper-log-search-status-select',
+      options: [
+        { label: '成功', value: 1 },
+        { label: '失败', value: 0 },
+      ],
+    },
+    fieldName: 'status',
+    label: '状态',
+  },
+  {
+    component: 'DatePicker',
+    componentProps: {
+      'data-testid': 'oper-log-search-start-picker',
+      type: 'datetime',
+      valueFormat: 'YYYY-MM-DDTHH:mm:ss',
+    },
+    fieldName: 'start',
+    label: '开始时间',
+  },
+  {
+    component: 'DatePicker',
+    componentProps: {
+      'data-testid': 'oper-log-search-end-picker',
+      type: 'datetime',
+      valueFormat: 'YYYY-MM-DDTHH:mm:ss',
+    },
+    fieldName: 'end',
+    label: '结束时间',
+  },
+];
+
+const { SearchFormBar } = useSearchForm({
+  testid: 'oper-log',
+  schema: searchSchema,
+  async onSearch(values) {
+    Object.assign(filter, values);
+    page.current = 1;
+    await load();
+  },
+  async onReset() {
+    filter.module = '';
+    filter.operatorName = '';
+    filter.status = null;
+    filter.start = '';
+    filter.end = '';
+    page.current = 1;
+    await load();
+  },
 });
 
 const submitting = ref(false);
@@ -54,10 +128,10 @@ async function load() {
   try {
     const result = await getOperLogListApi({
       ...page,
-      end: filter.range?.[1],
+      end: filter.end || undefined,
       module: filter.module || undefined,
       operatorName: filter.operatorName || undefined,
-      start: filter.range?.[0],
+      start: filter.start || undefined,
       status: filter.status ?? undefined,
     });
     rows.value = result.records;
@@ -65,19 +139,6 @@ async function load() {
   } finally {
     loading.value = false;
   }
-}
-
-function search() {
-  page.current = 1;
-  load();
-}
-
-function resetFilter() {
-  filter.module = '';
-  filter.operatorName = '';
-  filter.status = null;
-  filter.range = null;
-  search();
 }
 
 function askDelete(row: SysOperLog) {
@@ -137,52 +198,7 @@ onMounted(async () => {
       </ElButton>
     </template>
 
-    <div class="mb-4 flex flex-wrap items-center gap-2">
-      <ElInput
-        v-model="filter.module"
-        placeholder="模块，如 system:dept"
-        clearable
-        class="!w-48"
-        data-testid="oper-log-module-input"
-        @keyup.enter="search"
-      />
-      <ElInput
-        v-model="filter.operatorName"
-        placeholder="操作人"
-        clearable
-        class="!w-40"
-        data-testid="oper-log-operator-name-input"
-        @keyup.enter="search"
-      />
-      <ElSelect
-        v-model="filter.status"
-        placeholder="状态"
-        clearable
-        class="!w-32"
-        data-testid="oper-log-status-select"
-      >
-        <ElOption label="成功" :value="1" />
-        <ElOption label="失败" :value="0" />
-      </ElSelect>
-      <ElDatePicker
-        v-model="filter.range"
-        type="datetimerange"
-        start-placeholder="开始时间"
-        end-placeholder="结束时间"
-        value-format="YYYY-MM-DDTHH:mm:ss"
-        data-testid="oper-log-range-picker"
-      />
-      <ElButton
-        type="primary"
-        data-testid="oper-log-search-btn"
-        @click="search"
-      >
-        查询
-      </ElButton>
-      <ElButton data-testid="oper-log-reset-btn" @click="resetFilter">
-        重置
-      </ElButton>
-    </div>
+    <SearchFormBar />
 
     <ElTable
       v-loading="loading"

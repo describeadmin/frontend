@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { SysDictData, SysDictType } from '../../api';
+import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { computed, onMounted, reactive, ref } from 'vue';
 
@@ -30,6 +31,7 @@ import {
   updateDictDataApi,
   updateDictTypeApi,
 } from '../../api';
+import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemDict' });
 
@@ -82,10 +84,53 @@ const deletingTypeId = ref<null | number>(null);
 
 const selectedType = ref<null | string>(null);
 
+const typeFilter = reactive<{ dictName: string; dictType: string }>({
+  dictName: '',
+  dictType: '',
+});
+
+const typeSearchSchema: SearchFormSchema[] = [
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'dict-type-search-dict-name-input' },
+    fieldName: 'dictName',
+    label: '字典名称',
+  },
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'dict-type-search-dict-type-input' },
+    fieldName: 'dictType',
+    label: '字典类型',
+  },
+];
+
+const { SearchFormBar: TypeSearchFormBar } = useSearchForm({
+  testid: 'dict-type',
+  // 面板窄（w-2/5），字段直接平铺不折叠
+  collapsible: false,
+  wrapperClass: 'grid-cols-1 sm:grid-cols-2',
+  schema: typeSearchSchema,
+  async onSearch(values) {
+    Object.assign(typeFilter, values);
+    typePage.current = 1;
+    await loadTypes();
+  },
+  async onReset() {
+    typeFilter.dictName = '';
+    typeFilter.dictType = '';
+    typePage.current = 1;
+    await loadTypes();
+  },
+});
+
 async function loadTypes() {
   typeLoading.value = true;
   try {
-    const result = await getDictTypeListApi({ ...typePage });
+    const result = await getDictTypeListApi({
+      ...typePage,
+      dictName: typeFilter.dictName || undefined,
+      dictType: typeFilter.dictType || undefined,
+    });
     typeRows.value = result.records;
     typeTotal.value = result.total;
   } finally {
@@ -162,11 +207,41 @@ const dataLoading = ref(false);
  */
 const allDictData = ref<SysDictData[]>([]);
 
-const filteredDictData = computed(() =>
-  selectedType.value === null
-    ? []
-    : allDictData.value.filter((item) => item.dictType === selectedType.value),
-);
+const dataFilter = reactive<{ dictLabel: string }>({ dictLabel: '' });
+
+const dataSearchSchema: SearchFormSchema[] = [
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'dict-data-search-dict-label-input' },
+    fieldName: 'dictLabel',
+    label: '字典标签',
+  },
+];
+
+const { SearchFormBar: DataSearchFormBar } = useSearchForm({
+  testid: 'dict-data',
+  collapsible: false,
+  wrapperClass: 'grid-cols-1 sm:grid-cols-2',
+  schema: dataSearchSchema,
+  onSearch(values) {
+    Object.assign(dataFilter, values);
+  },
+  onReset() {
+    dataFilter.dictLabel = '';
+  },
+});
+
+const filteredDictData = computed(() => {
+  if (selectedType.value === null) {
+    return [];
+  }
+  const keyword = dataFilter.dictLabel.trim().toLowerCase();
+  return allDictData.value.filter(
+    (item) =>
+      item.dictType === selectedType.value &&
+      (!keyword || (item.dictLabel ?? '').toLowerCase().includes(keyword)),
+  );
+});
 
 const dataFormVisible = ref(false);
 const dataSubmitting = ref(false);
@@ -289,6 +364,8 @@ onMounted(async () => {
           </ElButton>
         </div>
 
+        <TypeSearchFormBar />
+
         <ElTable
           v-loading="typeLoading"
           :data="typeRows"
@@ -349,6 +426,8 @@ onMounted(async () => {
             新增
           </ElButton>
         </div>
+
+        <DataSearchFormBar />
 
         <ElTable
           v-loading="dataLoading"

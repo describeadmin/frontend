@@ -2,6 +2,7 @@
 import type { TreeNodeData } from 'element-plus/es/components/tree/src/tree.type';
 
 import type { SysDept, SysMenu, SysRole } from '../../api';
+import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { computed, onMounted, reactive, ref } from 'vue';
 
@@ -39,6 +40,7 @@ import {
   getRoleMenusApi,
   updateRoleApi,
 } from '../../api';
+import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemRole' });
 
@@ -49,6 +51,42 @@ const loading = ref(false);
 const rows = ref<SysRole[]>([]);
 const total = ref(0);
 const page = reactive({ current: 1, size: 10 });
+
+const filter = reactive<{ roleCode: string; roleName: string }>({
+  roleCode: '',
+  roleName: '',
+});
+
+const searchSchema: SearchFormSchema[] = [
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'role-search-role-name-input' },
+    fieldName: 'roleName',
+    label: '角色名称',
+  },
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'role-search-role-code-input' },
+    fieldName: 'roleCode',
+    label: '角色标识',
+  },
+];
+
+const { SearchFormBar } = useSearchForm({
+  testid: 'role',
+  schema: searchSchema,
+  async onSearch(values) {
+    Object.assign(filter, values);
+    page.current = 1;
+    await load();
+  },
+  async onReset() {
+    filter.roleName = '';
+    filter.roleCode = '';
+    page.current = 1;
+    await load();
+  },
+});
 
 const formVisible = ref(false);
 const submitting = ref(false);
@@ -122,7 +160,11 @@ const homePathTree = computed(() => buildHomePathTree(allMenuTree.value));
 async function load() {
   loading.value = true;
   try {
-    const result = await getRoleListApi({ ...page });
+    const result = await getRoleListApi({
+      ...page,
+      roleCode: filter.roleCode || undefined,
+      roleName: filter.roleName || undefined,
+    });
     rows.value = result.records;
     total.value = result.total;
   } finally {
@@ -271,6 +313,8 @@ onMounted(async () => {
         新增
       </ElButton>
     </template>
+
+    <SearchFormBar />
 
     <ElTable
       v-loading="loading"

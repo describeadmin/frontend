@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { SysConfig } from '../../api';
+import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { onMounted, reactive, ref } from 'vue';
 
@@ -24,6 +25,7 @@ import {
   getConfigListApi,
   updateConfigApi,
 } from '../../api';
+import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemConfig' });
 
@@ -31,6 +33,42 @@ const loading = ref(false);
 const rows = ref<SysConfig[]>([]);
 const total = ref(0);
 const page = reactive({ current: 1, size: 10 });
+
+const filter = reactive<{ configKey: string; configName: string }>({
+  configKey: '',
+  configName: '',
+});
+
+const searchSchema: SearchFormSchema[] = [
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'config-search-config-name-input' },
+    fieldName: 'configName',
+    label: '参数名称',
+  },
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'config-search-config-key-input' },
+    fieldName: 'configKey',
+    label: '参数键名',
+  },
+];
+
+const { SearchFormBar } = useSearchForm({
+  testid: 'config',
+  schema: searchSchema,
+  async onSearch(values) {
+    Object.assign(filter, values);
+    page.current = 1;
+    await load();
+  },
+  async onReset() {
+    filter.configKey = '';
+    filter.configName = '';
+    page.current = 1;
+    await load();
+  },
+});
 
 const formVisible = ref(false);
 const submitting = ref(false);
@@ -57,7 +95,11 @@ const deletingId = ref<null | number>(null);
 async function load() {
   loading.value = true;
   try {
-    const result = await getConfigListApi({ ...page });
+    const result = await getConfigListApi({
+      ...page,
+      configKey: filter.configKey || undefined,
+      configName: filter.configName || undefined,
+    });
     rows.value = result.records;
     total.value = result.total;
   } finally {
@@ -139,6 +181,8 @@ onMounted(async () => {
         新增
       </ElButton>
     </template>
+
+    <SearchFormBar />
 
     <ElTable
       v-loading="loading"

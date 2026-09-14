@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import type { SysDept } from '../../api';
+import type { SearchFormSchema } from '../../composables/useSearchForm';
 
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
@@ -26,11 +27,75 @@ import {
   getDeptTreeApi,
   updateDeptApi,
 } from '../../api';
+import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemDept' });
 
 const loading = ref(false);
 const tree = ref<SysDept[]>([]);
+
+const filter = reactive<{ deptName: string; status: null | number }>({
+  deptName: '',
+  status: null,
+});
+
+/**
+ * 部门树整棵拉取、不分页（见 getDeptTreeApi），因此搜索是纯客户端过滤：不重新请求，
+ * 只是从 `tree` 派生出 `displayTree`。命中的节点连同其祖先一起保留——
+ * 否则匹配到的子部门会因为父节点被过滤掉而从树里"掉出去"，用户看不到它挂在哪。
+ */
+function filterDeptTree(nodes: SysDept[]): SysDept[] {
+  if (!filter.deptName && filter.status === null) {
+    return nodes;
+  }
+  const keyword = filter.deptName.trim().toLowerCase();
+  const result: SysDept[] = [];
+  for (const node of nodes) {
+    const children = filterDeptTree(node.children ?? []);
+    const selfMatches =
+      (!keyword || (node.deptName ?? '').toLowerCase().includes(keyword)) &&
+      (filter.status === null || node.status === filter.status);
+    if (selfMatches || children.length > 0) {
+      result.push({ ...node, children });
+    }
+  }
+  return result;
+}
+
+const displayTree = computed(() => filterDeptTree(tree.value));
+
+const searchSchema: SearchFormSchema[] = [
+  {
+    component: 'Input',
+    componentProps: { 'data-testid': 'dept-search-dept-name-input' },
+    fieldName: 'deptName',
+    label: '部门名称',
+  },
+  {
+    component: 'Select',
+    componentProps: {
+      'data-testid': 'dept-search-status-select',
+      options: [
+        { label: '启用', value: 1 },
+        { label: '停用', value: 0 },
+      ],
+    },
+    fieldName: 'status',
+    label: '状态',
+  },
+];
+
+const { SearchFormBar } = useSearchForm({
+  testid: 'dept',
+  schema: searchSchema,
+  onSearch(values) {
+    Object.assign(filter, values);
+  },
+  onReset() {
+    filter.deptName = '';
+    filter.status = null;
+  },
+});
 
 const formVisible = ref(false);
 const submitting = ref(false);
@@ -186,9 +251,11 @@ onMounted(async () => {
       </ElButton>
     </template>
 
+    <SearchFormBar />
+
     <ElTable
       v-loading="loading"
-      :data="tree"
+      :data="displayTree"
       row-key="id"
       default-expand-all
       :tree-props="{ children: 'children' }"

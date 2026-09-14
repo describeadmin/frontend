@@ -32,7 +32,15 @@ export * from './types';
 
 // --------------------------------------------------------------------- 用户
 
-export async function getUserListApi(params: PageQuery) {
+export interface UserQuery extends PageQuery {
+  deptId?: number;
+  mobile?: string;
+  nickname?: string;
+  status?: number;
+  username?: string;
+}
+
+export async function getUserListApi(params: UserQuery) {
   return getSystemApiClient().get<PageResult<SysUser>>('/system/user', {
     params,
   });
@@ -72,7 +80,12 @@ export async function assignUserRolesApi(id: number, roleIds: number[]) {
 
 // --------------------------------------------------------------------- 角色
 
-export async function getRoleListApi(params: PageQuery) {
+export interface RoleQuery extends PageQuery {
+  roleCode?: string;
+  roleName?: string;
+}
+
+export async function getRoleListApi(params: RoleQuery) {
   return getSystemApiClient().get<PageResult<SysRole>>('/system/role', {
     params,
   });
@@ -147,7 +160,13 @@ export async function deleteDeptApi(id: number) {
 
 // ------------------------------------------------------------------- 字典类型
 
-export async function getDictTypeListApi(params: PageQuery) {
+export interface DictTypeQuery extends PageQuery {
+  dictName?: string;
+  dictType?: string;
+  status?: number;
+}
+
+export async function getDictTypeListApi(params: DictTypeQuery) {
   return getSystemApiClient().get<PageResult<SysDictType>>(
     '/system/dict/type',
     {
@@ -197,7 +216,12 @@ export async function deleteDictDataApi(id: number) {
 
 // ------------------------------------------------------------------- 参数配置
 
-export async function getConfigListApi(params: PageQuery) {
+export interface ConfigQuery extends PageQuery {
+  configKey?: string;
+  configName?: string;
+}
+
+export async function getConfigListApi(params: ConfigQuery) {
   return getSystemApiClient().get<PageResult<SysConfig>>('/system/config', {
     params,
   });
@@ -247,7 +271,11 @@ export async function cleanOperLogApi() {
  * 在应用层切片——没有对应数据库表，翻页会重复一次全量枚举，但这是低频管理页、
  * 在线会话数天然有界，可以接受。
  */
-export async function getOnlineListApi(params: PageQuery) {
+export interface OnlineQuery extends PageQuery {
+  username?: string;
+}
+
+export async function getOnlineListApi(params: OnlineQuery) {
   return getSystemApiClient().get<PageResult<ActiveSession>>('/system/online', {
     params,
   });
