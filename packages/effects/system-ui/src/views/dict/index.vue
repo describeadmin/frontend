@@ -84,34 +84,28 @@ const deletingTypeId = ref<null | number>(null);
 
 const selectedType = ref<null | string>(null);
 
-const typeFilter = reactive<{ dictName: string; dictType: string }>({
-  dictName: '',
-  dictType: '',
-});
+const typeFilter = reactive<{ keyword: string }>({ keyword: '' });
 
 const typeSearchSchema: SearchFormSchema[] = [
   {
     component: 'Input',
-    componentProps: { 'data-testid': 'dict-type-search-dict-name-input' },
-    fieldName: 'dictName',
-    label: '字典名称',
-  },
-  {
-    component: 'Input',
-    componentProps: { 'data-testid': 'dict-type-search-dict-type-input' },
-    fieldName: 'dictType',
-    label: '字典类型',
+    componentProps: {
+      'data-testid': 'dict-type-search-keyword-input',
+      placeholder: '请输入字典名称或字典类型',
+    },
+    fieldName: 'keyword',
+    label: '关键字',
   },
 ];
 
 const { SearchFormBar: TypeSearchFormBar } = useSearchForm({
   testid: 'dict-type',
-  // 面板窄（w-2/5），字段直接平铺不折叠。actionLayout 用 'inline' + 列数=字段数+1，
-  // 让搜索/清空按钮紧跟在最后一个字段后面、稳定落在同一行——默认的 'rowEnd' 会把
-  // 按钮固定卡在网格最后一列，两个字段正好占满 2 列时按钮挤不进当前行、被迫换行，
-  // 这张检索栏就会比右边字典数据的检索栏多一行、两侧列表的表头也跟着错位。
+  // 原先字典名称/字典类型两个输入框在窄屏下换行、和右边字典数据的检索栏不等高，
+  // 改成一个关键字输入框同时搜两个字段（服务端 OR 匹配，见后端 buildListWrapper），
+  // 从根上避免多字段横排在小屏幕下的挤压问题。actionLayout 用 'inline' + 列数=
+  // 字段数+1，让搜索/清空按钮紧跟在字段后面、稳定落在同一行。
   collapsible: false,
-  wrapperClass: 'grid-cols-1 sm:grid-cols-3',
+  wrapperClass: 'grid-cols-1 sm:grid-cols-2',
   actionLayout: 'inline',
   schema: typeSearchSchema,
   async onSearch(values) {
@@ -120,8 +114,7 @@ const { SearchFormBar: TypeSearchFormBar } = useSearchForm({
     await loadTypes();
   },
   async onReset() {
-    typeFilter.dictName = '';
-    typeFilter.dictType = '';
+    typeFilter.keyword = '';
     typePage.current = 1;
     await loadTypes();
   },
@@ -132,8 +125,7 @@ async function loadTypes() {
   try {
     const result = await getDictTypeListApi({
       ...typePage,
-      dictName: typeFilter.dictName || undefined,
-      dictType: typeFilter.dictType || undefined,
+      keyword: typeFilter.keyword || undefined,
     });
     typeRows.value = result.records;
     typeTotal.value = result.total;
@@ -224,11 +216,17 @@ const dataSearchSchema: SearchFormSchema[] = [
 
 const { SearchFormBar: DataSearchFormBar } = useSearchForm({
   testid: 'dict-data',
-  // 面板宽（flex-1），只有一个字段时默认的 'rowEnd' 会把按钮拉到网格最后一列，
-  // 中间空出一大截——同样改用 'inline' + 列数=字段数+1（4 列，1 字段只占用 1/4
-  // 宽度），按钮紧跟字段，检索栏不再被拉得又矮又空。
+  // 只有一个字段时默认的 'rowEnd' 会把按钮拉到网格最后一列，中间空出一大截——
+  // 改用 'inline' 让按钮紧跟字段。列数按外层 lg 断点（两个面板并排/堆叠的分界，
+  // 见模板里的 flex-col lg:flex-row）分两段取值：
+  // - lg 以下：两个面板上下堆叠，本面板独占一行宽度，用 2 列（字段占一半）,
+  //   避免 Tailwind 的断点只认视口宽、不认容器宽——面板明明很宽，字段却被摊薄
+  //   成 1/4 宽度挤成一条缝（Tailwind 的 sm/md 等断点按 viewport 宽度触发，
+  //   与本面板实际渲染宽度无关，是本节这个问题的根因）。
+  // - lg 及以上：面板与左侧字典类型面板并排（flex-1，约占大屏 60% 宽），
+  //   继续沿用原先的 4 列，让字段只占 1/4 宽度，检索栏不会被拉得又矮又空。
   collapsible: false,
-  wrapperClass: 'grid-cols-1 sm:grid-cols-4',
+  wrapperClass: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
   actionLayout: 'inline',
   schema: dataSearchSchema,
   onSearch(values) {
@@ -358,8 +356,9 @@ onMounted(async () => {
 <template>
   <Page title="字典管理">
     <!-- 字典类型与字典数据由框架的 framework-system-starter 提供，byType 查询读穿 CacheProvider——实现说明，不面向最终用户。 -->
-    <div class="flex gap-4">
-      <div class="w-2/5">
+    <!-- lg 以下两个面板各占整行、上下堆叠，避免窄屏/手机端左右挤压到不可用。 -->
+    <div class="flex flex-col gap-4 lg:flex-row">
+      <div class="w-full lg:w-2/5">
         <div class="mb-2 flex items-center justify-between">
           <span class="font-medium">字典类型</span>
           <ElButton

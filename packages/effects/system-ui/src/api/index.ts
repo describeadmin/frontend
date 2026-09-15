@@ -161,6 +161,8 @@ export async function deleteDeptApi(id: number) {
 // ------------------------------------------------------------------- 字典类型
 
 export interface DictTypeQuery extends PageQuery {
+  /** 同时对字典名称、字典类型做 OR 匹配的组合搜索框，见 dict/index.vue。 */
+  keyword?: string;
   dictName?: string;
   dictType?: string;
   status?: number;
