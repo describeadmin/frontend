@@ -115,6 +115,20 @@ export function useSearchForm(options: UseSearchFormOptions) {
     await onReset();
   }
 
+  /**
+   * 搜索/清空/展开(收起) 三个操作项挤在同一个 flex 行里，理论上都该吃行上的
+   * `gap-3`（12px）间距，实际渲染出来并不是：
+   * - element-plus 给 `.el-button` 加了默认的相邻兄弟间距
+   *   （`.el-button + .el-button { margin-left: 12px }`），"搜索"和"清空"都是
+   *   `ElButton`，这条规则叠加在 flex `gap-3` 之上，两者间距变成 24px。
+   * - 内建的"展开/收起"折叠箭头（`VbenExpandableArrow`）自带
+   *   `class="ml-[-0.3em]"` 做视觉对齐微调，叠加在 `gap-3` 上反而把它和"清空"的
+   *   间距压到 7px 左右。
+   * 三段间距因此长得不一样（24px / 7px）。这两条都是各自组件的默认样式，用
+   * `data-testid` 把两条规则清零，让行上统一的 `gap-3` 成为三者之间唯一的间距来源。
+   */
+  const actionSpacingFix = `[data-testid="${testid}-search-form"] .el-button + .el-button { margin-left: 0; } [data-testid="${testid}-search-form"] .vben-link { margin-left: 0; }`;
+
   const SearchFormBar = defineComponent({
     name: 'SearchFormBar',
     setup() {
@@ -122,10 +136,19 @@ export function useSearchForm(options: UseSearchFormOptions) {
         h(
           'div',
           {
-            class: 'mb-4 rounded-lg border border-border bg-card p-4',
+            /**
+             * 卡片故意不用 `p-4`（四边等距）——网格里每个字段/操作区自己都带一条
+             * `pb-4`（框架用它当多行之间的行间距，字段较少不换行时它就是最后一行、
+             * 也是唯一一行自带的底部间距），卡片如果自己再叠一份 `pb-4`，内容下方就会
+             * 有两份 16px 叠出的 32px，顶部却只有卡片自己这一份 16px，看起来内容贴顶、
+             * 底部空得明显更多。卡片自己不设 `pb-*`，靠最后一行自带的 `pb-4` 撑底部，
+             * 跟顶部的卡片 `pt-4` 对称。
+             */
+            class: 'mb-4 rounded-lg border border-border bg-card pt-4 px-4',
             'data-testid': `${testid}-search-form`,
           },
           [
+            h('style', actionSpacingFix),
             h(
               Form,
               {},
