@@ -225,6 +225,10 @@ const { SearchFormBar: DataSearchFormBar } = useSearchForm({
   //   与本面板实际渲染宽度无关，是本节这个问题的根因）。
   // - lg 及以上：面板与左侧字典类型面板并排（flex-1，约占大屏 60% 宽），
   //   继续沿用原先的 4 列，让字段只占 1/4 宽度，检索栏不会被拉得又矮又空。
+  // 光换断点还不够：flex 子项默认 min-width:auto，4 列检索栏 + ElTable 几列
+  // min-width 加总的最小内容宽度一旦超过面板实际分配到的空间，浏览器会拒绝
+  // 收缩、把面板撑爆溢出容器（症状：右侧面板挤成一条缝甚至溢出视口）。
+  // 必须配合模板里 flex-1 容器的 `min-w-0` 一起兜底，两者缺一不可。
   collapsible: false,
   wrapperClass: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
   actionLayout: 'inline',
@@ -420,7 +424,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="flex-1">
+      <div class="min-w-0 flex-1">
         <div class="mb-2 flex items-center justify-between">
           <span class="font-medium">字典数据</span>
           <ElButton
