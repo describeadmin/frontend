@@ -218,17 +218,17 @@ const { SearchFormBar: DataSearchFormBar } = useSearchForm({
   testid: 'dict-data',
   // 只有一个字段时默认的 'rowEnd' 会把按钮拉到网格最后一列，中间空出一大截——
   // 改用 'inline' 让按钮紧跟字段。列数按外层 lg 断点（两个面板并排/堆叠的分界，
-  // 见模板里的 flex-col lg:flex-row）分两段取值：
+  // 见模板里的 grid-cols-1 lg:grid-cols-5）分两段取值：
   // - lg 以下：两个面板上下堆叠，本面板独占一行宽度，用 2 列（字段占一半）,
   //   避免 Tailwind 的断点只认视口宽、不认容器宽——面板明明很宽，字段却被摊薄
   //   成 1/4 宽度挤成一条缝（Tailwind 的 sm/md 等断点按 viewport 宽度触发，
   //   与本面板实际渲染宽度无关，是本节这个问题的根因）。
-  // - lg 及以上：面板与左侧字典类型面板并排（flex-1，约占大屏 60% 宽），
+  // - lg 及以上：面板与左侧字典类型面板并排（lg:col-span-3，占大屏 60% 宽），
   //   继续沿用原先的 4 列，让字段只占 1/4 宽度，检索栏不会被拉得又矮又空。
-  // 光换断点还不够：flex 子项默认 min-width:auto，4 列检索栏 + ElTable 几列
+  // 光换断点还不够：grid/flex 子项默认 min-width:auto，4 列检索栏 + ElTable 几列
   // min-width 加总的最小内容宽度一旦超过面板实际分配到的空间，浏览器会拒绝
   // 收缩、把面板撑爆溢出容器（症状：右侧面板挤成一条缝甚至溢出视口）。
-  // 必须配合模板里 flex-1 容器的 `min-w-0` 一起兜底，两者缺一不可。
+  // 必须配合模板里该容器的 `min-w-0` 一起兜底，两者缺一不可。
   collapsible: false,
   wrapperClass: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
   actionLayout: 'inline',
@@ -360,9 +360,16 @@ onMounted(async () => {
 <template>
   <Page title="字典管理">
     <!-- 字典类型与字典数据由框架的 framework-system-starter 提供，byType 查询读穿 CacheProvider——实现说明，不面向最终用户。 -->
-    <!-- lg 以下两个面板各占整行、上下堆叠，避免窄屏/手机端左右挤压到不可用。 -->
-    <div class="flex flex-col gap-4 lg:flex-row">
-      <div class="w-full lg:w-2/5">
+    <!-- lg 以下两个面板各占整行、上下堆叠，避免窄屏/手机端左右挤压到不可用。
+         用 grid-cols-5 + col-span 而不是 flex + w-2/5：后者在业务方把本包当 npm 依赖
+         消费、走 tailwind-config/theme.css 里 `@source '../../'` 扫编译产物那条路径时，
+         这个分数宽度类没被扫出对应 CSS 规则（同类的 w-1/2、w-1/3、w-1/4、w-1/5、w-4/5
+         都能扫到，独独 w-2/5 不行，具体机制未查清，疑似 Tailwind v4 在这条消费路径下的
+         边界问题）——框架自己开发时走的是 monorepo 源码扫描，从未触发过这条路径，
+         这里没能提前测出来。grid-cols/col-span 是全仓库到处在用、经过反复验证的写法，
+         规避这个不稳定的分数宽度类。 -->
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-5">
+      <div class="min-w-0 lg:col-span-2">
         <div class="mb-2 flex items-center justify-between">
           <span class="font-medium">字典类型</span>
           <ElButton
@@ -424,7 +431,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="min-w-0 flex-1">
+      <div class="min-w-0 lg:col-span-3">
         <div class="mb-2 flex items-center justify-between">
           <span class="font-medium">字典数据</span>
           <ElButton
