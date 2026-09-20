@@ -4,7 +4,7 @@ import type { TreeNodeData } from 'element-plus/es/components/tree/src/tree.type
 import type { SysDept, SysMenu, SysRole } from '../../api';
 import type { SearchFormSchema } from '../../composables/useSearchForm';
 
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 
 import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
@@ -124,6 +124,16 @@ const deptTreeRef = ref();
 /** "首页"选择器用的完整菜单树，页面挂载时拉一次，供所有角色的编辑弹窗共用。 */
 const allMenuTree = ref<SysMenu[]>([]);
 
+/**
+ * 正在编辑的角色**已授权**的菜单 id；`null` 表示不过滤（新增角色时）。
+ *
+ * 用来把「首页」下拉限制在该角色真正勾过的菜单内。此前这个下拉列的是全量菜单树，
+ * 管理员可以给角色选一个它根本没授权的页面——用户登录后那个 path 解析不到任何路由，
+ * 直接落进 404，且报错里没有任何东西指向"首页配错了"。路由守卫那边已经加了兜底
+ * （改落到第一个有权限的页面），这里是从源头堵住。
+ */
+const editingRoleMenuIds = ref<null | Set<string>>(null);
+
 interface HomePathMenuNode extends SysMenu {
   children?: HomePathMenuNode[];
   /** 是否可选：只有真实页面（MENU 且有 path）可选，目录/按钮只作分组展示。 */
@@ -136,12 +146,24 @@ interface HomePathMenuNode extends SysMenu {
   treeKey: string;
 }
 
-/** 只保留真实页面节点可选，目录/按钮仅做分组——避免选到假路径，登录后 404。 */
-function buildHomePathTree(nodes: SysMenu[]): HomePathMenuNode[] {
+/**
+ * 只保留真实页面节点可选，目录/按钮仅做分组——避免选到假路径，登录后 404。
+ *
+ * @param granted 该角色已授权的菜单 id；传 `null` 表示不按授权过滤。id 在链路上是
+ *   字符串（Long 序列化为字符串，见 CLAUDE.md 4.8），比对统一转字符串。
+ */
+function buildHomePathTree(
+  nodes: SysMenu[],
+  granted: null | Set<string>,
+): HomePathMenuNode[] {
   const result: HomePathMenuNode[] = [];
   for (const node of nodes) {
-    const children = buildHomePathTree(node.children ?? []);
-    const selectable = node.menuType === 'MENU' && !!node.path;
+    const children = buildHomePathTree(node.children ?? [], granted);
+    const selectable =
+      node.menuType === 'MENU' &&
+      !!node.path &&
+      (granted === null || granted.has(String(node.id)));
+    // 没授权的页面节点会退化成"不可选"，若它又没有可选后代，整枝在这里被剪掉
     if (!selectable && children.length === 0) {
       continue;
     }
@@ -155,7 +177,30 @@ function buildHomePathTree(nodes: SysMenu[]): HomePathMenuNode[] {
   return result;
 }
 
-const homePathTree = computed(() => buildHomePathTree(allMenuTree.value));
+const homePathTree = computed(() =>
+  buildHomePathTree(allMenuTree.value, editingRoleMenuIds.value),
+);
+
+/**
+ * 存量脏数据：库里记着的首页已经不在该角色的授权范围内（或那条菜单被删了）。
+ * 树里找不到对应节点，ElTreeSelect 会原样显示那串 path，不提示的话管理员看不出
+ * 它其实是坏的。
+ */
+const homePathUnauthorized = computed(() => {
+  const granted = editingRoleMenuIds.value;
+  if (editingId.value === null || !form.homePath || granted === null) {
+    return false;
+  }
+  return !hasSelectablePath(homePathTree.value, form.homePath);
+});
+
+function hasSelectablePath(nodes: HomePathMenuNode[], path: string): boolean {
+  return nodes.some(
+    (node) =>
+      (node.selectable && node.path === path) ||
+      hasSelectablePath(node.children ?? [], path),
+  );
+}
 
 async function load() {
   loading.value = true;
@@ -174,6 +219,9 @@ async function load() {
 
 function openCreate() {
   editingId.value = null;
+  // 新角色还没有任何菜单授权，按授权过滤会得到一棵空树、根本选不了首页——
+  // 维持列全量的现状。新角色的首页配错了，守卫那边仍有兜底。
+  editingRoleMenuIds.value = null;
   Object.assign(form, {
     dataScope: 1,
     homePath: null,
@@ -184,8 +232,17 @@ function openCreate() {
   formVisible.value = true;
 }
 
-function openEdit(row: SysRole) {
+async function openEdit(row: SysRole) {
   editingId.value = row.id ?? null;
+  // 先拿该角色已授权的菜单，用来把「首页」下拉限制在其中。
+  // 失败时退回不过滤并照常开窗——错误提示由请求层的全局拦截器负责，不该因为这个
+  // 辅助请求挂了就把整个编辑弹窗卡住。
+  try {
+    const owned = await getRoleMenusApi(row.id as number);
+    editingRoleMenuIds.value = new Set(owned.map(String));
+  } catch {
+    editingRoleMenuIds.value = null;
+  }
   Object.assign(form, {
     dataScope: row.dataScope ?? 1,
     homePath: row.homePath ?? null,
@@ -232,6 +289,36 @@ async function confirmDelete() {
   }
 }
 
+/**
+ * 把「全选 + 半选」的授权 id 集合还原成 ElTree 能直接回填的**叶子** id。
+ *
+ * 提交时特意把半选的父节点也交给了后端（见 {@link submitAssignMenu}），
+ * 回读时若原样塞进 checkedKeys，非严格模式的 ElTree 会把父节点的勾选级联到
+ * 它的全部子节点 —— 症状是「只授了几项，打开弹窗却全勾上了」，且接口返回的数据
+ * 明明是对的。只回填叶子，父节点的全选/半选由 ElTree 自己推导，提交时再原样交回。
+ *
+ * id 在链路上是字符串（Long 序列化为字符串，见 CLAUDE.md 4.8），比对统一转字符串，
+ * 回填则保留节点上的原值以匹配 node-key。
+ */
+function leafCheckedKeys<T extends { children?: T[]; id?: number }>(
+  tree: T[],
+  owned: number[],
+): number[] {
+  const ownedSet = new Set(owned.map(String));
+  const leaves: number[] = [];
+  const walk = (nodes: T[]) => {
+    for (const node of nodes) {
+      if (node.children && node.children.length > 0) {
+        walk(node.children);
+      } else if (node.id !== undefined && ownedSet.has(String(node.id))) {
+        leaves.push(node.id);
+      }
+    }
+  };
+  walk(tree);
+  return leaves;
+}
+
 async function openAssignMenu(row: SysRole) {
   menuRoleId.value = row.id ?? null;
   const [all, owned] = await Promise.all([
@@ -239,8 +326,12 @@ async function openAssignMenu(row: SysRole) {
     getRoleMenusApi(row.id as number),
   ]);
   menuTree.value = all;
-  checkedMenuIds.value = owned;
+  checkedMenuIds.value = leafCheckedKeys(all, owned);
   menuVisible.value = true;
+  // ElDialog 的内容首次打开才渲染、关闭后不销毁，default-checked-keys 只在那一次
+  // 生效：换个角色再打开时不显式回填，看到的会是上一个角色的勾选状态。
+  await nextTick();
+  menuTreeRef.value?.setCheckedKeys(checkedMenuIds.value);
 }
 
 async function submitAssignMenu() {
@@ -270,8 +361,11 @@ async function openAssignDept(row: SysRole) {
     getRoleDeptsApi(row.id as number),
   ]);
   deptTree.value = tree;
-  checkedDeptIds.value = owned;
+  checkedDeptIds.value = leafCheckedKeys(tree, owned);
   deptVisible.value = true;
+  // 同 openAssignMenu
+  await nextTick();
+  deptTreeRef.value?.setCheckedKeys(checkedDeptIds.value);
 }
 
 async function submitAssignDept() {
@@ -449,6 +543,15 @@ onMounted(async () => {
             placeholder="不选则使用全局默认首页"
             data-testid="role-home-path-select"
           />
+          <div
+            v-if="homePathUnauthorized"
+            class="mt-1 w-full text-xs text-[var(--el-color-danger)]"
+            data-testid="role-home-path-warning"
+          >
+            当前首页
+            {{ form.homePath }}
+            不在该角色已授权的菜单内，用户登录后将进不去，请重新选择。
+          </div>
         </ElFormItem>
       </ElForm>
       <template #footer>
