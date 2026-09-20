@@ -1,4 +1,5 @@
 export * from './find-menu-by-path';
+export * from './first-reachable-path';
 export * from './generate-menus';
 export * from './generate-routes-backend';
 export * from './generate-routes-frontend';

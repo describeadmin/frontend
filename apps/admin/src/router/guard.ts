@@ -1,9 +1,13 @@
-import type { Router } from 'vue-router';
+import type { RouteLocationResolved, Router } from 'vue-router';
 
-import { LOGIN_PATH } from '@describeadmin/constants';
+import { LOGIN_PATH, NO_ACCESS_PATH } from '@describeadmin/constants';
 import { preferences } from '@describeadmin/preferences';
 import { useAccessStore, useUserStore } from '@describeadmin/stores';
-import { startProgress, stopProgress } from '@describeadmin/utils';
+import {
+  firstReachablePath,
+  startProgress,
+  stopProgress,
+} from '@describeadmin/utils';
 
 import { accessRoutes, coreRouteNames } from '#/router/routes';
 import { useAuthStore } from '#/store';
@@ -38,6 +42,19 @@ function setupCommonGuard(router: Router) {
       stopProgress();
     }
   });
+}
+
+/**
+ * 该目标是否「没有对应的真实页面」——匹配不到任何路由，或者只匹配到了 404 兜底。
+ *
+ * ⚠️ 不能只判断 `matched.length === 0`：404 兜底是 `/:path(.*)*` 通配路由，任何路径都
+ * 能匹配上它，`matched` 永远非空。
+ */
+function isUnreachable(resolved: RouteLocationResolved) {
+  return (
+    resolved.matched.length === 0 ||
+    resolved.matched.some((record) => record.name === 'FallbackNotFound')
+  );
 }
 
 /**
@@ -128,13 +145,48 @@ function setupAccessGuard(router: Router) {
       accessStore.setAccessMenus(accessibleMenus);
       accessStore.setAccessRoutes(accessibleRoutes);
       accessStore.setIsAccessChecked(true);
+
+      // 这个账号实际打得开的第一个页面。菜单树已按 sort 排好且滤掉了隐藏项，优先用它；
+      // 授权里全是隐藏页（独立的新增/编辑页那类）时退到路由树取；两个都空，才是真的
+      // 一个页面都进不去。
+      const landingPath =
+        firstReachablePath(accessibleMenus) ??
+        firstReachablePath(accessibleRoutes);
+
+      // 停在「暂无可用页面」上的账号，一旦管理员补了授权、用户刷新页面拿到了菜单，就该
+      // 被放出去——否则他盯着的是一个已经不成立的提示页，而侧边栏其实已经有东西了。
+      // （菜单每次都由 /auth/menus 实时查库，不受「权限快照在登录时确定」那条约束。）
+      if (to.path === NO_ACCESS_PATH && landingPath) {
+        return { path: landingPath, replace: true };
+      }
+
       const redirectPath = (from.query.redirect ??
         (to.path === preferences.app.defaultHomePath
           ? userInfo.homePath || preferences.app.defaultHomePath
           : to.fullPath)) as string;
+      const resolved = router.resolve(decodeURIComponent(redirectPath));
+
+      // 目标解析不到任何真实页面（角色没设首页、设了首页却没授权该页、或干脆一个菜单
+      // 都没分配）时不能就这么放行：动态路由此刻已经全部生成完毕，再往下走只会落进 404。
+      if (isUnreachable(resolved)) {
+        if (!landingPath) {
+          // 一个页面都进不去。必须给一个带布局的提示页而不是 404——用户得看得到
+          // 「重新加载 / 退出登录」，否则管理员补了角色他也没法自救。
+          return { path: NO_ACCESS_PATH, replace: true };
+        }
+        // 只有「自动落地」才改道：登录后/刷新后回首页，以及从登录页带回来的 redirect。
+        // 用户自己敲了个不存在的 URL 时保留 404 语义，不假装跳去别的页面——那个页面
+        // 现在也在布局内，侧边栏和退出入口都还在，不会走投无路。
+        if (
+          from.query.redirect ||
+          to.path === preferences.app.defaultHomePath
+        ) {
+          return { path: landingPath, replace: true };
+        }
+      }
 
       return {
-        ...router.resolve(decodeURIComponent(redirectPath)),
+        ...resolved,
         replace: true,
       };
     } catch (error) {

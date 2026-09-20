@@ -1,25 +1,12 @@
 import type { RouteRecordRaw } from 'vue-router';
 
-import { LOGIN_PATH } from '@describeadmin/constants';
+import { LOGIN_PATH, NO_ACCESS_PATH } from '@describeadmin/constants';
 import { preferences } from '@describeadmin/preferences';
 
 import { $t } from '#/locales';
 
 const BasicLayout = () => import('#/layouts/basic.vue');
 const AuthPageLayout = () => import('#/layouts/auth.vue');
-/** 全局404页面 */
-const fallbackNotFoundRoute: RouteRecordRaw = {
-  component: () => import('#/views/_core/fallback/not-found.vue'),
-  meta: {
-    hideInBreadcrumb: true,
-    hideInMenu: true,
-    hideInTab: true,
-    title: '404',
-  },
-  name: 'FallbackNotFound',
-  path: '/:path(.*)*',
-};
-
 /** 基本路由，这些路由是必须存在的 */
 const coreRoutes: RouteRecordRaw[] = [
   /**
@@ -48,6 +35,40 @@ const coreRoutes: RouteRecordRaw[] = [
           hideInMenu: true,
           title: $t('page.auth.profile'),
         },
+      },
+      {
+        // 「当前账号没有任何可访问页面」。没分配角色、或角色一个菜单都没勾的账号，
+        // 由 guard.ts 送到这里，而不是任其落进 404——见 NO_ACCESS_PATH 的注释。
+        name: 'NoAccess',
+        path: NO_ACCESS_PATH,
+        component: () => import('#/views/_core/fallback/no-access.vue'),
+        meta: {
+          hideInBreadcrumb: true,
+          hideInMenu: true,
+          hideInTab: true,
+          title: '暂无可用页面',
+        },
+      },
+      // 全局 404 兜底。
+      //
+      // ⚠️ 它必须挂在 Root 下（即 BasicLayout 之内），不要再放回顶层：放在顶层时整个
+      // 页面只有一张 404 插画和一个「返回首页」按钮，既没有侧边栏也没有右上角的退出
+      // 入口。而「首页本身就没权限」恰恰是最容易落到 404 的情形，那个按钮点下去又跳
+      // 回 404——登录着却什么都做不了，连退出重登刷新权限都不行。
+      //
+      // 通配路径的匹配优先级由 vue-router 按路径打分决定，与注册顺序无关，因此放在
+      // children 末尾不会抢在动态路由前面（动态路由由 effects/access 的 accessible.ts
+      // push 进同一个 children 数组）。
+      {
+        component: () => import('#/views/_core/fallback/not-found.vue'),
+        meta: {
+          hideInBreadcrumb: true,
+          hideInMenu: true,
+          hideInTab: true,
+          title: '404',
+        },
+        name: 'FallbackNotFound',
+        path: '/:path(.*)*',
       },
     ],
   },
@@ -102,4 +123,4 @@ const coreRoutes: RouteRecordRaw[] = [
   },
 ];
 
-export { coreRoutes, fallbackNotFoundRoute };
+export { coreRoutes };

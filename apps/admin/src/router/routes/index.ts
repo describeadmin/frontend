@@ -2,7 +2,7 @@ import type { RouteRecordRaw } from 'vue-router';
 
 import { mergeRouteModules, traverseTreeValues } from '@describeadmin/utils';
 
-import { coreRoutes, fallbackNotFoundRoute } from './core';
+import { coreRoutes } from './core';
 
 const dynamicRouteFiles = import.meta.glob('./modules/**/*.ts', {
   eager: true,
@@ -21,13 +21,12 @@ const dynamicRoutes: RouteRecordRaw[] = mergeRouteModules(dynamicRouteFiles);
 const staticRoutes: RouteRecordRaw[] = [];
 const externalRoutes: RouteRecordRaw[] = [];
 
-/** 路由列表，由基本路由、外部路由和404兜底路由组成
- *  无需走权限验证（会一直显示在菜单中） */
-const routes: RouteRecordRaw[] = [
-  ...coreRoutes,
-  ...externalRoutes,
-  fallbackNotFoundRoute,
-];
+/** 路由列表，由基本路由和外部路由组成
+ *  无需走权限验证（会一直显示在菜单中）
+ *
+ *  404 兜底路由不在这里——它已挂到 core.ts 的 Root.children 下，好让 404 页面落在
+ *  BasicLayout 之内（侧边栏与退出入口都在），理由见那里的注释。 */
+const routes: RouteRecordRaw[] = [...coreRoutes, ...externalRoutes];
 
 /**
  * 基本路由列表，这些路由不需要进入权限拦截。
