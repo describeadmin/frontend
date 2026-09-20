@@ -16,7 +16,9 @@ import {
   ElFormItem,
   ElInput,
   ElMessage,
+  ElOption,
   ElPagination,
+  ElSelect,
   ElSwitch,
   ElTable,
   ElTableColumn,
@@ -119,6 +121,9 @@ const form = reactive({
   mobile: '',
   nickname: '',
   password: '',
+  // 只在新增时使用：后端 /with-password 支持建号的同时授予角色，省掉
+  // 「先建号、再分配角色」两步。编辑时仍走「分配角色」按钮，保持单一路径。
+  roleIds: [] as number[],
   status: 1,
   username: '',
   version: undefined as number | undefined,
@@ -167,6 +172,7 @@ function openCreate() {
     mobile: '',
     nickname: '',
     password: '',
+    roleIds: [],
     status: 1,
     username: '',
     version: undefined,
@@ -183,6 +189,7 @@ function openEdit(row: SysUser) {
     nickname: row.nickname ?? '',
     // 编辑时不改密码，改密码走「重置密码」，避免把哈希值当明文回填
     password: '',
+    roleIds: [],
     status: row.status ?? 1,
     username: row.username ?? '',
     version: row.version ?? undefined,
@@ -201,6 +208,7 @@ async function submit() {
         mobile: form.mobile || undefined,
         nickname: form.nickname,
         password: form.password,
+        roleIds: form.roleIds,
         username: form.username,
       });
       ElMessage.success('新增成功');
@@ -292,6 +300,15 @@ async function submitAssignRole() {
 }
 
 onMounted(async () => {
+  // 角色列表供「新增用户」表单的角色下拉使用，先取一次，免得点开弹窗时是空的。
+  // 单独 try：读角色要 system:role:list，只有建号权限的账号会拿到 403，
+  // 那不该连带把用户列表也一起打掉——所以不放进下面那个 Promise。
+  try {
+    const roleList = await getRoleListApi({ current: 1, size: 200 });
+    allRoles.value = roleList.records;
+  } catch {
+    // 拿不到就让下拉留空，建号后仍可通过「分配角色」补授权。
+  }
   try {
     deptTree.value = await getDeptTreeApi();
     await load();
@@ -435,6 +452,23 @@ onMounted(async () => {
             clearable
             data-testid="user-dept-id-input"
           />
+        </ElFormItem>
+        <ElFormItem v-if="editingId === null" label="角色" prop="roleIds">
+          <ElSelect
+            v-model="form.roleIds"
+            multiple
+            clearable
+            placeholder="选填，可在创建后通过「分配角色」调整"
+            class="!w-full"
+            data-testid="user-role-ids-select"
+          >
+            <ElOption
+              v-for="role in allRoles"
+              :key="role.id"
+              :label="role.roleName"
+              :value="role.id as number"
+            />
+          </ElSelect>
         </ElFormItem>
         <ElFormItem v-if="editingId !== null" label="状态" prop="status">
           <ElSwitch
