@@ -40,6 +40,7 @@ import {
   getRoleMenusApi,
   updateRoleApi,
 } from '../../api';
+import { cascadeCheck } from '../../composables/useGrantTree';
 import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemRole' });
@@ -114,12 +115,15 @@ const menuTree = ref<SysMenu[]>([]);
 const checkedMenuIds = ref<number[]>([]);
 const menuRoleId = ref<null | number>(null);
 const menuTreeRef = ref();
+/** 已勾选项数，供管理员在提交前一眼看出不是 0（弹窗里树很长，滚动后看不全）。 */
+const menuCheckedCount = ref(0);
 
 const deptVisible = ref(false);
 const deptTree = ref<SysDept[]>([]);
 const checkedDeptIds = ref<number[]>([]);
 const deptRoleId = ref<null | number>(null);
 const deptTreeRef = ref();
+const deptCheckedCount = ref(0);
 
 /** "首页"选择器用的完整菜单树，页面挂载时拉一次，供所有角色的编辑弹窗共用。 */
 const allMenuTree = ref<SysMenu[]>([]);
@@ -290,33 +294,22 @@ async function confirmDelete() {
 }
 
 /**
- * 把「全选 + 半选」的授权 id 集合还原成 ElTree 能直接回填的**叶子** id。
+ * 两棵授权树都是 `check-strictly` + 手写的单向级联，见 `composables/useGrantTree.ts`
+ * 里那段关于「为什么不用 ElTree 默认父子联动」的说明。
  *
- * 提交时特意把半选的父节点也交给了后端（见 {@link submitAssignMenu}），
- * 回读时若原样塞进 checkedKeys，非严格模式的 ElTree 会把父节点的勾选级联到
- * 它的全部子节点 —— 症状是「只授了几项，打开弹窗却全勾上了」，且接口返回的数据
- * 明明是对的。只回填叶子，父节点的全选/半选由 ElTree 自己推导，提交时再原样交回。
+ * 一句话：父 MENU 节点自己就带 `xxx:list` 权限点，而联动模式下父节点的勾选态由子节点
+ * 推导——「只给列表权限」（父勾、子全不勾）在那个模式下根本表达不出来。
  *
- * id 在链路上是字符串（Long 序列化为字符串，见 CLAUDE.md 4.8），比对统一转字符串，
- * 回填则保留节点上的原值以匹配 node-key。
+ * ⚠️ 不要"顺手"去掉 `check-strictly` 恢复成联动，那会让这个授权状态再次无法表达。
  */
-function leafCheckedKeys<T extends { children?: T[]; id?: number }>(
-  tree: T[],
-  owned: number[],
-): number[] {
-  const ownedSet = new Set(owned.map(String));
-  const leaves: number[] = [];
-  const walk = (nodes: T[]) => {
-    for (const node of nodes) {
-      if (node.children && node.children.length > 0) {
-        walk(node.children);
-      } else if (node.id !== undefined && ownedSet.has(String(node.id))) {
-        leaves.push(node.id);
-      }
-    }
-  };
-  walk(tree);
-  return leaves;
+function onMenuCheck(data: TreeNodeData) {
+  cascadeCheck(menuTreeRef.value, menuTree.value, (data as SysMenu).id);
+  menuCheckedCount.value = menuTreeRef.value?.getCheckedKeys().length ?? 0;
+}
+
+function onDeptCheck(data: TreeNodeData) {
+  cascadeCheck(deptTreeRef.value, deptTree.value, (data as SysDept).id);
+  deptCheckedCount.value = deptTreeRef.value?.getCheckedKeys().length ?? 0;
 }
 
 async function openAssignMenu(row: SysRole) {
@@ -326,12 +319,15 @@ async function openAssignMenu(row: SysRole) {
     getRoleMenusApi(row.id as number),
   ]);
   menuTree.value = all;
-  checkedMenuIds.value = leafCheckedKeys(all, owned);
+  // check-strictly 下 setCheckedKeys 是精确回填、零级联，直接塞已授权 id 即可。
+  // （非严格模式才需要先把集合降解成叶子，否则父节点的勾选会级联铺满全部子节点。）
+  checkedMenuIds.value = owned;
   menuVisible.value = true;
   // ElDialog 的内容首次打开才渲染、关闭后不销毁，default-checked-keys 只在那一次
   // 生效：换个角色再打开时不显式回填，看到的会是上一个角色的勾选状态。
   await nextTick();
   menuTreeRef.value?.setCheckedKeys(checkedMenuIds.value);
+  menuCheckedCount.value = menuTreeRef.value?.getCheckedKeys().length ?? 0;
 }
 
 async function submitAssignMenu() {
@@ -340,12 +336,10 @@ async function submitAssignMenu() {
   }
   submitting.value = true;
   try {
-    // 半选的父节点也要提交：只交全选节点会让「只授了子菜单」的角色丢掉目录，
-    // 前端生成路由时子路由就没有挂载点了
-    const ids = [
-      ...menuTreeRef.value.getCheckedKeys(),
-      ...menuTreeRef.value.getHalfCheckedKeys(),
-    ] as number[];
+    // check-strictly 下不产生半选，getCheckedKeys() 就是完整的勾选集合。
+    // 祖先由后端 SysRoleService.assignMenus 闭包补齐——那是「子路由要有挂载点」
+    // 这条不变量的唯一写入口，不再要求每个调用方记得提交半选父节点。
+    const ids = menuTreeRef.value.getCheckedKeys() as number[];
     await assignRoleMenusApi(menuRoleId.value, ids);
     ElMessage.success('授权成功');
     menuVisible.value = false;
@@ -361,11 +355,13 @@ async function openAssignDept(row: SysRole) {
     getRoleDeptsApi(row.id as number),
   ]);
   deptTree.value = tree;
-  checkedDeptIds.value = leafCheckedKeys(tree, owned);
+  // 同 openAssignMenu：check-strictly 下精确回填
+  checkedDeptIds.value = owned;
   deptVisible.value = true;
   // 同 openAssignMenu
   await nextTick();
   deptTreeRef.value?.setCheckedKeys(checkedDeptIds.value);
+  deptCheckedCount.value = deptTreeRef.value?.getCheckedKeys().length ?? 0;
 }
 
 async function submitAssignDept() {
@@ -374,12 +370,12 @@ async function submitAssignDept() {
   }
   submitting.value = true;
   try {
-    // 半选的父节点也要提交，理由与 submitAssignMenu 一致：只交全选节点会让
-    // 「只授了子部门」的角色在部门树里丢掉父级挂载点
-    const ids = [
-      ...deptTreeRef.value.getCheckedKeys(),
-      ...deptTreeRef.value.getHalfCheckedKeys(),
-    ] as number[];
+    // ⚠️ 这里过去连半选的父节点一起提交，照搬了 submitAssignMenu 的理由——那个结论
+    // 放在部门树上是错的，而且是一个数据权限越授：部门树在这里根本不用于渲染，
+    // 它只是选值，DeptDataPermissionHandler 的 CUSTOM 档生成的是 dept_id IN (...)，
+    // 精确集合成员判定。半选的父部门被一并提交 = 角色能看到父部门的业务数据。
+    // 所以部门这边只交真正勾上的，后端 assignDataScopeDepts 也刻意不做祖先闭包。
+    const ids = deptTreeRef.value.getCheckedKeys() as number[];
     await assignRoleDeptsApi(deptRoleId.value, ids);
     ElMessage.success('授权成功');
     deptVisible.value = false;
@@ -576,6 +572,9 @@ onMounted(async () => {
       append-to-body
       data-testid="role-menu-dialog"
     >
+      <p class="mb-2 text-sm text-gray-500" data-testid="role-menu-count">
+        已选 {{ menuCheckedCount }} 项
+      </p>
       <ElTree
         ref="menuTreeRef"
         :data="menuTree"
@@ -583,8 +582,10 @@ onMounted(async () => {
         :default-checked-keys="checkedMenuIds"
         node-key="id"
         show-checkbox
+        check-strictly
         default-expand-all
         data-testid="role-menu-tree"
+        @check="(data: TreeNodeData) => onMenuCheck(data)"
       />
       <template #footer>
         <ElButton
@@ -611,6 +612,9 @@ onMounted(async () => {
       append-to-body
       data-testid="role-dept-dialog"
     >
+      <p class="mb-2 text-sm text-gray-500" data-testid="role-dept-count">
+        已选 {{ deptCheckedCount }} 项
+      </p>
       <ElTree
         ref="deptTreeRef"
         :data="deptTree"
@@ -618,8 +622,10 @@ onMounted(async () => {
         :default-checked-keys="checkedDeptIds"
         node-key="id"
         show-checkbox
+        check-strictly
         default-expand-all
         data-testid="role-dept-tree"
+        @check="(data: TreeNodeData) => onDeptCheck(data)"
       />
       <template #footer>
         <ElButton

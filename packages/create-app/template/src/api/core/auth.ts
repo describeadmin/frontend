@@ -280,36 +280,51 @@ function routeNameOf(path: string): string {
 function toRouteRecords(menus: BackendMenu[]): RouteRecordStringComponent[] {
   return (
     menus
-      // 后端 treeOf 已过滤 BUTTON，这里再挡一次：菜单数据是业主可编辑的，
-      // 一个手滑把按钮建成菜单就会产生没有 component 的坏路由
-      .filter((menu) => menu.menuType !== 'BUTTON' && !!menu.path)
-      .map((menu) => {
-        const path = menu.path as string;
+      // 不可路由的节点（BUTTON，或没填 path 的目录）不生成路由，但**它的子节点要提升
+      // 到本层**，不能连同整棵子树一起丢掉。
+      //
+      // 后端 treeOf 已过滤 BUTTON，这里再挡一次：菜单数据是业主可编辑的，一个手滑把
+      // 按钮建成菜单就会产生没有 component 的坏路由。而「目录没填 path」是完全合法的
+      // 输入——SysMenuService.normalizeBlankToNull 会把空串归一成 NULL，没有任何校验
+      // 要求 DIR 必须有 path。
+      //
+      // ⚠️ 这里过去是 filter + map，于是那种目录会连它下面的所有页面一起消失：children
+      // 只能经父节点递归取得，父节点被跳过，子树就再也回不来了。症状是「明明授权了，
+      // 侧边栏没有、敲 URL 落 404」，而排查方向会指向授权而不是那个空 path。
+      // 角色授权改为自动补齐祖先（SysRoleService.assignMenus）之后这条路径更容易被走到：
+      // 在那之前父目录往往根本不在授权集合里，孤儿节点被 TreeBuilder 提升为根反而躲开了。
+      .flatMap((menu) => {
         const children = toRouteRecords(menu.children ?? []);
+        if (menu.menuType === 'BUTTON' || !menu.path) {
+          return children;
+        }
+        const path = menu.path;
         const isContainer = children.length > 0;
-        return {
-          children: isContainer ? children : undefined,
-          // 有子菜单的节点只是路由容器，不下发页面组件——子页面透传到父级
-          // <router-view>，vue-router 会自动跳过这一层。框架的 generateAccessible
-          // 只对「顶层」容器 delete component（见 effects/access/src/accessible.ts），
-          // 三级及以上的中间容器不归它管；这里若兜底成 'BasicLayout'，就会在
-          // BasicLayout 里再套一层 BasicLayout，侧边栏 / 头部重复渲染，页面布局错乱。
-          component: isContainer
-            ? undefined
-            : (menu.component ?? 'BasicLayout'),
-          meta: {
-            // 隐藏页面（独立的新增/编辑页）把侧边栏选中态落回所属列表菜单，
-            // 否则进去之后侧边栏一项都不高亮、面包屑也断在父级。
-            activePath: menu.activePath ?? undefined,
-            // visible=0 只是不进侧边栏，路由照常生成——能不能访问由后端授权决定。
-            hideInMenu: menu.visible === 0,
-            icon: menu.icon ?? undefined,
-            order: menu.sort ?? 0,
-            title: menu.menuName,
-          },
-          name: routeNameOf(path),
-          path,
-        } as RouteRecordStringComponent;
+        return [
+          {
+            children: isContainer ? children : undefined,
+            // 有子菜单的节点只是路由容器，不下发页面组件——子页面透传到父级
+            // <router-view>，vue-router 会自动跳过这一层。框架的 generateAccessible
+            // 只对「顶层」容器 delete component（见 effects/access/src/accessible.ts），
+            // 三级及以上的中间容器不归它管；这里若兜底成 'BasicLayout'，就会在
+            // BasicLayout 里再套一层 BasicLayout，侧边栏 / 头部重复渲染，页面布局错乱。
+            component: isContainer
+              ? undefined
+              : (menu.component ?? 'BasicLayout'),
+            meta: {
+              // 隐藏页面（独立的新增/编辑页）把侧边栏选中态落回所属列表菜单，
+              // 否则进去之后侧边栏一项都不高亮、面包屑也断在父级。
+              activePath: menu.activePath ?? undefined,
+              // visible=0 只是不进侧边栏，路由照常生成——能不能访问由后端授权决定。
+              hideInMenu: menu.visible === 0,
+              icon: menu.icon ?? undefined,
+              order: menu.sort ?? 0,
+              title: menu.menuName,
+            },
+            name: routeNameOf(path),
+            path,
+          } as RouteRecordStringComponent,
+        ];
       })
   );
 }

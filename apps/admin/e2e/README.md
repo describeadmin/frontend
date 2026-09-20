@@ -7,7 +7,10 @@ docker run -d --name da-mysql -p 3307:3306 \
   -e MYSQL_USER=app -e MYSQL_PASSWORD=app \
   mysql:5.7 --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
 
-pom.xml spring-boot:run -Dspring-boot.run.profiles=local/pom.xml spring-boot:run -Dspring-boot.run.profiles=local
+# 2. 起后端：任一消费框架的业务工程（describeadmin-archetype 生成的脚手架即可），
+#    默认端口 8090 —— 前端代理的目标，见 apps/admin/vite.config.ts 的 proxyTarget，
+#    撞端口时用环境变量 VITE_PROXY_TARGET 绕开
+mvn -f <你的业务后端>/pom.xml spring-boot:run -Dspring-boot.run.profiles=local
 
 # 3. 起前端
 pnpm dev
@@ -15,6 +18,8 @@ pnpm dev
 # 4. 跑冒烟
 pnpm -F @describeadmin/admin run test:e2e
 ```
+
+登录口令由后端 dev-seed 首次启动时随机生成，明文写在**该后端工程**根目录的 `.passwd` （取法见 `_password.mjs`）。⚠️ 换了数据库或重新初始化过，旧的 `.passwd` 就对不上了；后端有登录失败锁定策略，**不要反复试密码**，直接从当前这个后端实例的 `.passwd` 取，或用 `APP_PASSWORD` 显式指定。
 
 链路是**真实的**：真实浏览器 → vite dev server → 代理 → Spring Boot → MySQL 5.7，没有任何一段是 mock。这正是删掉上游 `apps/backend-mock` 的原因——用 mock 开发前端，等于把前后端契约不一致的问题全部推迟到联调阶段才暴露。
 

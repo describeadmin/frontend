@@ -135,6 +135,99 @@ try {
   const roleText = await page.textContent('[data-testid="role-table"]');
   check('角色列表渲染出 ADMIN', roleText.includes('ADMIN'));
 
+  // -------------------------------------------- 角色授权树：只给列表权限
+  // 对一个**新建的临时角色**操作，不要碰 ADMIN——它的授权是种子数据，改了会污染
+  // 本文件其余断言（以及同一个库上的后端 IT）。
+  const grantRole = `E2E_GRANT_${Date.now()}`;
+  await page.click('[data-testid="role-add-btn"]');
+  await page.waitForSelector('[data-testid="role-form-dialog"]', {
+    timeout: 20_000,
+  });
+  await page.fill('[data-testid="role-role-name-input"] input', '授权树冒烟');
+  await page.fill('[data-testid="role-role-code-input"] input', grantRole);
+  await page.click('[data-testid="role-submit-btn"]');
+  await page.waitForTimeout(1200);
+  const roleTableText = await page.textContent('[data-testid="role-table"]');
+  check(
+    '新建的临时角色出现在列表里',
+    roleTableText.includes(grantRole),
+    grantRole,
+  );
+
+  // 该角色所在行的「分配菜单」
+  const grantRow = page.locator('[data-testid="role-table"] tr', {
+    hasText: grantRole,
+  });
+  await grantRow.locator('[data-testid="role-assign-menu-btn"]').click();
+  await page.waitForSelector('[data-testid="role-menu-tree"]', {
+    timeout: 20_000,
+  });
+
+  // ElTree 的节点：用文案定位到 .el-tree-node，再取它自己那一层的复选框
+  const treeNode = (label) =>
+    page
+      .locator('[data-testid="role-menu-tree"] .el-tree-node')
+      .filter({ has: page.locator(`.el-tree-node__label:text-is("${label}")`) })
+      .first();
+  const nodeCheckbox = (label) =>
+    treeNode(label).locator('.el-checkbox').first();
+  const isChecked = async (label) =>
+    await nodeCheckbox(label).evaluate((el) =>
+      el.classList.contains('is-checked'),
+    );
+  const isIndeterminate = async (label) =>
+    await nodeCheckbox(label).evaluate((el) =>
+      el.classList.contains('is-indeterminate'),
+    );
+
+  // 勾父：子节点跟着勾（便捷级联）
+  await nodeCheckbox('用户管理').click();
+  await page.waitForTimeout(300);
+  check(
+    '勾选「用户管理」后子节点「新增」也被勾上',
+    (await isChecked('用户管理')) && (await isChecked('新增')),
+  );
+
+  // 取消一个子：父保持勾选 —— 这就是「只给列表权限」
+  await nodeCheckbox('新增').click();
+  await page.waitForTimeout(300);
+  check(
+    '取消子节点「新增」后「用户管理」仍为勾选',
+    (await isChecked('用户管理')) && !(await isChecked('新增')),
+  );
+  check(
+    'check-strictly 下父节点不出现半选态',
+    !(await isIndeterminate('用户管理')),
+  );
+
+  await page.click('[data-testid="role-menu-submit-btn"]');
+  await page.waitForTimeout(1200);
+
+  // 重开弹窗：落库的和刚才看到的必须是同一个集合，且父目录被后端补齐
+  await grantRow.locator('[data-testid="role-assign-menu-btn"]').click();
+  await page.waitForSelector('[data-testid="role-menu-tree"]', {
+    timeout: 20_000,
+  });
+  await page.waitForTimeout(500);
+  check(
+    '重开弹窗后「用户管理」仍勾选、「新增」仍未勾（勾选集合精确回填）',
+    (await isChecked('用户管理')) && !(await isChecked('新增')),
+  );
+  check(
+    '父目录「系统管理」被后端自动补齐（祖先闭包落库了）',
+    await isChecked('系统管理'),
+  );
+  const menuCountText = await page.textContent(
+    '[data-testid="role-menu-count"]',
+  );
+  check(
+    '已选计数显示为 2 项（系统管理 + 用户管理）',
+    menuCountText.includes('已选 2 项'),
+    menuCountText,
+  );
+  await page.click('[data-testid="role-menu-cancel-btn"]');
+  await page.waitForTimeout(500);
+
   await page.goto(`${BASE}/system/menu`, { waitUntil: 'networkidle' });
   await page.waitForSelector('[data-testid="menu-table"]', { timeout: 20_000 });
   const menuText = await page.textContent('[data-testid="menu-table"]');
