@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { TreeNodeData } from 'element-plus/es/components/tree/src/tree.type';
 
-import type { SysDept, SysMenu, SysRole } from '../../api';
+import type { OptionItem, SysMenu, SysRole } from '../../api';
 import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { computed, nextTick, onMounted, reactive, ref } from 'vue';
@@ -33,9 +33,9 @@ import {
   createRoleApi,
   DATA_SCOPE_OPTIONS,
   deleteRoleApi,
-  getDeptTreeApi,
-  getMenuTreeApi,
+  getDeptOptionsApi,
   getRoleDeptsApi,
+  getRoleGrantableMenusApi,
   getRoleListApi,
   getRoleMenusApi,
   updateRoleApi,
@@ -119,13 +119,22 @@ const menuTreeRef = ref();
 const menuCheckedCount = ref(0);
 
 const deptVisible = ref(false);
-const deptTree = ref<SysDept[]>([]);
+// 只要 id + 名称，所以走部门模块只要求登录的选项接口，而不是要 system:dept:list 的
+// /dept/tree——否则「能管角色」和「能看部门管理」被迫捆绑（CLAUDE.md 4.11）。
+const deptTree = ref<OptionItem[]>([]);
 const checkedDeptIds = ref<number[]>([]);
 const deptRoleId = ref<null | number>(null);
 const deptTreeRef = ref();
 const deptCheckedCount = ref(0);
 
-/** "首页"选择器用的完整菜单树，页面挂载时拉一次，供所有角色的编辑弹窗共用。 */
+/**
+ * 「首页」选择器用的完整菜单树，页面挂载时拉一次，供所有角色的编辑弹窗共用。
+ *
+ * 取自 `/api/system/role/grantable-menus`（角色模块，按 `system:role:list` 校验）
+ * 而不是 `/api/system/menu/tree`（要 `system:menu:list`）：分配菜单与选首页都是
+ * **角色管理自己的功能**，数据该由角色模块提供。这里需要 `menuType`/`path`
+ * 判断哪些节点可选，通用 `OptionItem` 形状覆盖不了，所以不走 /options。
+ */
 const allMenuTree = ref<SysMenu[]>([]);
 
 /**
@@ -308,14 +317,14 @@ function onMenuCheck(data: TreeNodeData) {
 }
 
 function onDeptCheck(data: TreeNodeData) {
-  cascadeCheck(deptTreeRef.value, deptTree.value, (data as SysDept).id);
+  cascadeCheck(deptTreeRef.value, deptTree.value, (data as OptionItem).value);
   deptCheckedCount.value = deptTreeRef.value?.getCheckedKeys().length ?? 0;
 }
 
 async function openAssignMenu(row: SysRole) {
   menuRoleId.value = row.id ?? null;
   const [all, owned] = await Promise.all([
-    getMenuTreeApi(),
+    getRoleGrantableMenusApi(),
     getRoleMenusApi(row.id as number),
   ]);
   menuTree.value = all;
@@ -351,7 +360,7 @@ async function submitAssignMenu() {
 async function openAssignDept(row: SysRole) {
   deptRoleId.value = row.id ?? null;
   const [tree, owned] = await Promise.all([
-    getDeptTreeApi(),
+    getDeptOptionsApi(),
     getRoleDeptsApi(row.id as number),
   ]);
   deptTree.value = tree;
@@ -386,7 +395,7 @@ async function submitAssignDept() {
 
 onMounted(async () => {
   try {
-    allMenuTree.value = await getMenuTreeApi();
+    allMenuTree.value = await getRoleGrantableMenusApi();
     await load();
   } catch {
     // 已经由请求层的全局拦截器处理（弹出提示、401 时跳转登录页），这里只需要
@@ -615,12 +624,17 @@ onMounted(async () => {
       <p class="mb-2 text-sm text-gray-500" data-testid="role-dept-count">
         已选 {{ deptCheckedCount }} 项
       </p>
+      <!--
+        刻意不把 OptionItem 的 disabled 映射进 :props。用户表单里「停用部门不可选」是对的，
+        这里不是：某个部门停用之前可能已经被授给了这个角色，映射过去就变成
+        勾着、却取消不掉——管理员连收回这条数据权限都做不到。
+      -->
       <ElTree
         ref="deptTreeRef"
         :data="deptTree"
-        :props="{ children: 'children', label: 'deptName' }"
+        :props="{ children: 'children', label: 'label' }"
         :default-checked-keys="checkedDeptIds"
-        node-key="id"
+        node-key="value"
         show-checkbox
         check-strictly
         default-expand-all

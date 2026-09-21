@@ -32,10 +32,31 @@
  * **授权树不需要 normalizeIds**。
  */
 
-/** 授权树节点：只要求 id 与 children，菜单树（`SysMenu`）与部门树（`SysDept`）都满足。 */
+/**
+ * 授权树节点：只要求「一个键 + children」。
+ *
+ * 两棵树的节点形状不同，是因为它们的数据来源不同档：
+ * - 分配菜单用 `SysMenu`（`id`），走角色模块的 `grantable-menus`——授权树要
+ *   `menuType`/`path`，通用选项形状带不了；
+ * - 分配数据权限用 `OptionItem`（`value`），走部门模块的 `/options`——只要 id + 名称。
+ *
+ * 见 CLAUDE.md 4.11。因此这里认 `id` 或 `value` 两种键，取其一即可。
+ */
 export interface GrantNode {
   children?: GrantNode[];
   id?: number;
+  value?: string;
+}
+
+/**
+ * 节点的键。`id` 优先，没有则用 `value`。
+ *
+ * 必须与 ElTree 的 `node-key` 逐字对应（菜单树是 `id`、部门树是 `value`）——
+ * 对不上的症状是**静默的**：`pathToNode` 找不到节点直接返回 `[]`，级联什么也不做，
+ * 勾选看起来正常、子孙却没被带上，只有提交后重开弹窗才发现少了。
+ */
+function keyOf(node: GrantNode): unknown {
+  return node.id ?? node.value;
 }
 
 /**
@@ -49,7 +70,8 @@ export function pathToNode(tree: GrantNode[], targetId: unknown): GrantNode[] {
   const walk = (nodes: GrantNode[], trail: GrantNode[]): GrantNode[] => {
     for (const node of nodes) {
       const next = [...trail, node];
-      if (node.id !== undefined && String(node.id) === target) {
+      const key = keyOf(node);
+      if (key !== undefined && String(key) === target) {
         return next;
       }
       const found = walk(node.children ?? [], next);
@@ -67,8 +89,9 @@ export function descendantIds(node: GrantNode): unknown[] {
   const ids: unknown[] = [];
   const walk = (nodes: GrantNode[]) => {
     for (const child of nodes) {
-      if (child.id !== undefined) {
-        ids.push(child.id);
+      const key = keyOf(child);
+      if (key !== undefined) {
+        ids.push(key);
       }
       walk(child.children ?? []);
     }
@@ -116,7 +139,7 @@ export function cascadeCheck(
   const checked = !!treeRef.getNode(nodeId)?.checked;
   if (checked) {
     for (const ancestor of path.slice(0, -1)) {
-      treeRef.setChecked(ancestor.id, true, false);
+      treeRef.setChecked(keyOf(ancestor), true, false);
     }
     for (const id of descendantIds(self)) {
       treeRef.setChecked(id, true, false);

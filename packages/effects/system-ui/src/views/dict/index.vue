@@ -2,7 +2,7 @@
 import type { SysDictData, SysDictType } from '../../api';
 import type { SearchFormSchema } from '../../composables/useSearchForm';
 
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 
 import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
@@ -183,6 +183,7 @@ async function confirmDeleteType() {
     typeConfirmVisible.value = false;
     if (row?.dictType === selectedType.value) {
       selectedType.value = null;
+      await loadDictData();
     }
     await loadTypes();
   } finally {
@@ -190,18 +191,19 @@ async function confirmDeleteType() {
   }
 }
 
-function onSelectType(row: null | SysDictType) {
+async function onSelectType(row: null | SysDictType) {
   selectedType.value = row?.dictType ?? null;
+  // 换了类型就是换了一份数据集，页码必须回到第一页——否则在第 3 页选中一个
+  // 只有 2 页的类型，表格会是空的，看起来像"这个类型下没有字典项"
+  dictDataPage.current = 1;
+  await loadDictData();
 }
 
 // ------------------------------------------------------------------ 字典数据
 
 const dataLoading = ref(false);
-/**
- * 后端未按 dictType 做服务端过滤，整批拉取（size=500）后客户端按选中类型过滤，
- * 见 api/index.ts 的 getDictDataListApi 注释。
- */
-const allDictData = ref<SysDictData[]>([]);
+/** 当前选中字典类型下的一页字典项。服务端按 dictType 过滤，见 loadDictData。 */
+const dictData = ref<SysDictData[]>([]);
 
 const dataFilter = reactive<{ dictLabel: string }>({ dictLabel: '' });
 
@@ -233,25 +235,22 @@ const { SearchFormBar: DataSearchFormBar } = useSearchForm({
   wrapperClass: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
   actionLayout: 'inline',
   schema: dataSearchSchema,
-  onSearch(values) {
+  // 筛选改由服务端执行（见 loadDictData），所以这两个回调除了记录条件还要回到第一页
+  // 并重新取数——过去是客户端 computed 过滤，改条件自然就重算，不需要这一步。
+  async onSearch(values) {
     Object.assign(dataFilter, values);
+    dictDataPage.current = 1;
+    await loadDictData();
   },
-  onReset() {
+  async onReset() {
     dataFilter.dictLabel = '';
+    dictDataPage.current = 1;
+    await loadDictData();
   },
 });
 
-const filteredDictData = computed(() => {
-  if (selectedType.value === null) {
-    return [];
-  }
-  const keyword = dataFilter.dictLabel.trim().toLowerCase();
-  return allDictData.value.filter(
-    (item) =>
-      item.dictType === selectedType.value &&
-      (!keyword || (item.dictLabel ?? '').toLowerCase().includes(keyword)),
-  );
-});
+const dictDataTotal = ref(0);
+const dictDataPage = reactive({ current: 1, size: 10 });
 
 const dataFormVisible = ref(false);
 const dataSubmitting = ref(false);
@@ -274,11 +273,30 @@ const dataRules = {
 const dataConfirmVisible = ref(false);
 const deletingDataId = ref<null | number>(null);
 
-async function loadAllDictData() {
+/**
+ * 字典项列表。**按 dictType 服务端过滤 + 真分页**。
+ *
+ * 此前这里是 `getDictDataListApi({ current: 1, size: 500 })` 把全库字典项一次拉回来、
+ * 再在浏览器里按类型筛。那是把分页接口当全量接口使：全库字典项超过 500 条就开始
+ * 静默丢数据，症状是"某个类型下少了几项"，完全不指向真因；而且调大 size 也修不好，
+ * 后端 `PageQuery.MAX_SIZE` 就是 500。根因是服务端没按 dictType 筛，现已补上
+ * （`SysDictDataController.buildListWrapper`）。同类约定见 CLAUDE.md 4.11。
+ */
+async function loadDictData() {
+  if (selectedType.value === null) {
+    dictData.value = [];
+    dictDataTotal.value = 0;
+    return;
+  }
   dataLoading.value = true;
   try {
-    const result = await getDictDataListApi({ current: 1, size: 500 });
-    allDictData.value = result.records;
+    const result = await getDictDataListApi({
+      ...dictDataPage,
+      dictLabel: dataFilter.dictLabel.trim() || undefined,
+      dictType: selectedType.value,
+    });
+    dictData.value = result.records;
+    dictDataTotal.value = result.total;
   } finally {
     dataLoading.value = false;
   }
@@ -321,7 +339,7 @@ async function submitData() {
       : updateDictDataApi(editingDataId.value, { ...dataForm }));
     ElMessage.success(editingDataId.value === null ? '新增成功' : '保存成功');
     dataFormVisible.value = false;
-    await loadAllDictData();
+    await loadDictData();
   } finally {
     dataSubmitting.value = false;
   }
@@ -341,7 +359,7 @@ async function confirmDeleteData() {
     await deleteDictDataApi(deletingDataId.value);
     ElMessage.success('删除成功');
     dataConfirmVisible.value = false;
-    await loadAllDictData();
+    await loadDictData();
   } finally {
     dataSubmitting.value = false;
   }
@@ -349,7 +367,7 @@ async function confirmDeleteData() {
 
 onMounted(async () => {
   try {
-    await Promise.all([loadTypes(), loadAllDictData()]);
+    await Promise.all([loadTypes(), loadDictData()]);
   } catch {
     // 已经由请求层的全局拦截器处理（弹出提示、401 时跳转登录页），这里只需要
     // 避免异常继续冒泡成 Vue 的 "Unhandled error during execution of mounted hook"。
@@ -449,7 +467,7 @@ onMounted(async () => {
 
         <ElTable
           v-loading="dataLoading"
-          :data="filteredDictData"
+          :data="dictData"
           row-key="id"
           :empty-text="
             selectedType === null ? '请先在左侧选择字典类型' : '暂无数据'
@@ -485,6 +503,20 @@ onMounted(async () => {
             </template>
           </ElTableColumn>
         </ElTable>
+
+        <div class="mt-3 flex justify-end">
+          <ElPagination
+            v-model:current-page="dictDataPage.current"
+            v-model:page-size="dictDataPage.size"
+            :total="dictDataTotal"
+            :page-sizes="[10, 20, 50]"
+            layout="total, sizes, prev, pager, next"
+            size="small"
+            data-testid="dict-data-pagination"
+            @current-change="loadDictData"
+            @size-change="loadDictData"
+          />
+        </div>
       </div>
     </div>
 

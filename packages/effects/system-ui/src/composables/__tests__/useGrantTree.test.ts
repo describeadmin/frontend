@@ -28,6 +28,25 @@ function menuTree(): GrantNode[] {
   ];
 }
 
+/**
+ * 部门授权树的形状：节点是 `OptionItem`，键叫 `value` 而不是 `id`。
+ *
+ * 两棵授权树的数据来源不同档（CLAUDE.md 4.11）：分配菜单要 `menuType`/`path`，
+ * 走角色模块的 `grantable-menus`，节点是 `SysMenu`（`id`）；分配数据权限只要
+ * id + 名称，走部门模块的 `/options`，节点是 `OptionItem`（`value`）。
+ *
+ * 这组用例是那条差异的守卫：`keyOf` 若只认 `id`，部门树的级联会**静默失效**
+ * ——`pathToNode` 找不到节点就返回 `[]`，勾选看起来正常、子孙却没被带上。
+ */
+function deptTree(): GrantNode[] {
+  return [
+    {
+      value: '10',
+      children: [{ value: '20', children: [{ value: '30' }, { value: '31' }] }],
+    },
+  ];
+}
+
 describe('pathToNode', () => {
   it('returns the full path from root to the target, target included', () => {
     expect(pathToNode(menuTree(), '3').map((n) => n.id)).toEqual([
@@ -54,6 +73,16 @@ describe('pathToNode', () => {
       '1',
       '2',
       '3',
+    ]);
+  });
+});
+
+describe('pathToNode (value-keyed nodes)', () => {
+  it('finds nodes keyed by value, not just id', () => {
+    expect(pathToNode(deptTree(), '30').map((n) => n.value)).toEqual([
+      '10',
+      '20',
+      '30',
     ]);
   });
 });
@@ -131,6 +160,24 @@ describe('cascadeCheck', () => {
     }
 
     expect([...el.checked].toSorted()).toEqual(['1', '2']);
+  });
+
+  /**
+   * 部门授权树走 `value` 键，级联行为必须与菜单树逐条一致。
+   *
+   * 注意这里只验证**勾选联动**；部门 id 的祖先闭包是另一回事，后端
+   * `assignDataScopeDepts` 刻意不做——菜单 id 是挂载点，部门 id 是
+   * `dept_id IN (...)` 的行过滤值，给后者补祖先是越权而不是修复。
+   */
+  it('cascades the same way for value-keyed (dept) nodes', () => {
+    const tree = deptTree();
+    const el = fakeTree(new Set(['20']));
+    cascadeCheck(el, tree, '20');
+    expect([...el.checked].toSorted()).toEqual(['10', '20', '30', '31']);
+
+    el.setChecked('20', false);
+    cascadeCheck(el, tree, '20');
+    expect([...el.checked].toSorted()).toEqual(['10']);
   });
 
   it('does nothing when the tree ref is missing or the node is unknown', () => {

@@ -13,6 +13,7 @@
  */
 import type {
   ActiveSession,
+  OptionItem,
   PageQuery,
   PageResult,
   SysConfig,
@@ -91,6 +92,39 @@ export async function getRoleListApi(params: RoleQuery) {
   });
 }
 
+/**
+ * 角色选项，供别的模块的选择器使用（用户管理的角色下拉、「分配角色」弹窗）。
+ *
+ * **别用 `getRoleListApi({ current: 1, size: 200 })` 代替它。** 那是把分页接口当全量
+ * 接口使，角色超过 200 条就静默丢数据；而且调大 `size` 也没用——后端 `PageQuery.MAX_SIZE`
+ * 是 500，在入口就夹紧了。本接口不分页，超过上限会明确报错而不是悄悄截断。
+ *
+ * 只要求登录、不挂权限点，所以「只授用户管理」的角色也能填出这个下拉，
+ * 且不必为此被授予 `system:role:list`（那会让侧边栏多出「角色管理」入口）。
+ *
+ * @param keyword 角色名前缀，可选；不传返回全量
+ */
+export async function getRoleOptionsApi(keyword?: string) {
+  return getSystemApiClient().get<OptionItem[]>('/system/role/options', {
+    params: keyword ? { keyword } : undefined,
+  });
+}
+
+/**
+ * 可授予的完整菜单树（含 BUTTON 权限点，带 `menuType`/`path`），
+ * 供「分配菜单」弹窗与角色表单的「首页」选择器使用。
+ *
+ * 这个端点开在**角色模块**上、按 `system:role:list` 校验：分配菜单是角色管理自己的功能，
+ * 它需要的数据就该由角色模块提供。过去这里调 `getMenuTreeApi()`，那要求
+ * `system:menu:list`，于是"能管角色"和"能看菜单管理"被迫捆绑。
+ *
+ * 之所以不走 `/options`：通用 `OptionItem` 形状带不了 `menuType`/`path`，
+ * 而「首页」选择器要靠它们判断哪些节点可选。判据见 CLAUDE.md 4.11。
+ */
+export async function getRoleGrantableMenusApi() {
+  return getSystemApiClient().get<SysMenu[]>('/system/role/grantable-menus');
+}
+
 export async function createRoleApi(data: SysRole) {
   return getSystemApiClient().post<SysRole>('/system/role', data);
 }
@@ -123,9 +157,23 @@ export async function assignRoleMenusApi(id: number, menuIds: number[]) {
 
 // --------------------------------------------------------------------- 菜单
 
-/** 全量菜单树（含 BUTTON 权限点），供菜单管理与角色授权使用。 */
+/**
+ * 全量菜单树（含 BUTTON 权限点），需要 `system:menu:list`。
+ *
+ * 只给**菜单管理页自己**用。别的模块要引用菜单，走 {@link getMenuOptionsApi}；
+ * 角色授权走 {@link getRoleGrantableMenusApi}——都不需要菜单模块的权限点。
+ */
 export async function getMenuTreeApi() {
   return getSystemApiClient().get<SysMenu[]>('/system/menu/tree');
+}
+
+/**
+ * 菜单选项树，供「上级菜单」这类引用选择器使用。仅要求登录。
+ *
+ * 只含目录与菜单（**不含按钮**，按钮不是可挂载的节点），只下发 id + 名称。
+ */
+export async function getMenuOptionsApi() {
+  return getSystemApiClient().get<OptionItem[]>('/system/menu/options');
 }
 
 export async function createMenuApi(data: SysMenu) {
@@ -142,8 +190,24 @@ export async function deleteMenuApi(id: number) {
 
 // --------------------------------------------------------------------- 部门
 
+/**
+ * 全量部门树（含负责人、电话、物化路径），需要 `system:dept:list`。
+ *
+ * 只给**部门管理页自己**用。别的模块要引用部门，走 {@link getDeptOptionsApi}。
+ */
 export async function getDeptTreeApi() {
   return getSystemApiClient().get<SysDept[]>('/system/dept/tree');
+}
+
+/**
+ * 部门选项树，供别的模块的选择器使用（用户表单的「部门」、角色的「分配数据权限」）。
+ * 仅要求登录，只下发 id + 名称 + 禁用态。
+ *
+ * 停用的部门带 `disabled: true` 而不是被滤掉——直接滤掉的话，已在该部门下的用户
+ * 一打开编辑表单，部门就显示为空，看起来像"这个人没有部门"，保存一次就真没了。
+ */
+export async function getDeptOptionsApi() {
+  return getSystemApiClient().get<OptionItem[]>('/system/dept/options');
 }
 
 export async function createDeptApi(data: SysDept) {
@@ -191,16 +255,38 @@ export async function deleteDictTypeApi(id: number) {
 
 // ------------------------------------------------------------------- 字典数据
 
+export interface DictDataQuery extends PageQuery {
+  /** 字典项标签，右模糊。 */
+  dictLabel?: string;
+  /** 字典项归属的类型，**精确匹配**（它是归属键，不是搜索词）。 */
+  dictType?: string;
+}
+
 /**
- * 未按 `dictType` 做服务端过滤——后端 `SysDictDataController` 未覆写
- * `buildListWrapper`。调用方传大 `size` 整批拉取后自行按 `dictType` 客户端过滤。
+ * 字典项分页列表，供字典管理页使用。
+ *
+ * 服务端按 `dictType` 精确过滤。此前后端没覆写 `buildListWrapper`，调用方只能传
+ * `size: 500` 整批拉回来再在浏览器里筛——那是把分页接口当全量接口使，
+ * 全库字典项超过 500 条就开始静默丢数据。别再那样写。
  */
-export async function getDictDataListApi(params: PageQuery) {
+export async function getDictDataListApi(params: DictDataQuery) {
   return getSystemApiClient().get<PageResult<SysDictData>>(
     '/system/dict/data',
     {
       params,
     },
+  );
+}
+
+/**
+ * 按字典类型取全部启用中的字典项，供业务表单的下拉框使用。仅要求登录。
+ *
+ * 这是框架里最早的「引用数据」端点，本约定的先例。形状比通用 `OptionItem` 宽
+ * （字典项自带 `dictValue` 等语义），所以保持返回实体而不强行收敛。
+ */
+export async function getDictDataByTypeApi(dictType: string) {
+  return getSystemApiClient().get<SysDictData[]>(
+    `/system/dict/data/type/${dictType}`,
   );
 }
 

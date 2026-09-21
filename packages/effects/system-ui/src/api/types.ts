@@ -30,6 +30,33 @@ export interface PageQuery {
   size?: number;
 }
 
+/**
+ * 后端 `OptionItem`：跨模块引用数据的标准形状，供下拉框与树选择器使用。
+ *
+ * 用它取代「调别的模块的分页列表接口填下拉框」，一次解掉两个问题：
+ * - **分页截断**：`?current=1&size=200` 是把分页接口当全量接口使，超出就静默丢数据，
+ *   且调大参数也没用（后端 `PageQuery.MAX_SIZE` 在入口夹紧）。选项接口不分页。
+ * - **授权不闭环**：`/options` 只要求登录、不挂权限点，因此「只授用户管理」的角色
+ *   也能填出角色与部门下拉，而侧边栏不会多出别的模块的入口。
+ *
+ * 约定与分档见 CLAUDE.md 4.11。
+ *
+ * `value` 是字符串而不是数字：后端把所有 `Long` 序列化为字符串（雪花 ID 有 19 位，
+ * 超过 JS 的 `Number.MAX_SAFE_INTEGER`，用数字会被 `JSON.parse` 静默舍入末几位）。
+ * 因此绑定它的 `node-key`、合成的顶层节点也要用字符串（写 `'0'` 而不是 `0`）——
+ * ElTreeSelect 的 v-model 按严格相等匹配，类型不一致的症状是"选了没反应"。
+ *
+ * 平铺与树是同一个形状：`children` 只在树形数据里出现。
+ */
+export interface OptionItem {
+  /** 仅树形数据下发；平铺选项没有这个字段。 */
+  children?: OptionItem[];
+  /** 停用项：仍然下发（否则编辑时回显为空），但不可选。 */
+  disabled?: boolean;
+  label: string;
+  value: string;
+}
+
 export interface SysUser extends AuditFields {
   deptId?: null | number;
   /** 非持久化字段，由后端联表带出，不要提交回去。 */

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { SysDept, SysRole, SysUser } from '../../api';
+import type { OptionItem, SysUser } from '../../api';
 import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { onMounted, reactive, ref } from 'vue';
@@ -29,8 +29,8 @@ import {
   assignUserRolesApi,
   createUserApi,
   deleteUserApi,
-  getDeptTreeApi,
-  getRoleListApi,
+  getDeptOptionsApi,
+  getRoleOptionsApi,
   getUserListApi,
   getUserRolesApi,
   resetUserPasswordApi,
@@ -108,7 +108,10 @@ const { SearchFormBar } = useSearchForm({
   },
 });
 
-const deptTree = ref<SysDept[]>([]);
+// 部门与角色都取「选项」接口而不是对方模块的列表/树接口：后者要 system:dept:list /
+// system:role:list，于是只授「用户管理」的角色会 403，补授又会让侧边栏多出别的模块入口。
+// 选项接口只要求登录，且不分页——详见 CLAUDE.md 4.11。
+const deptTree = ref<OptionItem[]>([]);
 
 const formVisible = ref(false);
 const submitting = ref(false);
@@ -144,7 +147,7 @@ const newPassword = ref('');
 
 const roleVisible = ref(false);
 const roleUserId = ref<null | number>(null);
-const allRoles = ref<SysRole[]>([]);
+const allRoles = ref<OptionItem[]>([]);
 const checkedRoleIds = ref<number[]>([]);
 
 async function load() {
@@ -276,11 +279,11 @@ async function submitResetPassword() {
 
 async function openAssignRole(row: SysUser) {
   roleUserId.value = row.id ?? null;
-  const [list, owned] = await Promise.all([
-    getRoleListApi({ current: 1, size: 200 }),
+  const [options, owned] = await Promise.all([
+    getRoleOptionsApi(),
     getUserRolesApi(row.id as number),
   ]);
-  allRoles.value = list.records;
+  allRoles.value = options;
   checkedRoleIds.value = owned;
   roleVisible.value = true;
 }
@@ -300,17 +303,13 @@ async function submitAssignRole() {
 }
 
 onMounted(async () => {
-  // 角色列表供「新增用户」表单的角色下拉使用，先取一次，免得点开弹窗时是空的。
-  // 单独 try：读角色要 system:role:list，只有建号权限的账号会拿到 403，
-  // 那不该连带把用户列表也一起打掉——所以不放进下面那个 Promise。
+  // 角色与部门都走只要求登录的选项接口，不会再因为缺少别的模块的 :list 权限而 403，
+  // 所以这里不再需要那段「单独 try 吞掉角色 403」的绕行代码——留着它只会掩盖真实故障。
   try {
-    const roleList = await getRoleListApi({ current: 1, size: 200 });
-    allRoles.value = roleList.records;
-  } catch {
-    // 拿不到就让下拉留空，建号后仍可通过「分配角色」补授权。
-  }
-  try {
-    deptTree.value = await getDeptTreeApi();
+    [allRoles.value, deptTree.value] = await Promise.all([
+      getRoleOptionsApi(),
+      getDeptOptionsApi(),
+    ]);
     await load();
   } catch {
     // 已经由请求层的全局拦截器处理（弹出提示、401 时跳转登录页），这里只需要
@@ -446,8 +445,12 @@ onMounted(async () => {
           <ElTreeSelect
             v-model="form.deptId"
             :data="deptTree"
-            :props="{ children: 'children', label: 'deptName' }"
-            node-key="id"
+            :props="{
+              children: 'children',
+              label: 'label',
+              disabled: 'disabled',
+            }"
+            node-key="value"
             check-strictly
             clearable
             data-testid="user-dept-id-input"
@@ -464,9 +467,9 @@ onMounted(async () => {
           >
             <ElOption
               v-for="role in allRoles"
-              :key="role.id"
-              :label="role.roleName"
-              :value="role.id as number"
+              :key="role.value"
+              :label="role.label"
+              :value="role.value"
             />
           </ElSelect>
         </ElFormItem>
@@ -536,9 +539,9 @@ onMounted(async () => {
       <ElCheckboxGroup v-model="checkedRoleIds" data-testid="user-role-group">
         <ElCheckbox
           v-for="role in allRoles"
-          :key="role.id"
-          :value="role.id"
-          :label="role.roleName"
+          :key="role.value"
+          :value="role.value"
+          :label="role.label"
         />
       </ElCheckboxGroup>
       <template #footer>
