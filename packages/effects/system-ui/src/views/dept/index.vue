@@ -4,6 +4,7 @@ import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { computed, onMounted, reactive, ref } from 'vue';
 
+import { usePermission } from '@describeadmin/access';
 import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
 
@@ -30,6 +31,9 @@ import {
 import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemDept' });
+
+/** 按钮级权限（CLAUDE.md 4.5.3）。前缀须与 seed-rbac.sql 登记的 perm_code 一致。 */
+const { can, canAny } = usePermission('system:dept');
 
 const loading = ref(false);
 const tree = ref<SysDept[]>([]);
@@ -243,6 +247,7 @@ onMounted(async () => {
     <!-- 部门树由框架的 framework-system-starter 提供，业务方无需实现——实现说明，不面向最终用户。 -->
     <template #extra>
       <ElButton
+        v-if="can('add')"
         type="primary"
         data-testid="dept-add-btn"
         @click="openCreate(0)"
@@ -270,9 +275,15 @@ onMounted(async () => {
           {{ row.status === 1 ? '启用' : '停用' }}
         </template>
       </ElTableColumn>
-      <ElTableColumn label="操作" width="220" fixed="right">
+      <ElTableColumn
+        v-if="canAny('add', 'edit', 'remove')"
+        label="操作"
+        width="220"
+        fixed="right"
+      >
         <template #default="{ row }">
           <ElButton
+            v-if="can('add')"
             link
             type="primary"
             data-testid="dept-add-child-btn"
@@ -281,6 +292,7 @@ onMounted(async () => {
             新增下级
           </ElButton>
           <ElButton
+            v-if="can('edit')"
             link
             type="primary"
             data-testid="dept-edit-btn"
@@ -289,6 +301,7 @@ onMounted(async () => {
             编辑
           </ElButton>
           <ElButton
+            v-if="can('remove')"
             link
             type="danger"
             data-testid="dept-delete-btn"

@@ -4,6 +4,7 @@ import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { onMounted, reactive, ref } from 'vue';
 
+import { usePermission } from '@describeadmin/access';
 import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
 
@@ -39,6 +40,9 @@ import {
 import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemUser' });
+
+/** 按钮级权限（CLAUDE.md 4.5.3）。前缀须与 seed-rbac.sql 登记的 perm_code 一致。 */
+const { can, canAny } = usePermission('system:user');
 
 const loading = ref(false);
 const rows = ref<SysUser[]>([]);
@@ -322,7 +326,12 @@ onMounted(async () => {
   <Page title="用户管理">
     <!-- 用户体系由框架的 framework-system-starter 提供，业务方无需实现——这是给开发者看的实现说明，不面向最终用户，故不放进 Page 的 description。 -->
     <template #extra>
-      <ElButton type="primary" data-testid="user-add-btn" @click="openCreate">
+      <ElButton
+        v-if="can('add')"
+        type="primary"
+        data-testid="user-add-btn"
+        @click="openCreate"
+      >
         新增
       </ElButton>
     </template>
@@ -344,9 +353,15 @@ onMounted(async () => {
         </template>
       </ElTableColumn>
       <ElTableColumn prop="createTime" label="创建时间" min-width="180" />
-      <ElTableColumn label="操作" width="320" fixed="right">
+      <ElTableColumn
+        v-if="canAny('assign-role', 'reset-password', 'edit', 'remove')"
+        label="操作"
+        width="320"
+        fixed="right"
+      >
         <template #default="{ row }">
           <ElButton
+            v-if="can('assign-role')"
             link
             type="primary"
             data-testid="user-assign-role-btn"
@@ -355,6 +370,7 @@ onMounted(async () => {
             分配角色
           </ElButton>
           <ElButton
+            v-if="can('reset-password')"
             link
             type="primary"
             data-testid="user-reset-password-btn"
@@ -363,6 +379,7 @@ onMounted(async () => {
             重置密码
           </ElButton>
           <ElButton
+            v-if="can('edit')"
             link
             type="primary"
             data-testid="user-edit-btn"
@@ -371,6 +388,7 @@ onMounted(async () => {
             编辑
           </ElButton>
           <ElButton
+            v-if="can('remove')"
             link
             type="danger"
             data-testid="user-delete-btn"

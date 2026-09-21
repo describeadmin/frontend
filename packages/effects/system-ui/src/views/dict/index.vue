@@ -4,6 +4,7 @@ import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { onMounted, reactive, ref } from 'vue';
 
+import { usePermission } from '@describeadmin/access';
 import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
 
@@ -34,6 +35,9 @@ import {
 import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemDict' });
+
+/** 按钮级权限（CLAUDE.md 4.5.3）。前缀须与 seed-rbac.sql 登记的 perm_code 一致。 */
+const { can, canAny } = usePermission('system:dict');
 
 /**
  * 表单模型刻意不直接用 `SysDictType`/`SysDictData`：实体字段大多可空
@@ -391,6 +395,7 @@ onMounted(async () => {
         <div class="mb-2 flex items-center justify-between">
           <span class="font-medium">字典类型</span>
           <ElButton
+            v-if="can('add')"
             type="primary"
             size="small"
             data-testid="dict-type-add-btn"
@@ -412,9 +417,15 @@ onMounted(async () => {
         >
           <ElTableColumn prop="dictName" label="字典名称" min-width="140" />
           <ElTableColumn prop="dictType" label="字典类型" min-width="140" />
-          <ElTableColumn label="操作" width="140" fixed="right">
+          <ElTableColumn
+            v-if="canAny('edit', 'remove')"
+            label="操作"
+            width="140"
+            fixed="right"
+          >
             <template #default="{ row }">
               <ElButton
+                v-if="can('edit')"
                 link
                 type="primary"
                 data-testid="dict-type-edit-btn"
@@ -423,6 +434,7 @@ onMounted(async () => {
                 编辑
               </ElButton>
               <ElButton
+                v-if="can('remove')"
                 link
                 type="danger"
                 data-testid="dict-type-delete-btn"
@@ -453,6 +465,7 @@ onMounted(async () => {
         <div class="mb-2 flex items-center justify-between">
           <span class="font-medium">字典数据</span>
           <ElButton
+            v-if="can('add')"
             type="primary"
             size="small"
             :disabled="selectedType === null"
@@ -482,9 +495,15 @@ onMounted(async () => {
               {{ row.status === 1 ? '启用' : '停用' }}
             </template>
           </ElTableColumn>
-          <ElTableColumn label="操作" width="140" fixed="right">
+          <ElTableColumn
+            v-if="canAny('edit', 'remove')"
+            label="操作"
+            width="140"
+            fixed="right"
+          >
             <template #default="{ row }">
               <ElButton
+                v-if="can('edit')"
                 link
                 type="primary"
                 data-testid="dict-data-edit-btn"
@@ -493,6 +512,7 @@ onMounted(async () => {
                 编辑
               </ElButton>
               <ElButton
+                v-if="can('remove')"
                 link
                 type="danger"
                 data-testid="dict-data-delete-btn"

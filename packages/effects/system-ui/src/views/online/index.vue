@@ -4,6 +4,7 @@ import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { onMounted, reactive, ref } from 'vue';
 
+import { usePermission } from '@describeadmin/access';
 import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
 
@@ -19,6 +20,9 @@ import { forceLogoutApi, getOnlineListApi } from '../../api';
 import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemOnline' });
+
+/** 按钮级权限（CLAUDE.md 4.5.3）。前缀须与 seed-rbac.sql 登记的 perm_code 一致。 */
+const { can } = usePermission('system:online');
 
 const loading = ref(false);
 const rows = ref<ActiveSession[]>([]);
@@ -129,7 +133,12 @@ onMounted(async () => {
       </ElTableColumn>
       <ElTableColumn prop="issuedAt" label="登录时间" min-width="170" />
       <ElTableColumn prop="expiresAt" label="过期时间" min-width="170" />
-      <ElTableColumn label="操作" width="110" fixed="right">
+      <ElTableColumn
+        v-if="can('remove')"
+        label="操作"
+        width="110"
+        fixed="right"
+      >
         <template #default="{ row }">
           <ElButton
             link

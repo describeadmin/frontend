@@ -6,6 +6,7 @@ import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 
+import { usePermission } from '@describeadmin/access';
 import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
 
@@ -44,6 +45,9 @@ import { cascadeCheck } from '../../composables/useGrantTree';
 import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemRole' });
+
+/** 按钮级权限（CLAUDE.md 4.5.3）。前缀须与 seed-rbac.sql 登记的 perm_code 一致。 */
+const { can, canAny } = usePermission('system:role');
 
 /** DataScopeType.CUSTOM 的 code，见后端 DataScopeType 枚举。 */
 const DATA_SCOPE_CUSTOM = 2;
@@ -408,7 +412,12 @@ onMounted(async () => {
   <Page title="角色管理">
     <!-- 角色与菜单授权由框架的 framework-system-starter 提供——实现说明，不面向最终用户。 -->
     <template #extra>
-      <ElButton type="primary" data-testid="role-add-btn" @click="openCreate">
+      <ElButton
+        v-if="can('add')"
+        type="primary"
+        data-testid="role-add-btn"
+        @click="openCreate"
+      >
         新增
       </ElButton>
     </template>
@@ -433,9 +442,15 @@ onMounted(async () => {
       </ElTableColumn>
       <ElTableColumn prop="sort" label="排序" width="80" />
       <ElTableColumn prop="createTime" label="创建时间" min-width="180" />
-      <ElTableColumn label="操作" width="320" fixed="right">
+      <ElTableColumn
+        v-if="canAny('assign-menu', 'assign-dept', 'edit', 'remove')"
+        label="操作"
+        width="320"
+        fixed="right"
+      >
         <template #default="{ row }">
           <ElButton
+            v-if="can('assign-menu')"
             link
             type="primary"
             data-testid="role-assign-menu-btn"
@@ -443,7 +458,10 @@ onMounted(async () => {
           >
             分配菜单
           </ElButton>
+          <!-- v-if 挂在 ElTooltip 上而不是里面的 ElButton：无权限时连提示一起摘掉，
+               否则会留下一个能 hover 出气泡、却没有按钮的空壳。 -->
           <ElTooltip
+            v-if="can('assign-dept')"
             :disabled="row.dataScope === DATA_SCOPE_CUSTOM"
             content="仅数据范围为「自定义部门」的角色可分配"
           >
@@ -458,6 +476,7 @@ onMounted(async () => {
             </ElButton>
           </ElTooltip>
           <ElButton
+            v-if="can('edit')"
             link
             type="primary"
             data-testid="role-edit-btn"
@@ -466,6 +485,7 @@ onMounted(async () => {
             编辑
           </ElButton>
           <ElButton
+            v-if="can('remove')"
             link
             type="danger"
             data-testid="role-delete-btn"

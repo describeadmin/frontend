@@ -3,6 +3,7 @@ import type { MenuType, SysMenu } from '../../api';
 
 import { computed, onMounted, reactive, ref } from 'vue';
 
+import { usePermission } from '@describeadmin/access';
 import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { IconPicker, Page, VbenIcon } from '@describeadmin/ui';
 
@@ -31,6 +32,9 @@ import {
 } from '../../api';
 
 defineOptions({ name: 'SystemMenu' });
+
+/** 按钮级权限（CLAUDE.md 4.5.3）。前缀须与 seed-rbac.sql 登记的 perm_code 一致。 */
+const { can, canAny } = usePermission('system:menu');
 
 const loading = ref(false);
 const tree = ref<SysMenu[]>([]);
@@ -243,6 +247,7 @@ onMounted(async () => {
         {{ expanded ? '收起全部' : '展开全部' }}
       </ElButton>
       <ElButton
+        v-if="can('add')"
         type="primary"
         data-testid="menu-add-btn"
         @click="openCreate(0)"
@@ -302,9 +307,15 @@ onMounted(async () => {
         </template>
       </ElTableColumn>
       <ElTableColumn prop="sort" label="排序" width="80" />
-      <ElTableColumn label="操作" width="220" fixed="right">
+      <ElTableColumn
+        v-if="canAny('add', 'edit', 'remove')"
+        label="操作"
+        width="220"
+        fixed="right"
+      >
         <template #default="{ row }">
           <ElButton
+            v-if="can('add')"
             link
             type="primary"
             data-testid="menu-add-child-btn"
@@ -313,6 +324,7 @@ onMounted(async () => {
             新增下级
           </ElButton>
           <ElButton
+            v-if="can('edit')"
             link
             type="primary"
             data-testid="menu-edit-btn"
@@ -321,6 +333,7 @@ onMounted(async () => {
             编辑
           </ElButton>
           <ElButton
+            v-if="can('remove')"
             link
             type="danger"
             data-testid="menu-delete-btn"

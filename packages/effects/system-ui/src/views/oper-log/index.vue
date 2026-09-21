@@ -4,6 +4,7 @@ import type { SearchFormSchema } from '../../composables/useSearchForm';
 
 import { onMounted, reactive, ref } from 'vue';
 
+import { usePermission } from '@describeadmin/access';
 import { ConfirmDialog } from '@describeadmin/ele-ui';
 import { Page } from '@describeadmin/ui';
 
@@ -24,6 +25,9 @@ import {
 import { useSearchForm } from '../../composables/useSearchForm';
 
 defineOptions({ name: 'SystemOperLog' });
+
+/** 按钮级权限（CLAUDE.md 4.5.3）。前缀须与 seed-rbac.sql 登记的 perm_code 一致。 */
+const { can } = usePermission('system:oper-log');
 
 const loading = ref(false);
 const rows = ref<SysOperLog[]>([]);
@@ -189,6 +193,7 @@ onMounted(async () => {
     <!-- 操作日志由框架的 framework-system-starter 提供，BaseController+ 的写操作与 @OperLog 标注端点自动记录——实现说明，不面向最终用户。 -->
     <template #extra>
       <ElButton
+        v-if="can('remove')"
         type="danger"
         plain
         data-testid="oper-log-clean-btn"
@@ -219,7 +224,12 @@ onMounted(async () => {
       </ElTableColumn>
       <ElTableColumn prop="costTime" label="耗时(ms)" width="100" />
       <ElTableColumn prop="createTime" label="操作时间" min-width="180" />
-      <ElTableColumn label="操作" width="100" fixed="right">
+      <ElTableColumn
+        v-if="can('remove')"
+        label="操作"
+        width="100"
+        fixed="right"
+      >
         <template #default="{ row }">
           <ElButton
             link

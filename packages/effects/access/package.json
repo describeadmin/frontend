@@ -45,6 +45,7 @@
     "vue": "catalog:"
   },
   "devDependencies": {
+    "pinia": "catalog:",
     "unplugin-vue": "catalog:"
   }
 }
