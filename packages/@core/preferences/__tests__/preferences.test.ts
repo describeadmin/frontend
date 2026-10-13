@@ -107,6 +107,59 @@ describe('preferences', () => {
     expect(preferenceManager.getPreferences().sidebar.width).toBe(999);
   });
 
+  it('ignores cached deployment-owned fields so overrides always win', async () => {
+    const namespace = 'deployNamespace';
+    vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
+      if (key === `${namespace}-preferences`) {
+        return JSON.stringify({
+          value: {
+            app: {
+              defaultHomePath: '/old-home',
+              layout: 'header-nav',
+              name: 'Old Name',
+            },
+            logo: { source: '/old-logo.svg' },
+            theme: { mode: 'dark' },
+          },
+        });
+      }
+      return null;
+    });
+
+    await preferenceManager.initPreferences({
+      namespace,
+      overrides: {
+        app: { defaultHomePath: '/new-home', name: 'New Name' },
+        logo: { source: '/new-logo.svg' },
+      } as any,
+    });
+
+    const preferences = preferenceManager.getPreferences();
+    // 部署方字段：缓存里的旧值不得生效
+    expect(preferences.app.name).toBe('New Name');
+    expect(preferences.app.defaultHomePath).toBe('/new-home');
+    expect(preferences.logo.source).toBe('/new-logo.svg');
+    // 同一份缓存里的用户选择照常恢复
+    expect(preferences.app.layout).toBe('header-nav');
+    expect(preferences.theme.mode).toBe('dark');
+  });
+
+  it('falls back to defaults for deployment-owned fields absent from overrides', async () => {
+    const namespace = 'deployDefaultNamespace';
+    vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
+      if (key === `${namespace}-preferences`) {
+        return JSON.stringify({ value: { app: { name: 'Stale Name' } } });
+      }
+      return null;
+    });
+
+    await preferenceManager.initPreferences({ namespace, overrides: {} });
+
+    expect(preferenceManager.getPreferences().app.name).toBe(
+      defaultPreferences.app.name,
+    );
+  });
+
   it('updates theme mode correctly', () => {
     preferenceManager.updatePreferences({
       theme: {

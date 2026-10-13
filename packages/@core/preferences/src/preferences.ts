@@ -32,6 +32,31 @@ const STORAGE_KEYS = {
   THEME: 'preferences-theme',
 } as const;
 
+/**
+ * 由部署方决定、用户无从修改的字段：读缓存时一律丢弃，始终以 overrides / 默认值为准。
+ *
+ * 缓存优先是为了保住用户在偏好设置抽屉等界面里的选择；但整份 state 都会落进
+ * localStorage，没有任何界面能写的字段也被冻结在首次访问时的值——部署方改了
+ * VITE_APP_TITLE、logo 或首页路径，老用户永远看不到，且不 bump 版本号就无解。
+ *
+ * 判据：全仓找不到任何 updatePreferences 写入它。新增界面可写某字段时，从这里移除；
+ * 新增纯部署配置字段时，加进来。
+ */
+const DEPLOYMENT_OWNED_APP_KEYS = [
+  'checkUpdatesInterval',
+  'defaultAvatar',
+  'defaultHomePath',
+  'enablePreferences',
+  'enableRefreshToken',
+  'loginExpiredMode',
+  'name',
+  'zIndex',
+] as const satisfies readonly (keyof Preferences['app'])[];
+
+const DEPLOYMENT_OWNED_SECTIONS = [
+  'logo',
+] as const satisfies readonly (keyof Preferences)[];
+
 class PreferenceManager {
   private cache: StorageManager;
   private customPreferencesExtension: null | PreferencesExtension<any> = null;
@@ -144,7 +169,10 @@ class PreferenceManager {
     // 下方 custom 偏好的合并顺序与此一致（缓存在前）。
     // 代码里改了 overridesPreferences 默认值却想让老用户生效时，bump VITE_APP_VERSION
     // 即可——namespace 带版本号，换版本等于换 key，旧缓存自然失效。
-    const cachedPreferences = (await this.loadFromCache()) || {};
+    // 部署方字段（应用名、logo、首页路径等）不受此限，见 DEPLOYMENT_OWNED_APP_KEYS。
+    const cachedPreferences = this.omitDeploymentOwned(
+      (await this.loadFromCache()) || {},
+    );
     const mergedPreference = merge(
       {},
       cachedPreferences,
@@ -342,6 +370,26 @@ class PreferenceManager {
    */
   private async loadFromCache(): Promise<null | Preferences> {
     return this.cache.getItem<Preferences>(STORAGE_KEYS.MAIN);
+  }
+
+  private omitDeploymentOwned(
+    cached: DeepPartial<Preferences>,
+  ): DeepPartial<Preferences> {
+    const result: DeepPartial<Preferences> = { ...cached };
+
+    for (const section of DEPLOYMENT_OWNED_SECTIONS) {
+      Reflect.deleteProperty(result, section);
+    }
+
+    if (result.app) {
+      const app = { ...result.app };
+      for (const key of DEPLOYMENT_OWNED_APP_KEYS) {
+        Reflect.deleteProperty(app, key);
+      }
+      result.app = app;
+    }
+
+    return result;
   }
 
   private replaceCustomPreferences(preferences: CustomPreferencesRecord) {
