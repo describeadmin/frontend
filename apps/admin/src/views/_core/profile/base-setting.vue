@@ -1,15 +1,25 @@
 <script setup lang="ts">
 import type { VbenFormSchema } from '#/adapter/form';
 
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
+import { useUserStore } from '@describeadmin/stores';
+import { AvatarPicker, avatarUrl } from '@describeadmin/system-ui';
 import { ProfileBaseSetting, z } from '@describeadmin/ui';
 
 import { ElMessage } from 'element-plus';
 
-import { getOwnProfileApi, updateOwnProfileApi } from '#/api';
+import {
+  getOwnProfileApi,
+  removeOwnAvatarApi,
+  updateOwnProfileApi,
+  uploadOwnAvatarApi,
+} from '#/api';
 
 const profileBaseSettingRef = ref();
+const userStore = useUserStore();
+
+const avatarSrc = computed(() => userStore.userInfo?.avatar ?? '');
 
 // 用户名/角色不接受在个人中心修改：用户名做只读展示（disabled），角色干脆不放进表单。
 const formSchema: VbenFormSchema[] = [
@@ -62,13 +72,38 @@ const formSchema: VbenFormSchema[] = [
   },
 ];
 
+/**
+ * 把改动同步进 userStore，顶栏的名字、邮箱、头像立刻跟着变。
+ * 刷新页面后由 `/auth/me` 的 profile（实时读库）兜底，不会退回旧值。
+ */
+function patchUserInfo(patch: {
+  avatar?: string;
+  email?: string;
+  realName?: string;
+}) {
+  const info = userStore.userInfo;
+  if (info) {
+    userStore.setUserInfo({ ...info, ...patch });
+  }
+}
+
 async function handleSubmit(values: Record<string, any>) {
   await updateOwnProfileApi({
     email: values.email,
     mobile: values.mobile,
     nickname: values.nickname,
   });
+  patchUserInfo({ email: values.email ?? '', realName: values.nickname });
   ElMessage.success('保存成功');
+}
+
+async function uploadAvatar(file: File) {
+  patchUserInfo({ avatar: avatarUrl(await uploadOwnAvatarApi(file)) });
+}
+
+async function removeAvatar() {
+  await removeOwnAvatarApi();
+  patchUserInfo({ avatar: '' });
 }
 
 onMounted(async () => {
@@ -77,6 +112,16 @@ onMounted(async () => {
 });
 </script>
 <template>
+  <div class="mb-6">
+    <AvatarPicker
+      :src="avatarSrc"
+      :text="userStore.userInfo?.realName"
+      :upload="uploadAvatar"
+      :remove="removeAvatar"
+      :size="80"
+      testid="profile"
+    />
+  </div>
   <ProfileBaseSetting
     ref="profileBaseSettingRef"
     :form-schema="formSchema"

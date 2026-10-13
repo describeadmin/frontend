@@ -122,8 +122,9 @@ const menus = computed(() => [
   },
 ]);
 
+// 用 || 不用 ??：没有头像时 toUserInfo 给的是空串，?? 拦不住，默认头像就不生效
 const avatar = computed(() => {
-  return userStore.userInfo?.avatar ?? preferences.app.defaultAvatar;
+  return userStore.userInfo?.avatar || preferences.app.defaultAvatar;
 });
 
 async function handleLogout() {
@@ -223,8 +224,7 @@ watch(
         :avatar
         :menus
         :text="userStore.userInfo?.realName"
-        description="ann.vben@gmail.com"
-        tag-text="Pro"
+        :description="userStore.userInfo?.email"
         @logout="handleLogout"
         @clear-preferences-and-logout="handleLogout"
       />

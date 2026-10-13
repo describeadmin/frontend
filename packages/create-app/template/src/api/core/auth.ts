@@ -3,6 +3,8 @@ import type {
   UserInfo,
 } from '@describeadmin/types';
 
+import { avatarUrl } from '@describeadmin/system-ui';
+
 import { authLifecycleRequestClient, requestClient } from '#/api/request';
 
 export namespace AuthApi {
@@ -52,8 +54,14 @@ export namespace AuthApi {
     authType: string;
     /** 按角色合并出的默认首页路径，未设置时为 null，由前端落回全局 defaultHomePath。 */
     homePath?: null | string;
+    /** 登录时定格在令牌里的快照，自助改了姓名也不会变——显示用 {@link MeProfile.nickname}。 */
     nickname: string;
     permissions: string[];
+    /**
+     * 只有 `GET /auth/me` 带，登录响应里的 `user` 没有。每次请求实时读库；
+     * 业务方自己提供 `AuthUserLoader`、用户不在 `sys_user` 里时为 null。
+     */
+    profile?: MeProfile | null;
     /**
      * 是否要求先强制修改密码：管理员建号 / 重置密码后为 true，或密码已过
      * `sys.password.max-age-days` 设定的有效期。为 true 时前端只能进强制改密页，
@@ -64,6 +72,14 @@ export namespace AuthApi {
     /** 后端把 Long 序列化成字符串，避免雪花 ID 被 JS 舍入。 */
     userId: string;
     username: string;
+  }
+
+  /** `GET /auth/me` 里实时读库的那部分资料，见后端 `AuthController.MeView`。 */
+  export interface MeProfile {
+    /** 头像的对象键，不是 URL——用 `avatarUrl()` 转换。 */
+    avatar?: null | string;
+    email?: null | string;
+    nickname?: null | string;
   }
 
   /** Vben 内核期望的登录返回结构。 */
@@ -174,13 +190,21 @@ export async function getMeApi() {
   return requestClient.get<AuthApi.BackendLoginUser>('/auth/me');
 }
 
-/** 把后端的 `LoginUser` 映射成 Vben 内核认的 `UserInfo`。 */
+/**
+ * 把后端的 `LoginUser` 映射成 Vben 内核认的 `UserInfo`。
+ *
+ * 姓名、邮箱、头像优先取 `profile`（实时读库），没有时才回落到令牌快照——
+ * 否则自助改了姓名，刷新页面后顶栏还是旧名字，要重新登录才变。
+ * 没有头像时 `avatar` 为空串，显示处用 `||` 回落到默认头像（`??` 拦不住空串）。
+ */
 export function toUserInfo(user: AuthApi.BackendLoginUser): UserInfo {
+  const profile = user.profile;
   return {
-    avatar: '',
+    avatar: avatarUrl(profile?.avatar),
     desc: user.authType,
+    email: profile?.email ?? '',
     homePath: user.homePath ?? '',
-    realName: user.nickname || user.username,
+    realName: profile?.nickname || user.nickname || user.username,
     roles: user.roles ?? [],
     token: '',
     userId: String(user.userId),
@@ -231,6 +255,20 @@ export async function updateOwnProfileApi(data: {
   nickname: string;
 }) {
   return requestClient.put('/auth/profile', data);
+}
+
+/**
+ * 自助换头像，返回新的对象键。传入的文件应先经过 `compressAvatar()`。
+ *
+ * 用 `requestClient.upload`，自动带上令牌；读取端点则免登录，见 `avatarUrl()`。
+ */
+export async function uploadOwnAvatarApi(file: File) {
+  return requestClient.upload<string>('/auth/avatar', { file });
+}
+
+/** 自助移除头像。 */
+export async function removeOwnAvatarApi() {
+  return requestClient.delete('/auth/avatar');
 }
 
 /**

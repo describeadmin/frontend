@@ -79,6 +79,20 @@ export async function assignUserRolesApi(id: number, roleIds: number[]) {
   return getSystemApiClient().put(`/system/user/${id}/roles`, roleIds);
 }
 
+/**
+ * 给用户换头像（管理员代设），返回新的对象键。权限点 `system:user:edit`，
+ * 目标用户须在操作者的数据权限范围内。传入的文件应先经过 `compressAvatar()`。
+ */
+export async function uploadUserAvatarApi(id: number, file: File) {
+  return getSystemApiClient().upload<string>(`/system/user/${id}/avatar`, {
+    file,
+  });
+}
+
+export async function removeUserAvatarApi(id: number) {
+  return getSystemApiClient().delete(`/system/user/${id}/avatar`);
+}
+
 // --------------------------------------------------------------------- 角色
 
 export interface RoleQuery extends PageQuery {

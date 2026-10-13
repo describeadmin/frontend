@@ -6,9 +6,11 @@ import { onMounted, reactive, ref } from 'vue';
 
 import { usePermission } from '@describeadmin/access';
 import { ConfirmDialog } from '@describeadmin/ele-ui';
+import { useUserStore } from '@describeadmin/stores';
 import { Page } from '@describeadmin/ui';
 
 import {
+  ElAvatar,
   ElButton,
   ElCheckbox,
   ElCheckboxGroup,
@@ -34,15 +36,20 @@ import {
   getRoleOptionsApi,
   getUserListApi,
   getUserRolesApi,
+  removeUserAvatarApi,
   resetUserPasswordApi,
   updateUserApi,
+  uploadUserAvatarApi,
 } from '../../api';
+import AvatarPicker from '../../components/AvatarPicker.vue';
 import { useSearchForm } from '../../composables/useSearchForm';
+import { avatarUrl } from '../../utils/avatar';
 
 defineOptions({ name: 'SystemUser' });
 
 /** 按钮级权限（CLAUDE.md 4.5.3）。前缀须与 seed-rbac.sql 登记的 perm_code 一致。 */
 const { can, canAny } = usePermission('system:user');
+const userStore = useUserStore();
 
 const loading = ref(false);
 const rows = ref<SysUser[]>([]);
@@ -120,6 +127,8 @@ const deptTree = ref<OptionItem[]>([]);
 const formVisible = ref(false);
 const submitting = ref(false);
 const editingId = ref<null | number>(null);
+/** 编辑弹窗里的头像对象键。头像不走表单提交，选好图就直接调头像端点，见 uploadAvatar。 */
+const editingAvatar = ref<null | string>(null);
 const formRef = ref();
 
 const form = reactive({
@@ -189,6 +198,7 @@ function openCreate() {
 
 function openEdit(row: SysUser) {
   editingId.value = row.id ?? null;
+  editingAvatar.value = row.avatar ?? null;
   Object.assign(form, {
     deptId: row.deptId ?? undefined,
     email: row.email ?? '',
@@ -237,6 +247,34 @@ async function submit() {
     await load();
   } finally {
     submitting.value = false;
+  }
+}
+
+/**
+ * 头像单独提交，不并进「确定」：后端写头像不递增版本号（avatar 列通用编辑写不进去，
+ * 两条写入路径不重叠），所以换完头像再点「确定」不会撞乐观锁，form.version 不用刷新。
+ */
+async function uploadAvatar(file: File) {
+  const id = editingId.value as number;
+  applyAvatar(id, await uploadUserAvatarApi(id, file));
+}
+
+async function removeAvatar() {
+  const id = editingId.value as number;
+  await removeUserAvatarApi(id);
+  applyAvatar(id, null);
+}
+
+function applyAvatar(id: number, key: null | string) {
+  editingAvatar.value = key;
+  const row = rows.value.find((r) => r.id === id);
+  if (row) {
+    row.avatar = key;
+  }
+  // 管理员改的是自己：顶栏头像跟着变，不必等下次刷新页面
+  const info = userStore.userInfo;
+  if (info && info.userId === String(id)) {
+    userStore.setUserInfo({ ...info, avatar: avatarUrl(key) });
   }
 }
 
@@ -344,6 +382,13 @@ onMounted(async () => {
       row-key="id"
       data-testid="user-table"
     >
+      <ElTableColumn label="头像" width="70">
+        <template #default="{ row }">
+          <ElAvatar :size="32" :src="avatarUrl(row.avatar) || undefined">
+            {{ (row.nickname || row.username || '').charAt(0) }}
+          </ElAvatar>
+        </template>
+      </ElTableColumn>
       <ElTableColumn prop="username" label="用户名" min-width="140" />
       <ElTableColumn prop="nickname" label="昵称" min-width="140" />
       <ElTableColumn prop="deptName" label="部门" min-width="140" />
@@ -421,6 +466,16 @@ onMounted(async () => {
       data-testid="user-form-dialog"
     >
       <ElForm ref="formRef" :model="form" :rules="rules" label-width="90px">
+        <!-- 新增时不放：用户还不存在，没有可挂的 id。建好后再编辑设置 -->
+        <ElFormItem v-if="editingId !== null" label="头像">
+          <AvatarPicker
+            :src="avatarUrl(editingAvatar)"
+            :text="form.nickname || form.username"
+            :upload="uploadAvatar"
+            :remove="removeAvatar"
+            testid="user"
+          />
+        </ElFormItem>
         <ElFormItem label="用户名" prop="username">
           <ElInput
             v-model="form.username"

@@ -1,6 +1,8 @@
 import type { ComponentRecordType } from '@describeadmin/types';
 
 export * from './api';
+export { default as AvatarPicker } from './components/AvatarPicker.vue';
+export { AVATAR_SIZE, avatarUrl, compressAvatar } from './utils/avatar';
 
 /**
  * 系统管理页面组件的路由 key → 懒加载组件 映射。

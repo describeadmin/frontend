@@ -7,6 +7,10 @@ interface UserInfo extends BasicUserInfo {
    */
   desc: string;
   /**
+   * 邮箱，用户下拉菜单里显示。可能为空串
+   */
+  email?: string;
+  /**
    * 首页地址
    */
   homePath: string;

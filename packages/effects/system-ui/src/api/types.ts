@@ -58,6 +58,11 @@ export interface OptionItem {
 }
 
 export interface SysUser extends AuditFields {
+  /**
+   * 头像的对象键，不是 URL——用 `avatarUrl()` 转成地址。只读：后端是 `updateStrategy = NEVER` 列，
+   * 通用编辑端点提交了也不会生效，改头像走 {@link uploadUserAvatarApi}。
+   */
+  avatar?: null | string;
   deptId?: null | number;
   /** 非持久化字段，由后端联表带出，不要提交回去。 */
   deptName?: null | string;
