@@ -120,7 +120,10 @@ const handleItemClick = (item: NotificationItem) => {
                     <Bell class="size-4" />
                   </span>
                 </span>
-                <div class="flex flex-col gap-1 leading-none">
+                <!-- pr-10 给右侧绝对定位的操作按钮留位，否则长文本会压到按钮下面 -->
+                <div
+                  class="flex min-w-0 flex-1 flex-col gap-1 pr-10 leading-none"
+                >
                   <p class="font-semibold">{{ item.title }}</p>
                   <p class="my-1 line-clamp-2 text-xs text-muted-foreground">
                     {{ item.message }}
