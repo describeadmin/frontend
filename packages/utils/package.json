@@ -40,6 +40,7 @@
   "dependencies": {
     "@describeadmin/core-shared": "workspace:*",
     "@describeadmin/core-typings": "workspace:*",
+    "@noble/hashes": "catalog:",
     "vue-router": "catalog:"
   }
 }

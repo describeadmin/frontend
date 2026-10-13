@@ -15,6 +15,7 @@
   "captcha": "Captcha",
   "captchaTip": "Please enter the captcha",
   "captchaRefreshTip": "Can't read it? Click to refresh",
+  "captchaVerifying": "Verifying…",
   "rememberMe": "Remember Me",
   "createAnAccount": "Create an Account",
   "createAccount": "Create Account",

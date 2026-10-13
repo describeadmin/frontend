@@ -27,8 +27,12 @@ export namespace AuthApi {
   /**
    * 后端 `CaptchaChallenge` 的原样映射。
    *
-   * `type` 目前唯一取值 `"image"`；后端换成滑块/第三方验证码插件后这里的取值会变化，
-   * 前端应按 `type` 分支渲染，而不是假设永远是图片。
+   * `type` 由后端 `describeadmin.security.captcha.type` 决定，核心内置两种：
+   * - `"pow"`（默认）：`payload` 为 `{ algorithm, salt, challenge, maxNumber }`，
+   *   交给 `@describeadmin/utils` 的 `solvePow` 求解，答案作为 `captchaCode` 提交
+   * - `"image"`：`payload.image` 是 `data:image/png;base64,...`
+   *
+   * 后端换成滑块/第三方验证码插件后会出现别的取值，前端应按 `type` 分支渲染。
    */
   export interface CaptchaChallenge {
     captchaId: string;
@@ -112,7 +116,7 @@ export async function getAuthProvidersApi() {
  * 获取一次新的验证码挑战。
  *
  * 对应后端 `GET /api/auth/captcha`，免认证——登录之前显然还没有令牌。
- * `type="image"` 时 `payload.image` 是 `data:image/png;base64,...` 形式，可直接当 `<img src>` 用。
+ * 挑战一次性：提交过一次（无论对错）即作废，下次提交前要重新获取。
  */
 export async function getCaptchaApi() {
   return requestClient.get<AuthApi.CaptchaChallenge>('/auth/captcha');

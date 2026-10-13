@@ -3,7 +3,10 @@
  */
 import type { RequestClientOptions } from '@describeadmin/request';
 
-import { RESULT_CODE_UNAUTHORIZED } from '@describeadmin/constants';
+import {
+  RESULT_CODE_CAPTCHA_REQUIRED,
+  RESULT_CODE_UNAUTHORIZED,
+} from '@describeadmin/constants';
 import { useAppConfig } from '@describeadmin/hooks';
 import { preferences } from '@describeadmin/preferences';
 import {
@@ -139,6 +142,10 @@ function createRequestClient(
         // 当前mock接口返回的错误字段是 error 或者 message
         // 后端统一返回 Result：{ code, message, data, traceId }
         const responseData = error?.response?.data ?? {};
+        // "需要验证码"由登录页自己处理（PoW 自动求解重提 / 显示图形验证码输入框），这里不提示
+        if (responseData?.code === RESULT_CODE_CAPTCHA_REQUIRED) {
+          return;
+        }
         const errorMessage = responseData?.message ?? responseData?.error ?? '';
         // 如果没有错误信息，则会根据状态码进行提示
         ElMessage.error(errorMessage || msg);

@@ -24,6 +24,17 @@ export const NO_ACCESS_PATH = '/no-access';
  */
 export const RESULT_CODE_UNAUTHORIZED = 40_100;
 
+/**
+ * 后端"需要验证码"的业务错误码，对应 ResultCode.CAPTCHA_REQUIRED（40103）。
+ *
+ * 只由登录接口返回，且由登录页自己处理（PoW 自动求解重提 / 图形验证码显示输入框），
+ * 因此请求层的通用错误提示对它静默——否则 PoW 自动重提成功前会先闪一条"需要验证码"。
+ */
+export const RESULT_CODE_CAPTCHA_REQUIRED = 40_103;
+
+/** 后端"验证码错误或已过期"的业务错误码，对应 ResultCode.CAPTCHA_INVALID（40104）。 */
+export const RESULT_CODE_CAPTCHA_INVALID = 40_104;
+
 export interface LanguageOption {
   label: string;
   value: 'en-US' | 'zh-CN';
