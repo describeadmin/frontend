@@ -2,7 +2,7 @@
 import type { SysOperLog } from '../../api';
 import type { SearchFormSchema } from '../../composables/useSearchForm';
 
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import { usePermission } from '@describeadmin/access';
 import { ConfirmDialog } from '@describeadmin/ele-ui';
@@ -10,6 +10,9 @@ import { Page } from '@describeadmin/ui';
 
 import {
   ElButton,
+  ElDescriptions,
+  ElDescriptionsItem,
+  ElDialog,
   ElMessage,
   ElPagination,
   ElTable,
@@ -23,6 +26,7 @@ import {
   getOperLogListApi,
 } from '../../api';
 import { useSearchForm } from '../../composables/useSearchForm';
+import { prettyJson } from '../../utils/pretty-json';
 
 defineOptions({ name: 'SystemOperLog' });
 
@@ -127,6 +131,19 @@ const confirmVisible = ref(false);
 const deletingId = ref<null | number>(null);
 const cleanConfirmVisible = ref(false);
 
+/**
+ * 详情直接用列表行里的数据：后端分页本来就返回全部列（请求参数、错误信息都在），
+ * 没必要为此再开一个 `GET /{id}`。日志只追加不修改，也不存在"列表里的是旧值"的问题。
+ */
+const detailVisible = ref(false);
+const detail = ref<null | SysOperLog>(null);
+const detailParam = computed(() => prettyJson(detail.value?.requestParam));
+
+function openDetail(row: SysOperLog) {
+  detail.value = row;
+  detailVisible.value = true;
+}
+
 async function load() {
   loading.value = true;
   try {
@@ -224,14 +241,19 @@ onMounted(async () => {
       </ElTableColumn>
       <ElTableColumn prop="costTime" label="耗时(ms)" width="100" />
       <ElTableColumn prop="createTime" label="操作时间" min-width="180" />
-      <ElTableColumn
-        v-if="can('remove')"
-        label="操作"
-        width="100"
-        fixed="right"
-      >
+      <!-- 能进这个页面就有 list 权限，详情不再单独判定，所以操作列总是渲染。 -->
+      <ElTableColumn label="操作" width="120" fixed="right">
         <template #default="{ row }">
           <ElButton
+            link
+            type="primary"
+            data-testid="oper-log-detail-btn"
+            @click="openDetail(row)"
+          >
+            详情
+          </ElButton>
+          <ElButton
+            v-if="can('remove')"
             link
             type="danger"
             data-testid="oper-log-delete-btn"
@@ -255,6 +277,73 @@ onMounted(async () => {
         @size-change="load"
       />
     </div>
+
+    <ElDialog
+      v-model="detailVisible"
+      title="操作日志详情"
+      width="760px"
+      data-testid="oper-log-detail-dialog"
+    >
+      <template v-if="detail">
+        <ElDescriptions :column="2" border data-testid="oper-log-detail-desc">
+          <ElDescriptionsItem label="模块">
+            {{ detail.module }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="操作描述">
+            {{ detail.description }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="操作人">
+            {{ detail.operatorName || '-' }}
+            <span v-if="detail.operatorId" class="text-muted-foreground">
+              (ID: {{ detail.operatorId }})
+            </span>
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="IP">
+            {{ detail.operatorIp || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="请求" :span="2">
+            <span data-testid="oper-log-detail-request">
+              {{ detail.httpMethod || '-' }} {{ detail.requestUrl || '' }}
+            </span>
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="状态">
+            <ElTag :type="detail.status === 1 ? 'success' : 'danger'">
+              {{ detail.status === 1 ? '成功' : '失败' }}
+            </ElTag>
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="耗时">
+            {{ detail.costTime ?? '-' }} ms
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="操作时间" :span="2">
+            {{ detail.createTime }}
+          </ElDescriptionsItem>
+        </ElDescriptions>
+
+        <div class="mt-4 mb-2 font-medium">
+          请求参数
+          <span
+            v-if="detailParam.truncated"
+            class="text-muted-foreground ml-2 text-xs font-normal"
+          >
+            超过 2000 字符，已截断
+          </span>
+        </div>
+        <pre
+          class="bg-muted max-h-80 overflow-auto rounded p-3 text-xs leading-5 break-all whitespace-pre-wrap"
+          data-testid="oper-log-detail-param"
+          v-text="detailParam.text || '（无）'"
+        ></pre>
+
+        <template v-if="detail.errorMsg">
+          <div class="mt-4 mb-2 font-medium">错误信息</div>
+          <pre
+            class="bg-muted text-destructive max-h-60 overflow-auto rounded p-3 text-xs leading-5 break-all whitespace-pre-wrap"
+            data-testid="oper-log-detail-error"
+            v-text="detail.errorMsg"
+          ></pre>
+        </template>
+      </template>
+    </ElDialog>
 
     <ConfirmDialog
       v-model="confirmVisible"
