@@ -6,6 +6,7 @@ import { onMounted, reactive, ref } from 'vue';
 
 import { usePermission } from '@describeadmin/access';
 import { ConfirmDialog } from '@describeadmin/ele-ui';
+import { useUserStore } from '@describeadmin/stores';
 import { Page } from '@describeadmin/ui';
 
 import {
@@ -14,6 +15,7 @@ import {
   ElPagination,
   ElTable,
   ElTableColumn,
+  ElTag,
 } from 'element-plus';
 
 import { forceLogoutApi, getOnlineListApi } from '../../api';
@@ -23,6 +25,8 @@ defineOptions({ name: 'SystemOnline' });
 
 /** 按钮级权限（CLAUDE.md 4.5.3）。前缀须与 seed-rbac.sql 登记的 perm_code 一致。 */
 const { can } = usePermission('system:online');
+
+const userStore = useUserStore();
 
 const loading = ref(false);
 const rows = ref<ActiveSession[]>([]);
@@ -59,6 +63,8 @@ const submitting = ref(false);
 const confirmVisible = ref(false);
 const loggingOutUserId = ref<null | number>(null);
 const loggingOutName = ref('');
+/** 要踢的就是自己：强制下线按用户吊销全部令牌，当前这个登录也会一起失效。 */
+const loggingOutSelf = ref(false);
 
 async function load() {
   loading.value = true;
@@ -77,6 +83,9 @@ async function load() {
 function askForceLogout(row: ActiveSession) {
   loggingOutUserId.value = row.userId;
   loggingOutName.value = row.nickname || row.username;
+  // userId 后端按 4.8 序列化成字符串，userInfo.userId 也是字符串，统一转字符串再比
+  loggingOutSelf.value =
+    row.current || String(row.userId) === String(userStore.userInfo?.userId);
   confirmVisible.value = true;
 }
 
@@ -119,10 +128,24 @@ onMounted(async () => {
     <ElTable
       v-loading="loading"
       :data="rows"
-      row-key="userId"
+      row-key="sessionId"
       data-testid="online-table"
     >
-      <ElTableColumn prop="username" label="用户名" min-width="120" />
+      <!-- 同一用户可有多条会话，userId 不唯一，不能当 row-key -->
+      <ElTableColumn prop="username" label="用户名" min-width="150">
+        <template #default="{ row }">
+          <span>{{ row.username }}</span>
+          <ElTag
+            v-if="row.current"
+            class="ml-2"
+            size="small"
+            type="success"
+            data-testid="online-current-tag"
+          >
+            当前
+          </ElTag>
+        </template>
+      </ElTableColumn>
       <ElTableColumn prop="nickname" label="昵称" min-width="120" />
       <ElTableColumn prop="authType" label="登录方式" min-width="100" />
       <ElTableColumn prop="ip" label="登录IP" min-width="130">
@@ -170,7 +193,11 @@ onMounted(async () => {
       testid="online"
       :loading="submitting"
       title="强制下线"
-      :message="`将吊销 ${loggingOutName} 的全部登录令牌，确定继续？`"
+      :message="
+        loggingOutSelf
+          ? `将吊销 ${loggingOutName} 的全部登录令牌，包括你当前正在使用的这个登录，确定后需要重新登录。确定继续？`
+          : `将吊销 ${loggingOutName} 的全部登录令牌，确定继续？`
+      "
       @confirm="confirmForceLogout"
     />
   </Page>

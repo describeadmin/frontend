@@ -182,6 +182,11 @@ export interface SysOperLog {
  */
 export interface ActiveSession {
   authType: string;
+  /**
+   * 是否就是发起本次查询的会话（即"我正在用的这个登录"）。由后端比对请求令牌得出，
+   * 同一账号在别的浏览器 / 重复登录留下的会话为 false。
+   */
+  current: boolean;
   /** 登录时的设备描述，如 `Chrome · Windows`；识别不出为 null。 */
   device: null | string;
   expiresAt: string;
@@ -189,6 +194,11 @@ export interface ActiveSession {
   ip: null | string;
   issuedAt: string;
   nickname: string;
+  /**
+   * 会话标识：令牌的单向摘要，不是令牌本身。业务方自定义的 `TokenStore` 没提供时为 null，
+   * 此时也不会有任何一条被标为 `current`。
+   */
+  sessionId: null | string;
   userId: number;
   username: string;
 }
