@@ -192,3 +192,34 @@ export interface ActiveSession {
   userId: number;
   username: string;
 }
+
+/**
+ * 站内信。刻意不继承 {@link AuditFields}——后端 `SysMessage` 不继承 `BaseEntity`
+ * （系统写入、收件人只读 / 标已读 / 删除）。
+ *
+ * `id` 声明成字符串：后端把 `Long` 一律序列化为字符串（CLAUDE.md 4.8），回传给
+ * 标已读、删除接口时原样拼进路径即可，不要转成数字。
+ */
+export interface SysMessage {
+  /** 业务自定的分类编码，如 `workorder.approval`；中文名查字典 `sys_message_category`。 */
+  category: string;
+  /** 纯文本，渲染时一律插值，不要用 `v-html`。 */
+  content: null | string;
+  createTime: string;
+  id: string;
+  /** 站内路由路径，可带 query；后端已拒绝外链。 */
+  link: null | string;
+  /** 已读时间，null 为未读。 */
+  readTime: null | string;
+  /** 发送人头像的对象键，用 `avatarUrl()` 拼地址；系统消息为 null。 */
+  senderAvatar?: null | string;
+  senderId: null | string;
+  senderName?: null | string;
+  title: string;
+}
+
+/** 顶栏铃铛轮询的响应：未读数 + 最近几条（含已读）。 */
+export interface MessageInbox {
+  latest: SysMessage[];
+  unreadCount: number;
+}

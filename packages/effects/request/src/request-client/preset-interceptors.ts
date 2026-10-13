@@ -61,7 +61,8 @@ export const authenticateResponseInterceptor = ({
     rejected: async (error) => {
       const { config, response } = error;
       // 如果不是 401 错误，直接抛出异常
-      if (response?.status !== 401) {
+      // 后台请求（如轮询）不参与刷新与重新登录，见 ExtendOptions.background
+      if (response?.status !== 401 || config?.background) {
         throw error;
       }
       // 判断是否启用了 refreshToken 功能
@@ -140,6 +141,10 @@ export const errorMessageResponseInterceptor = (
   return {
     rejected: (error: any) => {
       if (axios.isCancel(error)) {
+        return Promise.reject(error);
+      }
+      // 后台请求失败不打扰用户：轮询每分钟一次，断网或登录过期时弹提示会一直弹下去
+      if (error?.config?.background) {
         return Promise.reject(error);
       }
 

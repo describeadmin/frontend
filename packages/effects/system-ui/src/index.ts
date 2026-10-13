@@ -2,7 +2,31 @@ import type { ComponentRecordType } from '@describeadmin/types';
 
 export * from './api';
 export { default as AvatarPicker } from './components/AvatarPicker.vue';
+export {
+  loadMessageCategoryLabels,
+  MESSAGE_CATEGORY_DICT,
+  MESSAGE_POLL_INTERVAL,
+  messageCategoryLabel,
+  type MessageNotificationItem,
+  notifyInboxChanged,
+  openMessageLink,
+  useMessageInbox,
+} from './composables/useMessageInbox';
 export { AVATAR_SIZE, avatarUrl, compressAvatar } from './utils/avatar';
+export { relativeTime } from './utils/relative-time';
+
+/**
+ * 消息中心页（懒加载）。所有登录用户都有、不逐角色授权，所以不进 `sys_menu`、
+ * 也不在下面的 `systemPageMap` 里——由应用外壳挂到本地静态路由 `Root.children`：
+ *
+ * ```ts
+ * { name: 'MessageCenter', path: 'messages', component: MessageCenterPage,
+ *   meta: { hideInMenu: true, title: '消息中心' } }
+ * ```
+ *
+ * 不要把它列进 `coreRouteNames` 白名单，原因见 CLAUDE.md 4.5.1 末尾。
+ */
+export const MessageCenterPage = () => import('./views/message/index.vue');
 
 /**
  * 系统管理页面组件的路由 key → 懒加载组件 映射。

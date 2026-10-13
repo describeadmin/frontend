@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from 'vue-router';
 
 import { LOGIN_PATH, NO_ACCESS_PATH } from '@describeadmin/constants';
 import { preferences } from '@describeadmin/preferences';
+import { MessageCenterPage } from '@describeadmin/system-ui';
 
 import { $t } from '#/locales';
 
@@ -34,6 +35,18 @@ const coreRoutes: RouteRecordRaw[] = [
         meta: {
           hideInMenu: true,
           title: $t('page.auth.profile'),
+        },
+      },
+      // 顶栏铃铛「查看全部」进这里。所有登录用户都有、不逐角色授权，所以和个人中心一样
+      // 走本地静态路由、不进 sys_menu；也不能加进 routes/index.ts 的 coreRouteNames
+      // 白名单——守卫命中白名单会在 generateAccess() 之前早退，刷新该页面侧边栏就全空了。
+      {
+        name: 'MessageCenter',
+        path: 'messages',
+        component: MessageCenterPage,
+        meta: {
+          hideInMenu: true,
+          title: $t('page.message.title'),
         },
       },
       {

@@ -54,12 +54,21 @@ const handleMakeAll = () => {
 const handleClear = () => {
   emit('clear');
 };
+
+// 点击条目通常意味着跳转去办理，弹层留着会盖在新页面上
+const handleItemClick = (item: NotificationItem) => {
+  emit('onClick', item);
+  close();
+};
 </script>
 <template>
   <VbenPopover v-model:open="open" content-class="relative right-2 w-90 p-0">
     <template #trigger>
       <div class="mr-2 flex-center h-full" @click.stop="toggle()">
-        <VbenIconButton class="bell-button relative text-foreground">
+        <VbenIconButton
+          class="bell-button relative text-foreground"
+          data-testid="notification-bell-btn"
+        >
           <span
             v-if="dot"
             class="absolute top-0.5 right-0.5 size-2 rounded-sm bg-primary"
@@ -75,6 +84,7 @@ const handleClear = () => {
         <VbenIconButton
           :disabled="notifications.length <= 0"
           :tooltip="$t('ui.widgets.markAllAsRead')"
+          data-testid="notification-read-all-btn"
           @click="handleMakeAll"
         >
           <MailCheck class="size-4" />
@@ -85,7 +95,8 @@ const handleClear = () => {
           <template v-for="item in notifications" :key="item.id ?? item.title">
             <li
               class="relative flex w-full cursor-pointer items-start gap-5 border-t border-border p-3 hover:bg-accent"
-              @click="emit('onClick', item)"
+              data-testid="notification-item"
+              @click="handleItemClick(item)"
             >
               <slot name="content" :item="item">
                 <span
@@ -97,9 +108,17 @@ const handleClear = () => {
                   class="relative flex size-10 shrink-0 overflow-hidden rounded-full"
                 >
                   <img
+                    v-if="item.avatar"
                     :src="item.avatar"
                     class="aspect-square size-full object-cover"
                   />
+                  <!-- 系统消息没有发送人头像：空 src 的 img 会显示成破图 -->
+                  <span
+                    v-else
+                    class="flex-center size-full bg-accent text-muted-foreground"
+                  >
+                    <Bell class="size-4" />
+                  </span>
                 </span>
                 <div class="flex flex-col gap-1 leading-none">
                   <p class="font-semibold">{{ item.title }}</p>
@@ -121,6 +140,7 @@ const handleClear = () => {
                       variant="ghost"
                       class="h-6 px-2"
                       :tooltip="$t('common.confirm')"
+                      data-testid="notification-read-btn"
                       @click.stop="emit('read', item)"
                     >
                       <CircleCheckBig class="size-4" />
@@ -131,6 +151,7 @@ const handleClear = () => {
                       variant="ghost"
                       class="h-6 px-2 text-destructive"
                       :tooltip="$t('common.delete')"
+                      data-testid="notification-remove-btn"
                       @click.stop="emit('remove', item)"
                     >
                       <CircleX class="size-4" />
@@ -157,11 +178,16 @@ const handleClear = () => {
           :disabled="notifications.length <= 0"
           size="sm"
           variant="ghost"
+          data-testid="notification-clear-btn"
           @click="handleClear"
         >
           {{ $t('ui.widgets.clearNotifications') }}
         </VbenButton>
-        <VbenButton size="sm" @click="handleViewAll">
+        <VbenButton
+          size="sm"
+          data-testid="notification-view-all-btn"
+          @click="handleViewAll"
+        >
           {{ $t('ui.widgets.viewAll') }}
         </VbenButton>
       </div>

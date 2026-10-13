@@ -19,6 +19,10 @@ interface Props extends VbenButtonProps {
   variant?: ButtonVariants;
 }
 
+// 带 tooltip 时根节点是 VbenTooltip（不渲染自己的 DOM），透传属性会落空——
+// data-testid 之类的就丢了。统一手动绑到真正的按钮上，两个分支行为一致。
+defineOptions({ inheritAttrs: false });
+
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   onClick: () => {},
@@ -35,6 +39,7 @@ const showTooltip = computed(() => !!slots.tooltip || !!props.tooltip);
 <template>
   <VbenButton
     v-if="!showTooltip"
+    v-bind="$attrs"
     :class="cn('rounded-full', props.class)"
     :disabled="disabled"
     :variant="variant"
@@ -51,6 +56,7 @@ const showTooltip = computed(() => !!slots.tooltip || !!props.tooltip);
   >
     <template #trigger>
       <VbenButton
+        v-bind="$attrs"
         :class="cn('rounded-full', props.class)"
         :disabled="disabled"
         :variant="variant"

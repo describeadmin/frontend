@@ -47,7 +47,9 @@
     "@describeadmin/request": "workspace:*",
     "@describeadmin/stores": "workspace:*",
     "@describeadmin/types": "workspace:*",
-    "@describeadmin/ui": "workspace:*"
+    "@describeadmin/ui": "workspace:*",
+    "@vueuse/core": "catalog:",
+    "vue-router": "catalog:"
   },
   "devDependencies": {
     "element-plus": "catalog:",

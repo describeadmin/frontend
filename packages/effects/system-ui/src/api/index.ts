@@ -13,6 +13,7 @@
  */
 import type {
   ActiveSession,
+  MessageInbox,
   OptionItem,
   PageQuery,
   PageResult,
@@ -21,6 +22,7 @@ import type {
   SysDictData,
   SysDictType,
   SysMenu,
+  SysMessage,
   SysOperLog,
   SysRole,
   SysUser,
@@ -386,4 +388,51 @@ export async function getOnlineListApi(params: OnlineQuery) {
 /** 强制某用户下线，吊销其全部令牌，返回实际吊销的令牌数。 */
 export async function forceLogoutApi(userId: number) {
   return getSystemApiClient().delete<number>(`/system/online/${userId}`);
+}
+
+// --------------------------------------------------------------------- 站内信
+
+/**
+ * 当前登录用户的站内信，全部只要求登录、只能操作自己的消息。
+ *
+ * 没有"发消息"的接口：发送是后端业务代码通过 `MessageSender` 做的事。
+ */
+export interface MessageQuery extends PageQuery {
+  category?: string;
+  /** true 只看未读。 */
+  unread?: boolean;
+}
+
+/**
+ * 顶栏铃铛轮询用。带 `background: true`：令牌过期时不刷新、不弹登录失效，
+ * 免得开着不动的标签页靠轮询一直续命（见 request 包 `ExtendOptions.background`）。
+ */
+export async function getMessageInboxApi() {
+  return getSystemApiClient().get<MessageInbox>('/auth/messages/inbox', {
+    background: true,
+  });
+}
+
+export async function getMessageListApi(params: MessageQuery) {
+  return getSystemApiClient().get<PageResult<SysMessage>>('/auth/messages', {
+    params,
+  });
+}
+
+export async function readMessageApi(id: string) {
+  return getSystemApiClient().put(`/auth/messages/${id}/read`);
+}
+
+/** 全部标为已读，返回受影响条数。 */
+export async function readAllMessagesApi() {
+  return getSystemApiClient().put<number>('/auth/messages/read-all');
+}
+
+export async function deleteMessageApi(id: string) {
+  return getSystemApiClient().delete(`/auth/messages/${id}`);
+}
+
+/** 清空已读，返回删除条数。未读消息保留——待办不该被一键清掉。 */
+export async function clearReadMessagesApi() {
+  return getSystemApiClient().delete<number>('/auth/messages/read');
 }
