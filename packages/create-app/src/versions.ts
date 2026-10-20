@@ -1,16 +1,24 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 /**
- * `@describeadmin/*` 版本清单。
+ * `@describeadmin/*` 版本号。
  *
  * `@describeadmin/*` 全部包共用同一个版本号——`.changeset/config.json` 把
  * `@describeadmin/core-*` 与 `@describeadmin/*` 定义为一个 fixed 分组，任何一个包发版，
- * 全部包一起跳版本号，因此这里只需要维护一个常量，不需要逐包记录。
+ * 全部包一起跳版本号，因此生成器自己的版本就是模板该依赖的版本。
  *
- * ⚠️ 在真正打通发布链路（`pnpm publish` / registry 查询）之前，这里手工维护，
- * 必须与 `frontend/packages/*\/package.json` 里的实际版本保持一致。
- * 发布链路打通后，`getDescribeadminVersion` 应改为查询 npm registry，
- * 而不是继续读这个硬编码常量——切换点只有这一个函数，方便以后改。
+ * 读本包的 `package.json` 而不是手写常量：手写常量曾经停在 0.2.0、包已经是 0.2.2，
+ * 生成出的工程于是依赖 `^0.2.0`——能装上、能跑，只是悄悄落后，没有任何报错。
+ * `package.json` 永远随包发布，`dist/` 与 `src/` 上一级都是包根目录。
  */
-const DESCRIBEADMIN_VERSION = '0.2.0';
+const DESCRIBEADMIN_VERSION: string = JSON.parse(
+  readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'),
+    'utf8',
+  ),
+).version;
 
 export function getDescribeadminVersion(): string {
   return DESCRIBEADMIN_VERSION;
@@ -19,7 +27,7 @@ export function getDescribeadminVersion(): string {
 /**
  * 模板 package.json 里，非 `@describeadmin/*` 但用 `catalog:` 占位的外部依赖版本。
  *
- * 同样手工维护，与 `frontend/pnpm-workspace.yaml` 的 `catalog:` 小节保持一致。
+ * 手工维护，与 `frontend/pnpm-workspace.yaml` 的 `catalog:` 小节保持一致。
  * 模板新增了 catalog 依赖、而这里没有对应条目时，生成器会直接报错——
  * 这是有意的：静默生成一个装不上的 package.json 比生成器报错更难排查。
  */
