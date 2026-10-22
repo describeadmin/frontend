@@ -2,7 +2,7 @@
 import type { OptionItem, SysUser } from '../../api';
 import type { SearchFormSchema } from '../../composables/useSearchForm';
 
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import { usePermission } from '@describeadmin/access';
 import { ConfirmDialog } from '@describeadmin/ele-ui';
@@ -21,6 +21,7 @@ import {
   ElMessage,
   ElOption,
   ElPagination,
+  ElScrollbar,
   ElSelect,
   ElSwitch,
   ElTable,
@@ -162,6 +163,21 @@ const roleVisible = ref(false);
 const roleUserId = ref<null | number>(null);
 const allRoles = ref<OptionItem[]>([]);
 const checkedRoleIds = ref<number[]>([]);
+const roleUserName = ref('');
+const roleKeyword = ref('');
+/** 弹窗里的展示顺序，与新增表单共用的 allRoles 分开，免得打开一次弹窗就改了下拉的顺序。 */
+const dialogRoles = ref<OptionItem[]>([]);
+// 搜索只收窄展示，不动勾选：被滤掉的已选角色仍留在 checkedRoleIds 里照常提交
+const filteredRoles = computed(() => {
+  const kw = roleKeyword.value.trim().toLowerCase();
+  return kw
+    ? dialogRoles.value.filter((r) => r.label.toLowerCase().includes(kw))
+    : dialogRoles.value;
+});
+// 角色 id 运行时是字符串（4.8 Long → String），声明却是 number[]，按字符串比对两边都兜住
+function isRoleChecked(value: string) {
+  return checkedRoleIds.value.some((id) => String(id) === value);
+}
 
 async function load() {
   loading.value = true;
@@ -321,11 +337,22 @@ async function submitResetPassword() {
 
 async function openAssignRole(row: SysUser) {
   roleUserId.value = row.id ?? null;
+  roleUserName.value =
+    row.nickname && row.nickname !== row.username
+      ? `${row.nickname}（${row.username}）`
+      : (row.username ?? '');
+  roleKeyword.value = '';
   const [options, owned] = await Promise.all([
     getRoleOptionsApi(),
     getUserRolesApi(row.id as number),
   ]);
   allRoles.value = options;
+  // 已持有的排在前面，角色一多时不用滚动去找。只在打开时排一次，勾选过程中不跟着跳
+  const ownedSet = new Set(owned.map(String));
+  dialogRoles.value = [
+    ...options.filter((r) => ownedSet.has(r.value)),
+    ...options.filter((r) => !ownedSet.has(r.value)),
+  ];
   checkedRoleIds.value = owned;
   roleVisible.value = true;
 }
@@ -605,18 +632,70 @@ onMounted(async () => {
     <ElDialog
       v-model="roleVisible"
       title="分配角色"
-      width="420px"
+      width="560px"
       append-to-body
       data-testid="user-role-dialog"
     >
-      <ElCheckboxGroup v-model="checkedRoleIds" data-testid="user-role-group">
-        <ElCheckbox
-          v-for="role in allRoles"
-          :key="role.value"
-          :value="role.value"
-          :label="role.label"
-        />
-      </ElCheckboxGroup>
+      <div class="mb-3 flex items-center justify-between gap-4">
+        <span class="text-muted-foreground truncate text-sm">
+          用户：{{ roleUserName }}
+        </span>
+        <span class="shrink-0 text-sm">
+          已选
+          <span class="text-primary font-medium">{{
+            checkedRoleIds.length
+          }}</span>
+          / {{ dialogRoles.length }}
+          <ElButton
+            v-if="checkedRoleIds.length > 0"
+            link
+            type="primary"
+            class="ml-2"
+            data-testid="user-role-clear-btn"
+            @click="checkedRoleIds = []"
+          >
+            清空
+          </ElButton>
+        </span>
+      </div>
+      <ElInput
+        v-model="roleKeyword"
+        clearable
+        placeholder="搜索角色名称"
+        class="mb-3"
+        data-testid="user-role-search-input"
+      />
+      <!-- 用 ElScrollbar 的 max-height 而不是 max-h-[…] 任意值类：后者在业务方以 npm 依赖
+           消费本包时不保证能被扫出 CSS 规则（见 dict/index.vue 模板顶部的说明）。 -->
+      <ElScrollbar max-height="320px">
+        <ElCheckboxGroup
+          v-model="checkedRoleIds"
+          class="grid grid-cols-2 gap-2 pr-2"
+          data-testid="user-role-group"
+        >
+          <!-- 停用角色仍然展示（否则已持有的停用角色无从取消），但未持有时不可新选 -->
+          <ElCheckbox
+            v-for="role in filteredRoles"
+            :key="role.value"
+            :value="role.value"
+            :disabled="role.disabled && !isRoleChecked(role.value)"
+            :title="role.label"
+            border
+            class="!mr-0 !w-full"
+          >
+            {{ role.label }}
+            <span v-if="role.disabled" class="text-muted-foreground text-xs">
+              （已停用）
+            </span>
+          </ElCheckbox>
+        </ElCheckboxGroup>
+        <div
+          v-if="filteredRoles.length === 0"
+          class="text-muted-foreground py-8 text-center text-sm"
+        >
+          {{ dialogRoles.length === 0 ? '暂无角色' : '没有匹配的角色' }}
+        </div>
+      </ElScrollbar>
       <template #footer>
         <ElButton
           data-testid="user-role-cancel-btn"
