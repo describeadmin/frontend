@@ -30,7 +30,8 @@ const delegatedProps = computed(() => {
 
 const forwarded = useForwardPropsEmits(delegatedProps, emits);
 
-const open = defineModel('open', { default: true });
+// 显式 <boolean>：Vue 3.5.4x 起按 default 推断字面量类型 true，取反赋值会报类型错
+const open = defineModel<boolean>('open', { default: true });
 
 function toggle() {
   open.value = !open.value;

@@ -43,7 +43,7 @@ export const externalVersions: Record<string, string> = {
   typescript: '^6.0.3',
   'unplugin-element-plus': '^0.11.2',
   vite: '^8.0.13',
-  vue: '^3.5.34',
+  vue: '^3.5.42',
   'vue-router': '^5.0.7',
   'vue-tsc': '^3.3.1',
 };

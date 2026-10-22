@@ -23,7 +23,10 @@ const sidebarDraggable = defineModel<boolean>('sidebarDraggable');
 const sidebarCollapsed = defineModel<boolean>('sidebarCollapsed');
 const sidebarExpandOnHover = defineModel<boolean>('sidebarExpandOnHover');
 
-const sidebarButtons = defineModel<string[]>('sidebarButtons', { default: [] });
+// 数组默认值必须是工厂函数：字面量 [] 会被所有实例共享，下面的 push 会互相污染
+const sidebarButtons = defineModel<string[]>('sidebarButtons', {
+  default: () => [],
+});
 const sidebarCollapsedButton = defineModel<boolean>('sidebarCollapsedButton');
 const sidebarFixedButton = defineModel<boolean>('sidebarFixedButton');
 

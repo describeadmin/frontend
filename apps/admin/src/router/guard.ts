@@ -58,6 +58,19 @@ function isUnreachable(resolved: RouteLocationResolved) {
 }
 
 /**
+ * `redirect` 来自地址栏，是用户可控输入：`decodeURIComponent` 遇到畸形的 `%`
+ * （如 `?redirect=%E0%A4%A`）会抛 `URIError`，守卫里抛出等于整次导航失败、页面白屏。
+ * 解不开就原样使用——交给 `router.resolve`，解析不到真实页面时下面会改道或落 404。
+ */
+function safeDecode(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+/**
  * 权限访问守卫配置
  * @param router
  */
@@ -80,7 +93,7 @@ function setupAccessGuard(router: Router) {
     // 基本路由，这些路由不需要进入权限拦截
     if (coreRouteNames.includes(to.name as string)) {
       if (to.path === LOGIN_PATH && accessStore.accessToken) {
-        return decodeURIComponent(
+        return safeDecode(
           (to.query?.redirect as string) ||
             userStore.userInfo?.homePath ||
             preferences.app.defaultHomePath,
@@ -164,7 +177,7 @@ function setupAccessGuard(router: Router) {
         (to.path === preferences.app.defaultHomePath
           ? userInfo.homePath || preferences.app.defaultHomePath
           : to.fullPath)) as string;
-      const resolved = router.resolve(decodeURIComponent(redirectPath));
+      const resolved = router.resolve(safeDecode(redirectPath));
 
       // 目标解析不到任何真实页面（角色没设首页、设了首页却没授权该页、或干脆一个菜单
       // 都没分配）时不能就这么放行：动态路由此刻已经全部生成完毕，再往下走只会落进 404。

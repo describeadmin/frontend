@@ -7,7 +7,8 @@ const props = defineProps<{
 }>();
 
 // 控制箭头展开/收起状态
-const collapsed = defineModel({ default: false });
+// 显式 <boolean>：Vue 3.5.4x 起按 default 推断字面量类型 false，取反赋值会报类型错
+const collapsed = defineModel<boolean>({ default: false });
 </script>
 
 <template>

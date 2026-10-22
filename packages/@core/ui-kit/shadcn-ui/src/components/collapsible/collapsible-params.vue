@@ -31,9 +31,10 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emits = defineEmits<{ 'update:value': [any, string] }>();
 
-const modelValue = defineModel('value', {
-  default: {} as Recordable<CollapsibleParamSchema['defaultValue']>,
-});
+// 对象默认值用工厂函数：字面量 {} 会被所有实例共享，Vue 3.5.4x 的类型也不再接受
+const modelValue = defineModel<
+  Recordable<CollapsibleParamSchema['defaultValue']>
+>('value', { default: () => ({}) });
 
 const visibleRefs = useTemplateRef('visibleRefs');
 const collapsibleRefs = useTemplateRef('collapsibleRefs');
