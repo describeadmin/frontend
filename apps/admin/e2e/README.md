@@ -19,7 +19,7 @@ pnpm dev
 pnpm -F @describeadmin/admin run test:e2e
 ```
 
-登录口令由后端 dev-seed 首次启动时随机生成，明文写在**该后端工程**根目录的 `.passwd` （取法见 `_password.mjs`）。⚠️ 换了数据库或重新初始化过，旧的 `.passwd` 就对不上了；后端有登录失败锁定策略，**不要反复试密码**，直接从当前这个后端实例的 `.passwd` 取，或用 `APP_PASSWORD` 显式指定。
+登录口令由后端 dev-seed 首次启动时随机生成，明文写在**该后端工程**根目录的 `.passwd` （取法见 `_password.mjs`）。重建空库时 dev-seed 会复用已有的 `.passwd`，口令不变；但库里已有用户时它整体跳过，⚠️ 换成别处拷来的库、或在界面上改过 admin 的密码，`.passwd` 就对不上了；后端有登录失败锁定策略，**不要反复试密码**，直接从当前这个后端实例的 `.passwd` 取，或用 `APP_PASSWORD` 显式指定。
 
 链路是**真实的**：真实浏览器 → vite dev server → 代理 → Spring Boot → MySQL 5.7，没有任何一段是 mock。这正是删掉上游 `apps/backend-mock` 的原因——用 mock 开发前端，等于把前后端契约不一致的问题全部推迟到联调阶段才暴露。
 
