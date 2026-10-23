@@ -4,7 +4,7 @@
 
 ## 派生方式与后续关系
 
-本仓库采取的是 develop_plan.md 4.1 所确定的「一次性取材后独立演进」：
+本仓库采取的是「一次性取材后独立演进」（理由见 docs 仓 site/dev/architecture.md「前端」）：
 
 - 起点为上游 v5.7.0，此后**与上游断开，不做 merge**
 - `packages/` 已改造为 `@describeadmin/*` scope 下的可发布 npm 包

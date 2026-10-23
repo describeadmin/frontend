@@ -1,75 +1,42 @@
 # describeadmin frontend
 
-describeadmin 的前端。由 [Vben Admin](https://github.com/vbenjs/vue-vben-admin) **5.7.0** 一次性取材后独立演进，UI 库为 Element Plus。派生关系与维护责任见 [NOTICE.md](./NOTICE.md)。
+describeadmin 的前端：30 个 `@describeadmin/*` npm 包（锁步同版本，当前 1.0.0）与前端脚手架 `@describeadmin/create-app`。取材自 [Vben Admin](https://github.com/vbenjs/vue-vben-admin) 5.7.0 后独立演进，UI 库为 Element Plus，派生关系与维护责任见 [NOTICE.md](./NOTICE.md)。
 
-**从零开始用这套框架，请看 [快速开始](https://github.com/describeadmin/docs/blob/main/QUICKSTART.md)。** 本文是本仓库自身的开发说明。
+**文档：<https://describeadmin.github.io/docs/>**，从 [从零跑起一个管理后台](https://describeadmin.github.io/docs/guide/getting-started) 开始。
 
-## 分发形态
+## 开始使用
 
-`packages/` 下的 `@describeadmin/*` 包发布到 npm，按 `.changeset/config.json` 的 fixed 分组**锁步同版本**（当前 `0.2.x`）。业务方**依赖这些包**，而不是把它们复制进自己的仓库。
-
-`apps/admin` 是框架自己的联调 playground，标了 `private`、不发布。业务方**不以它为起点**——应用外壳由脚手架交付：
+业务方依赖这些包，不复制本仓库。应用外壳由脚手架生成：
 
 ```bash
-npm create @describeadmin/app my-app
+pnpm create @describeadmin/app my-web
+cd my-web && pnpm install && pnpm dev
 ```
 
-生成的是收走系统管理四页面（`@describeadmin/system-ui`）之后的薄外壳，只保留每个应用都要自己拥有的 router / access / layouts / adapter 装配。实现包是 `packages/create-app`。
+系统管理页面在 `@describeadmin/system-ui` 里，不在生成的工程里。各个包的用途见 [前端包目录](https://describeadmin.github.io/docs/reference/frontend-packages)，环境变量与偏好设置见 [前端配置](https://describeadmin.github.io/docs/reference/configuration/frontend)。
 
-## 快速开始（开发本仓库）
+## 开发本仓库
 
 ```bash
 pnpm install
-pnpm dev            # http://localhost:5777
+pnpm dev            # apps/admin，http://localhost:5777，/api 代理到 http://localhost:8090（VITE_PROXY_TARGET 可覆盖）
+pnpm lint           # 提交前
+pnpm check          # 循环依赖、依赖声明、类型、拼写检查
+pnpm test:unit
 ```
 
-前端需要一个真实后端。**本项目不带 mock**——用 mock 开发前端，等于把前后端契约不一致的问题全部推迟到联调阶段才暴露。起后端的步骤见 [apps/admin/e2e/README.md](./apps/admin/e2e/README.md)。
+前端不带 mock，需要一个真实后端：用 `describeadmin-archetype` 生成一个工程并以 `local` profile 启动即可，步骤见 [apps/admin/e2e/README.md](./apps/admin/e2e/README.md)。
 
-默认代理到 `http://localhost:8090`，可用 `VITE_PROXY_TARGET` 覆盖。
-
-## 仓库结构
-
-```
-apps/admin/          唯一应用（由官方 apps/web-ele 更名而来）
-packages/@core/      内核：布局、表单、弹窗、无样式组件原语（UI 库无关）
-packages/effects/    access / layouts / request / ui / plugins / hooks
-packages/            constants / icons / locales / preferences / stores / styles / types / utils
-packages/ele-ui/     绑定 Element Plus 的组件层（peerDeps: element-plus + vue）
-internal/            构建与 lint 配置（private，不发布）
-```
-
-## 与后端的关系
-
-| 约定 | 说明 |
+| 目录 | 内容 |
 | --- | --- |
-| 响应体 | 后端统一返回 `Result`：`{ code, message, data, traceId }`，`code === 0` 为成功 |
-| 认证 | 不透明令牌，`Authorization: Bearer <token>`。**没有 refresh 端点**，`enableRefreshToken` 保持 `false` |
-| 菜单与路由 | `accessMode: 'backend'`，全部由后端 `sys_menu` 表下发 |
-| 按钮权限 | 权限码随 `/api/auth/me` 的 `permissions` 下发，用 `v-access:code` 控制显隐 |
+| `apps/admin/` | 框架自己的联调应用，不发布 |
+| `packages/@core/` | 内核：布局、表单、弹窗、菜单等（`@describeadmin/core-*`） |
+| `packages/effects/` | access / layouts / request / hooks / system-ui 等 |
+| `packages/create-app/` | 前端脚手架，`template/` 与 `apps/admin` 的外壳手工同步 |
+| `internal/` | 构建与 lint 配置，不发布 |
 
-⚠️ `accessMode: 'backend'` 下，**前端的静态路由模块完全不参与路由生成**。 `defaultHomePath` 只能填菜单表里真实存在的路径，否则登录后直接落到 404（见 VERSION_BASELINE.md 发现 ⑪）。
+参与开发前读 docs 仓的 [`CLAUDE.md`](https://github.com/describeadmin/docs/blob/main/CLAUDE.md) 与 [前端开发约定](https://describeadmin.github.io/docs/dev/frontend)；发布照 [发布手册](https://describeadmin.github.io/docs/dev/release) 执行。
 
-## data-testid 是硬约束
+## 许可证
 
-所有交互元素必须带 `data-testid`，命名 `<模块>-<对象>-<动作>`（CLAUDE.md 4.4）。 **没有 `data-testid` 的交互元素视为未完成**——AI 的端到端自测靠它定位。
-
-这条约束有实际后果：删除确认用受控 `ElDialog` 而不是 `ElMessageBox.confirm`，因为后者由命令式 API 弹出，按钮上挂不了 `data-testid`。
-
-## 命令
-
-```bash
-pnpm dev                                  # 开发
-pnpm -F @describeadmin/admin run build    # 构建
-pnpm -F @describeadmin/admin run typecheck
-pnpm -F @describeadmin/admin run test:e2e # 端到端冒烟（需后端已启动）
-pnpm exec eslint packages apps internal
-```
-
-## 相关文档
-
-编码规范与设计方案都在 **`describeadmin/docs`** 仓——做本仓开发时把它与 `docs` 仓并列检出：
-
-- `docs/CLAUDE.md` —— 编码规范（`4.4` data-testid、`4.9` Tailwind/Element Plus 层叠层陷阱等）
-- `docs/develop_plan.md` 第四章 —— 前端架构与 Vben 取材方式
-- `docs/QUICKSTART.md` —— 业务方从零接入
-- `docs/PROGRESS.md` —— 当前进度
+[MIT](./LICENSE)

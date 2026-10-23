@@ -60,7 +60,7 @@ function createRequestClient(
   /**
    * 刷新 token 逻辑。
    *
-   * docs/LOGIN_MODULE_AUDIT.md E 项：后端已实现 access/refresh 双令牌（
+   * 后端已实现 access/refresh 双令牌（
    * framework-security-starter 的 TokenStore.issueWithRefresh/refresh），
    * 这里从"确定会抛错的桩实现"换成真实调用。`authenticateResponseInterceptor`
    * 的排队重放逻辑本身是现成的，不用改——只是此前一直没有真正被触发过。

@@ -33,7 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
   // 并发去重：token 过期时页面上往往有多个请求同时收到 401，
   // authenticateResponseInterceptor 对每一个都会独立调用 doReAuthenticate → logout()。
   // 多次并发执行 resetAllStores() + router.replace() 会互相打断路由跳转，
-  // 表现为“卡在原地不跳转”（同一根因见 docs/LOGIN_MODULE_AUDIT.md 改密码那条竞态记录）。
+  // 表现为“卡在原地不跳转”。
   let logoutPromise: null | Promise<void> = null;
 
   /**

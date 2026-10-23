@@ -15,7 +15,7 @@ const {
 
 <template>
   <!--
-    docs/LOGIN_MODULE_AUDIT.md A 项：原来这里还有微信/QQ/GitHub/Google 四个图标按钮，
+    原来这里还有微信/QQ/GitHub/Google 四个图标按钮，
     没有任何 @click 处理、纯装饰，已删除——不是本项目场景需要的社交登录，
     留着只是"看起来能点、其实什么都不做"的死壳。
 

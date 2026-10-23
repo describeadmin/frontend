@@ -18,7 +18,7 @@ export namespace AuthApi {
      * 登录方式，取值来自 `/auth/providers`。
      *
      * 不要在前端硬编码可选值——引入浙政钉等插件后后端会自动多出一项，
-     * 登录页据此动态渲染（develop_plan.md 3.2）。
+     * 登录页据此动态渲染。
      */
     type?: string;
     username?: string;

@@ -26,8 +26,8 @@ const authStore = useAuthStore();
 /**
  * 后端启用的登录方式，来自 `/api/auth/providers`。
  *
- * **不要把登录方式硬编码在本页面里**——这是插件化在前端侧成立的关键
- * （develop_plan.md 3.2）。原样透传给 <AuthenticationLogin> 的 :providers，
+ * **不要把登录方式硬编码在本页面里**——这是插件化在前端侧成立的关键。
+ * 原样透传给 <AuthenticationLogin> 的 :providers，
  * 由框架组件按其中是否含 "email" 决定要不要渲染邮箱登录入口——
  * 引入 framework-auth-email-starter 插件后前后端都不用改代码。
  */
@@ -197,7 +197,7 @@ async function handleSubmit(values: Record<string, any>, retried = false) {
 
 <template>
   <!--
-    docs/LOGIN_MODULE_AUDIT.md A 项：手机验证码登录/二维码登录/注册/忘记密码/第三方登录
+    手机验证码登录/二维码登录/注册/忘记密码/第三方登录
     目前都没有对应的后端能力（后端只有 password 一种内置方式），上游模板默认全部打开，
     留下的是"看起来能点、点了什么都不会发生"的死壳。这里显式关闭，对应的
     app 级包装页（code-login.vue、qrcode-login.vue、register.vue、forget-password.vue）

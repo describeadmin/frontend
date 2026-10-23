@@ -18,4 +18,4 @@
 node bin/create-app.mjs my-app --  # 在当前目录下生成 my-app/
 ```
 
-生成后到目标目录 `pnpm install`（此时 `@describeadmin/*` 已是真实版本号，不再是 `workspace:*`，因此不能直接在本仓 workspace 内 `pnpm install` ——包还没发布到 registry 前，需要用 `pnpm pack` 出的本地 tarball 或 `file:` 依赖替换，见 `docs/PROGRESS.md`）。
+生成后到目标目录 `pnpm install`（此时 `@describeadmin/*` 已是真实版本号，不再是 `workspace:*`，因此不能直接在本仓 workspace 内 `pnpm install` ——包还没发布到 registry 前，需要用 `pnpm pack` 出的本地 tarball 或 `file:` 依赖替换。`scripts/check-consumer-typecheck.mjs` 就是这样做的：打包全部 `@describeadmin/*`、生成工程、类型检查并做一次生产构建，发布流程在发布前跑它）。

@@ -17,7 +17,7 @@ const RAW_SUFFIX = /\?raw$/;
  * UNLOADABLE_DEPENDENCY / os error 123（`?` 不是合法文件名字符）。
  *
  * 这类「monorepo 内能用、发布出去不能用」的 Vite 专有语法，是前端分层此前
- * 停留在纸面的根因之一，见 develop_plan.md 9.3。
+ * 停留在纸面的根因之一。
  */
 function rawSuffixLoader() {
   return {

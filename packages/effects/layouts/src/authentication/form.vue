@@ -16,7 +16,7 @@ defineProps<{
     <!-- Router View with Transition and KeepAlive -->
     <RouterView v-slot="{ Component, route }">
       <!--
-        docs/LOGIN_MODULE_AUDIT.md A 项排查副产品：mode="out-in" 在"离开的是被
+        mode="out-in" 在"离开的是被
         KeepAlive 缓存的组件、进入的是首次挂载的新组件"这个组合下会卡死——离场
         过渡在等一个不会真正 unmount（只是 deactivate）的节点结束，进场永远等
         不到，最终整段 RouterView 渲染成空注释节点，且没有任何报错/警告。
