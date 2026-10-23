@@ -390,6 +390,24 @@ export async function forceLogoutApi(userId: number) {
   return getSystemApiClient().delete<number>(`/system/online/${userId}`);
 }
 
+// ------------------------------------------------------------------- 登录锁定
+
+/**
+ * 当前处于登录锁定状态的用户名。数据来自后端 `LoginAttemptGuard` 的失败计数，没有数据库表。
+ *
+ * 按「登录时输入的用户名」计数，所以列表里可能有系统中并不存在的用户名（有人在试探）。
+ */
+export async function getLockedAccountsApi() {
+  return getSystemApiClient().get<string[]>('/system/security/locked-accounts');
+}
+
+/** 手动解锁：清除该用户名的失败计数，效果等同于锁定提前到期。 */
+export async function unlockAccountApi(username: string) {
+  return getSystemApiClient().delete(
+    `/system/security/locked-accounts/${encodeURIComponent(username)}`,
+  );
+}
+
 // --------------------------------------------------------------------- 站内信
 
 /**

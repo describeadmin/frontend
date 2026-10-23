@@ -31,8 +31,8 @@ export const MessageCenterPage = () => import('./views/message/index.vue');
 /**
  * 系统管理页面组件的路由 key → 懒加载组件 映射。
  *
- * key 必须与 framework-system-starter 的 seed-rbac.sql（以及 codegen 产出的
- * menu-*.sql）里 `sys_menu.component` 字段规范化后的结果精确一致——`component`
+ * key 必须与 framework-system-starter 的 0002-rbac-seed.sql（以及 codegen 产出的
+ * 菜单 changeset）里 `sys_menu.component` 字段规范化后的结果精确一致——`component`
  * 填的是不带 `.vue` 的相对路径（如 `system/dept/index`），经
  * `generateRoutesByBackend` 的 normalizeViewPath 规范化（去掉 `./`/`../` 前缀、
  * 补前导 `/`、剥掉前导 `/views`）后即为下面这些 key，`.vue` 后缀不受该函数影响。
@@ -56,5 +56,6 @@ export const systemPageMap: ComponentRecordType = {
   '/system/online/index.vue': () => import('./views/online/index.vue'),
   '/system/oper-log/index.vue': () => import('./views/oper-log/index.vue'),
   '/system/role/index.vue': () => import('./views/role/index.vue'),
+  '/system/security/index.vue': () => import('./views/security/index.vue'),
   '/system/user/index.vue': () => import('./views/user/index.vue'),
 };
