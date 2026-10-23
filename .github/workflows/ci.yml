@@ -31,14 +31,18 @@ jobs:
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
 
-      # 用仓库自带的 pnpm check，而不是自己拼一条 eslint 命令。
-      # check 会跑 oxfmt --check + oxlint + eslint + stylelint + turbo typecheck，
-      # 与 lefthook 的 pre-commit 钩子**完全一致**——两边不一致的话，
-      # 本地能提交的代码到 CI 才挂（这个坑已经踩过一次）。
+      # 用仓库自带的命令，而不是自己拼一条 eslint 命令：
+      #   pnpm lint  = oxfmt --check + oxlint + eslint + stylelint
+      #   pnpm check = 循环依赖 + 依赖检查 + turbo typecheck + cspell
+      # lefthook 的 pre-commit 钩子跑的是 pnpm lint + pnpm check:type，这里是它的超集。
+      # 只跑其中一条的话，本地能提交的代码到 CI 才挂，或者反过来 CI 绿着、lint 从没跑过。
       #
       # 其中 eslint 的 no-restricted-imports 承担 @core 的分层约束，
       # 该规则在合并 scope 后需要否定模式才正确，必须真的跑到。
-      - name: 检查（格式 / lint / 类型 / 循环依赖）
+      - name: 格式与 lint
+        run: pnpm lint
+
+      - name: 检查（类型 / 循环依赖 / 依赖 / 拼写）
         run: pnpm check
 
       - name: 构建
