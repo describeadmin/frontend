@@ -1,0 +1,8 @@
+# pnpm 设置。单个工程也放在这个文件里（pnpm 11 不再读 package.json 的 `pnpm` 字段）。
+#
+# pnpm 11 默认不执行依赖的安装脚本；依赖树里有安装脚本、又没在这里表态的包，
+# 会让 `pnpm install` 以 ERR_PNPM_IGNORED_BUILDS 退出（依赖其实装上了，但退出码是 1，CI 会判失败）。
+# 下面两个是本工程依赖树里带安装脚本的包。以后新增的依赖再报这个错，用 `pnpm approve-builds` 处理。
+allowBuilds:
+  '@parcel/watcher': true
+  vue-demi: true

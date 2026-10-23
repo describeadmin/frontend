@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * 消费侧类型检查：以"业务方从 npm 安装发布产物"的视角，对 @describeadmin/* 的
- * dist/*.d.ts 跑一次真实 typecheck。
+ * 消费侧类型检查 + 生产构建：以"业务方从 npm 安装发布产物"的视角，对 @describeadmin/* 的
+ * dist/*.d.ts 跑一次真实 typecheck，再对 create-app 生成的工程做一次生产构建，
+ * 确认产物带着运行时配置 _app.config.js（见 assertRuntimeConfig）。
  *
  * 为什么需要它：
  * 框架自身的 typecheck（`turbo run typecheck`）只检查源码 src/，而发布出去的
@@ -144,8 +145,15 @@ function assertBuilt(packages) {
  * ⚠️ 必须写在 pnpm-workspace.yaml，不能写 package.json 的 `pnpm.overrides`——
  * pnpm 11 已不再读取后者（见 https://pnpm.io/settings）。
  * appDir 与 tarballDir 是同级目录，故用相对路径 `file:../tarballs/...`。
+ *
+ * 追加而不是覆盖：生成的工程自带一份 pnpm-workspace.yaml（`allowBuilds`），
+ * 覆盖掉它的话，这里的安装就和业务方实际的安装不是同一条路径了。
  */
 function writeOverrides(appDir, tarballDir, packages) {
+  const workspaceFile = join(appDir, 'pnpm-workspace.yaml');
+  const existing = existsSync(workspaceFile)
+    ? readFileSync(workspaceFile, 'utf8')
+    : '';
   const lines = ['overrides:'];
   for (const pkg of packages) {
     const slug = pkg.name.slice('@describeadmin/'.length);
@@ -157,7 +165,9 @@ function writeOverrides(appDir, tarballDir, packages) {
     }
     lines.push(`  '${pkg.name}': file:../tarballs/${tgz}`);
   }
-  writeFileSync(join(appDir, 'pnpm-workspace.yaml'), `${lines.join('\n')}\n`);
+  const prefix =
+    existing === '' || existing.endsWith('\n') ? existing : `${existing}\n`;
+  writeFileSync(workspaceFile, `${prefix}\n${lines.join('\n')}\n`);
 }
 
 function main() {
@@ -198,15 +208,49 @@ function main() {
     );
     writeOverrides(appDir, tarballDir, packages);
 
-    console.log('==> 安装（overrides 指向 tarball，忽略 build 脚本）');
-    run('pnpm', ['install', '--ignore-scripts'], { cwd: appDir });
+    // 不加 --ignore-scripts：要和业务方执行的 `pnpm install` 是同一条命令，
+    // 依赖的安装脚本没在 allowBuilds 里表态时 pnpm 11 会以错误退出，这里要能发现
+    console.log('==> 安装（overrides 指向 tarball）');
+    run('pnpm', ['install'], { cwd: appDir });
 
     console.log('==> 消费侧 typecheck');
     run('pnpm', ['typecheck'], { cwd: appDir });
 
-    console.log('==> 消费侧类型检查通过');
+    console.log('==> 消费侧生产构建');
+    run('pnpm', ['build'], { cwd: appDir });
+    assertRuntimeConfig(appDir);
+
+    console.log('==> 消费侧类型检查与生产构建通过');
   } finally {
     rmSync(workDir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * 生产产物必须带着运行时配置：useAppConfig 在生产环境优先读 `_app.config.js` 注入的全局变量。
+ * 模板的 vite 配置漏了生成它时，开发模式一切正常、生产构建也成功，打开却拿不到接口地址——
+ * 曾经因此白屏过，而 typecheck 与构建都是绿的。
+ */
+function assertRuntimeConfig(appDir) {
+  const distDir = join(appDir, 'dist');
+  const configFile = join(distDir, '_app.config.js');
+  if (!existsSync(configFile)) {
+    throw new Error('生产产物里没有 _app.config.js，接口地址只能在构建期写死');
+  }
+  const config = readFileSync(configFile, 'utf8');
+  if (
+    !config.includes('window._VBEN_ADMIN_PRO_APP_CONF_=') ||
+    !config.includes('VITE_GLOB_API_URL')
+  ) {
+    throw new Error(
+      `_app.config.js 内容不对，没有写入 VITE_GLOB_API_URL：\n${config}`,
+    );
+  }
+  const html = readFileSync(join(distDir, 'index.html'), 'utf8');
+  const configAt = html.indexOf('_app.config.js');
+  const entryAt = html.indexOf('type="module"');
+  if (configAt === -1 || entryAt === -1 || configAt > entryAt) {
+    throw new Error('index.html 没有在应用入口之前引用 _app.config.js');
   }
 }
 

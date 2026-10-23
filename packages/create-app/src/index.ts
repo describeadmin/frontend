@@ -67,7 +67,7 @@ async function main() {
           '  pnpm dev',
           '',
           '默认代理到 http://localhost:8090（archetype 生成的后端或你自己的服务），',
-          '可用 VITE_PROXY_TARGET 环境变量覆盖。',
+          '后端不在这个地址时，在 .env.development 里设 VITE_PROXY_TARGET（或用同名环境变量临时覆盖）。',
         ].join('\n'),
       );
     });

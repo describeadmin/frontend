@@ -1,3 +1,6 @@
+import type { Plugin } from 'vite';
+
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -7,26 +10,70 @@ import vue from '@vitejs/plugin-vue';
 import ElementPlus from 'unplugin-element-plus/vite';
 import { defineConfig, loadEnv } from 'vite';
 
-/**
- * 后端地址。写成环境变量而不是常量：8080 在开发机上极易与其他项目撞车，
- * 撞了之后改一处配置就能绕开，不必改代码。
- */
-const proxyTarget = process.env.VITE_PROXY_TARGET ?? 'http://localhost:8090';
-
 const pkg = JSON.parse(
   readFileSync(fileURLToPath(new URL('package.json', import.meta.url)), 'utf8'),
 );
 
-export default defineConfig(({ mode }) => {
-  /**
-   * dev server 端口。同 proxyTarget 的理由：默认端口在开发机上极易与其他项目撞车，
-   * 改 `.env.development` 里的 `VITE_PORT` 一处就能绕开，不必改代码。
-   * 缺省回落到 Vite 默认 5173。
-   */
-  const env = loadEnv(mode, process.cwd(), 'VITE_');
-  const port = Number(env.VITE_PORT) || 5173;
+/**
+ * 生产构建时把 `VITE_GLOB_*`（接口地址等）写进产物里的 `_app.config.js`，并在 index.html 里引用它。
+ *
+ * 运行时由 `@describeadmin/hooks` 的 `useAppConfig` 从 `window._VBEN_ADMIN_PRO_APP_CONF_` 读取：
+ * 部署时改这一个文件就能换后端地址，不用重新打包——内网部署时后端地址往往要到现场才知道。
+ * 文件名带内容哈希，改了配置浏览器不会拿到缓存里的旧文件。
+ */
+function appConfigPlugin(env: Record<string, string>): Plugin {
+  const fileName = '_app.config.js';
+  const globalName = '_VBEN_ADMIN_PRO_APP_CONF_';
+  const config = Object.fromEntries(
+    Object.entries(env).filter(([key]) => key.startsWith('VITE_GLOB_')),
+  );
+  const source =
+    `window.${globalName}=${JSON.stringify(config)};` +
+    `Object.freeze(window.${globalName});` +
+    `Object.defineProperty(window,"${globalName}",{configurable:false,writable:false});`;
+  const hash = createHash('sha256').update(source).digest('hex').slice(0, 8);
+  let base = '/';
 
   return {
+    apply: 'build',
+    configResolved(resolved) {
+      base = resolved.base.endsWith('/') ? resolved.base : `${resolved.base}/`;
+    },
+    generateBundle() {
+      this.emitFile({ fileName, source, type: 'asset' });
+    },
+    name: 'describeadmin:app-config',
+    transformIndexHtml() {
+      return [
+        {
+          attrs: { src: `${base}${fileName}?v=${pkg.version}-${hash}` },
+          injectTo: 'head-prepend',
+          tag: 'script',
+        },
+      ];
+    },
+  };
+}
+
+export default defineConfig(({ mode }) => {
+  /**
+   * `.env*` 文件与进程环境变量合并后的 `VITE_*`，进程环境变量优先。
+   * 不要直接读 `process.env`：`.env` 文件里的值不会进 `process.env`，写在里面等于没写。
+   */
+  const env = loadEnv(mode, process.cwd(), 'VITE_');
+
+  /**
+   * dev server 端口与后端地址。写成配置而不是常量：默认端口在开发机上极易与其他项目撞车，
+   * 撞了之后改 `.env.development`（或临时设环境变量）一处就能绕开，不必改代码。
+   * 端口缺省回落到 Vite 默认 5173。
+   */
+  const port = Number(env.VITE_PORT) || 5173;
+  const proxyTarget = env.VITE_PROXY_TARGET || 'http://localhost:8090';
+
+  return {
+    // 部署子路径。与 src/router/index.ts 的 createWebHistory(VITE_BASE) 同源，
+    // 两处不一致的话路由能进、静态资源却全部 404
+    base: env.VITE_BASE || '/',
     define: {
       /**
        * `@describeadmin/ui` 的关于页读取这个全局变量展示依赖版本。
@@ -42,6 +89,7 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(pkg.version),
     },
     plugins: [
+      appConfigPlugin(env),
       vue(),
       tailwindcss(),
       ElementPlus({

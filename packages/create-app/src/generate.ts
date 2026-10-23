@@ -19,6 +19,8 @@ const templateRoot = join(packageRoot, 'template');
 const TEMPLATE_RENAMES = new Map([
   ['_gitignore', '.gitignore'],
   ['_package.json', 'package.json'],
+  // 真名的 pnpm-workspace.yaml 留在 monorepo 里会被 pnpm 当成嵌套的工作区根
+  ['_pnpm-workspace.yaml', 'pnpm-workspace.yaml'],
 ]);
 
 export interface GenerateOptions {
