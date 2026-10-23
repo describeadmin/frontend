@@ -26,11 +26,26 @@ export const overridesPreferences = defineOverridesPreferences({
     defaultHomePath: '/dashboard/workbench',
 
     /**
-     * docs/LOGIN_MODULE_AUDIT.md E 项：后端已实现 access/refresh 双令牌，
-     * src/api/request.ts 的 doRefreshToken 已从桩实现换成真实调用，这里随之打开。
+     * access token 过期后用 refresh token 静默续期并重放原请求（src/api/request.ts 的 doRefreshToken），
+     * 用户无感。后端 describeadmin.security.refresh-token.enabled=false 时这里也要关掉。
      */
     enableRefreshToken: true,
 
     name: import.meta.env.VITE_APP_TITLE,
   },
+
+  /**
+   * 页脚版权信息，默认不显示。框架不预填任何单位名称，由部署方填自己的：
+   *
+   * copyright: {
+   *   enable: true,
+   *   companyName: '某某市大数据局',
+   *   companySiteLink: 'https://example.gov.cn',
+   *   date: '2026',
+   *   icp: '某ICP备XXXXXXXX号',
+   *   icpLink: 'https://beian.miit.gov.cn',
+   * },
+   *
+   * 这一段改了即生效，不受浏览器偏好缓存影响。
+   */
 });

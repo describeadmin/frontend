@@ -11,10 +11,11 @@ defineOptions({
   name: 'Copyright',
 });
 
+// 不预填任何名字或年份：版权信息归部署方，没填的部分就不显示
 withDefaults(defineProps<Props>(), {
-  companyName: 'Vben Admin',
+  companyName: '',
   companySiteLink: '',
-  date: '2024',
+  date: '',
   icp: '',
   icpLink: '',
 });
@@ -32,8 +33,8 @@ withDefaults(defineProps<Props>(), {
       {{ icp }}
     </a>
 
-    <!-- Copyright Text -->
-    Copyright © {{ date }}
+    <!-- Copyright Text：只填了备案号时不留一个光秃秃的「Copyright ©」 -->
+    <template v-if="date || companyName">Copyright © {{ date }}</template>
 
     <!-- Company Link -->
     <a

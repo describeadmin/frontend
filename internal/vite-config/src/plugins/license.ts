@@ -29,16 +29,15 @@ async function viteLicensePlugin(
     generateBundle: {
       handler: (_options: NormalizedOutputOptions, bundle: OutputBundle) => {
         const date = dateUtil().format('YYYY-MM-DD ');
+        // 前端源自 Vben Admin（MIT），再分发必须保留其版权声明——这一行是义务，不要删
         const copyrightText = `/*!
-  * Vben Admin
+  * describeadmin
   * Version: ${version}
-  * Author: vben
-  * Copyright (C) 2024 Vben
   * License: MIT License
+  * Based on Vben Admin, Copyright (c) 2024-present Vben (MIT License)
   * Description: ${description}
   * Date Created: ${date}
   * Homepage: ${homepage}
-  * Contact: ann.vben@gmail.com
 */
               `.trim();
 

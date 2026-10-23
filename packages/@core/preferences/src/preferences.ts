@@ -53,7 +53,12 @@ const DEPLOYMENT_OWNED_APP_KEYS = [
   'zIndex',
 ] as const satisfies readonly (keyof Preferences['app'])[];
 
+/**
+ * copyright 归部署方：偏好抽屉里的版权设置块默认隐藏（`copyright.settingShow = false`）。
+ * 部署方若把它打开让终端用户改，那份改动也只活到下次刷新——版权信息不该由终端用户决定。
+ */
 const DEPLOYMENT_OWNED_SECTIONS = [
+  'copyright',
   'logo',
 ] as const satisfies readonly (keyof Preferences)[];
 

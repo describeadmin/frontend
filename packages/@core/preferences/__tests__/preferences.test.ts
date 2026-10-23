@@ -144,6 +144,41 @@ describe('preferences', () => {
     expect(preferences.theme.mode).toBe('dark');
   });
 
+  it('ignores cached copyright so a stale upstream notice cannot survive', async () => {
+    const namespace = 'copyrightNamespace';
+    vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
+      if (key === `${namespace}-preferences`) {
+        return JSON.stringify({
+          value: {
+            copyright: {
+              companyName: 'Vben',
+              companySiteLink: 'https://www.vben.pro',
+              date: '2024',
+              enable: true,
+            },
+          },
+        });
+      }
+      return null;
+    });
+
+    await preferenceManager.initPreferences({
+      namespace,
+      overrides: {
+        copyright: {
+          companyName: '某某市大数据局',
+          date: '2026',
+          enable: true,
+        },
+      } as any,
+    });
+
+    const { copyright } = preferenceManager.getPreferences();
+    expect(copyright.companyName).toBe('某某市大数据局');
+    expect(copyright.date).toBe('2026');
+    expect(copyright.companySiteLink).toBe('');
+  });
+
   it('falls back to defaults for deployment-owned fields absent from overrides', async () => {
     const namespace = 'deployDefaultNamespace';
     vi.mocked(localStorage.getItem).mockImplementation((key: string) => {

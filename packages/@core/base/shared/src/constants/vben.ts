@@ -11,9 +11,9 @@
 export const VBEN_GITHUB_URL = 'https://github.com/describeadmin/frontend';
 
 /**
- * @zh_CN 文档地址
+ * @zh_CN 文档地址：docs 仓 site/ 构建出的文档站（GitHub Pages）
  */
-export const VBEN_DOC_URL = 'https://github.com/describeadmin/docs';
+export const VBEN_DOC_URL = 'https://describeadmin.github.io/docs/';
 
 /**
  * @zh_CN Logo。

@@ -28,7 +28,7 @@ const defaultPreferences: Preferences = {
     layout: 'sidebar-nav',
     locale: 'zh-CN',
     loginExpiredMode: 'page',
-    name: 'Vben Admin',
+    name: 'Describe Admin',
     preferencesButtonPosition: 'auto',
     timezone: 'Asia/Shanghai',
     watermark: false,
@@ -42,14 +42,16 @@ const defaultPreferences: Preferences = {
     showIcon: true,
     styleType: 'normal',
   },
+  // 版权信息归部署方：默认不显示、不预填任何名字，偏好抽屉里也不给终端用户改。
+  // 部署方在应用的 preferences.ts 里填自己的单位、年份与备案号，并把 enable 打开
   copyright: {
-    companyName: 'Vben',
-    companySiteLink: 'https://www.vben.pro',
-    date: '2024',
-    enable: true,
+    companyName: '',
+    companySiteLink: '',
+    date: '',
+    enable: false,
     icp: '',
     icpLink: '',
-    settingShow: true,
+    settingShow: false,
   },
   footer: {
     enable: false,
