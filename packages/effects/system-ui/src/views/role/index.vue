@@ -30,7 +30,6 @@ import {
 
 import {
   assignRoleDeptsApi,
-  assignRoleMenusApi,
   createRoleApi,
   DATA_SCOPE_OPTIONS,
   deleteRoleApi,
@@ -43,6 +42,7 @@ import {
 } from '../../api';
 import { cascadeCheck } from '../../composables/useGrantTree';
 import { useSearchForm } from '../../composables/useSearchForm';
+import AssignMenuDialog from './assign-menu-dialog.vue';
 
 defineOptions({ name: 'SystemRole' });
 
@@ -115,12 +115,8 @@ const confirmVisible = ref(false);
 const deletingId = ref<null | number>(null);
 
 const menuVisible = ref(false);
-const menuTree = ref<SysMenu[]>([]);
-const checkedMenuIds = ref<number[]>([]);
 const menuRoleId = ref<null | number>(null);
-const menuTreeRef = ref();
-/** 已勾选项数，供管理员在提交前一眼看出不是 0（弹窗里树很长，滚动后看不全）。 */
-const menuCheckedCount = ref(0);
+const menuRoleName = ref('');
 
 const deptVisible = ref(false);
 // 只要 id + 名称，所以走部门模块只要求登录的选项接口，而不是要 system:dept:list 的
@@ -307,58 +303,27 @@ async function confirmDelete() {
 }
 
 /**
- * 两棵授权树都是 `check-strictly` + 手写的单向级联，见 `composables/useGrantTree.ts`
- * 里那段关于「为什么不用 ElTree 默认父子联动」的说明。
+ * 「分配菜单」那棵树搬进了 `./assign-menu-dialog.vue`（检索 / 批量 / 摘要），
+ * 这里只留下「分配数据权限」这棵。两棵树的勾选规则相同：`check-strictly` +
+ * 手写的单向级联，见 `composables/useGrantTree.ts` 里那段关于「为什么不用
+ * ElTree 默认父子联动」的说明。
  *
  * 一句话：父 MENU 节点自己就带 `xxx:list` 权限点，而联动模式下父节点的勾选态由子节点
  * 推导——「只给列表权限」（父勾、子全不勾）在那个模式下根本表达不出来。
  *
  * ⚠️ 不要"顺手"去掉 `check-strictly` 恢复成联动，那会让这个授权状态再次无法表达。
  */
-function onMenuCheck(data: TreeNodeData) {
-  cascadeCheck(menuTreeRef.value, menuTree.value, (data as SysMenu).id);
-  menuCheckedCount.value = menuTreeRef.value?.getCheckedKeys().length ?? 0;
-}
-
 function onDeptCheck(data: TreeNodeData) {
   cascadeCheck(deptTreeRef.value, deptTree.value, (data as OptionItem).value);
   deptCheckedCount.value = deptTreeRef.value?.getCheckedKeys().length ?? 0;
 }
 
-async function openAssignMenu(row: SysRole) {
+function openAssignMenu(row: SysRole) {
   menuRoleId.value = row.id ?? null;
-  const [all, owned] = await Promise.all([
-    getRoleGrantableMenusApi(),
-    getRoleMenusApi(row.id as number),
-  ]);
-  menuTree.value = all;
-  // check-strictly 下 setCheckedKeys 是精确回填、零级联，直接塞已授权 id 即可。
-  // （非严格模式才需要先把集合降解成叶子，否则父节点的勾选会级联铺满全部子节点。）
-  checkedMenuIds.value = owned;
+  menuRoleName.value = row.roleName ?? '';
+  // 菜单树与已授权 id 都由弹窗自己取：已授权 id 必须是打开那一刻的值，
+  // 提前拉好放在这里反而要额外处理"拉了但没打开"的中间态。
   menuVisible.value = true;
-  // ElDialog 的内容首次打开才渲染、关闭后不销毁，default-checked-keys 只在那一次
-  // 生效：换个角色再打开时不显式回填，看到的会是上一个角色的勾选状态。
-  await nextTick();
-  menuTreeRef.value?.setCheckedKeys(checkedMenuIds.value);
-  menuCheckedCount.value = menuTreeRef.value?.getCheckedKeys().length ?? 0;
-}
-
-async function submitAssignMenu() {
-  if (menuRoleId.value === null) {
-    return;
-  }
-  submitting.value = true;
-  try {
-    // check-strictly 下不产生半选，getCheckedKeys() 就是完整的勾选集合。
-    // 祖先由后端 SysRoleService.assignMenus 闭包补齐——那是「子路由要有挂载点」
-    // 这条不变量的唯一写入口，不再要求每个调用方记得提交半选父节点。
-    const ids = menuTreeRef.value.getCheckedKeys() as number[];
-    await assignRoleMenusApi(menuRoleId.value, ids);
-    ElMessage.success('授权成功');
-    menuVisible.value = false;
-  } finally {
-    submitting.value = false;
-  }
 }
 
 async function openAssignDept(row: SysRole) {
@@ -368,10 +333,12 @@ async function openAssignDept(row: SysRole) {
     getRoleDeptsApi(row.id as number),
   ]);
   deptTree.value = tree;
-  // 同 openAssignMenu：check-strictly 下精确回填
+  // check-strictly 下 setCheckedKeys 是精确回填、零级联，直接塞已授权 id 即可。
+  // （非严格模式才需要先把集合降解成叶子，否则父节点的勾选会级联铺满全部子节点。）
   checkedDeptIds.value = owned;
   deptVisible.value = true;
-  // 同 openAssignMenu
+  // ElDialog 的内容首次打开才渲染、关闭后不销毁，default-checked-keys 只在那一次
+  // 生效：换个角色再打开时不显式回填，看到的会是上一个角色的勾选状态。
   await nextTick();
   deptTreeRef.value?.setCheckedKeys(checkedDeptIds.value);
   deptCheckedCount.value = deptTreeRef.value?.getCheckedKeys().length ?? 0;
@@ -383,7 +350,7 @@ async function submitAssignDept() {
   }
   submitting.value = true;
   try {
-    // ⚠️ 这里过去连半选的父节点一起提交，照搬了 submitAssignMenu 的理由——那个结论
+    // ⚠️ 这里过去连半选的父节点一起提交，照搬了「分配菜单」那个提交的理由——那个结论
     // 放在部门树上是错的，而且是一个数据权限越授：部门树在这里根本不用于渲染，
     // 它只是选值，DeptDataPermissionHandler 的 CUSTOM 档生成的是 dept_id IN (...)，
     // 精确集合成员判定。半选的父部门被一并提交 = 角色能看到父部门的业务数据。
@@ -594,45 +561,12 @@ onMounted(async () => {
       </template>
     </ElDialog>
 
-    <ElDialog
+    <AssignMenuDialog
       v-model="menuVisible"
-      title="分配菜单"
-      width="520px"
-      append-to-body
-      data-testid="role-menu-dialog"
-    >
-      <p class="mb-2 text-sm text-gray-500" data-testid="role-menu-count">
-        已选 {{ menuCheckedCount }} 项
-      </p>
-      <ElTree
-        ref="menuTreeRef"
-        :data="menuTree"
-        :props="{ children: 'children', label: 'menuName' }"
-        :default-checked-keys="checkedMenuIds"
-        node-key="id"
-        show-checkbox
-        check-strictly
-        default-expand-all
-        data-testid="role-menu-tree"
-        @check="(data: TreeNodeData) => onMenuCheck(data)"
-      />
-      <template #footer>
-        <ElButton
-          data-testid="role-menu-cancel-btn"
-          @click="menuVisible = false"
-        >
-          取消
-        </ElButton>
-        <ElButton
-          type="primary"
-          :loading="submitting"
-          data-testid="role-menu-submit-btn"
-          @click="submitAssignMenu"
-        >
-          确定
-        </ElButton>
-      </template>
-    </ElDialog>
+      :menus="allMenuTree"
+      :role-id="menuRoleId"
+      :role-name="menuRoleName"
+    />
 
     <ElDialog
       v-model="deptVisible"

@@ -150,3 +150,35 @@ export function cascadeCheck(
     }
   }
 }
+
+/**
+ * 批量改勾选（「分配菜单」里的检索结果全选 / 取消全选）。
+ *
+ * **起点是树当前态，不是调用方记着的那个 id 数组**：先 `setChecked` 把节点推到目标态，
+ * 再交给 `cascadeCheck` 按「读节点自身 checked」的方式补祖先 / 带子孙。拿一份缓存数组
+ * 重算的写法会在用户手工点过几下之后就跟树不同步——而那份数组看起来"明明是对的"。
+ *
+ * 不跳过「已经在目标态」的节点：全选时那条路径是**补齐命中节点的整枝**（管理员明确点了
+ * 全选，就是要把这一片都授出去，包括他之前特意留成只读的按钮）；取消时 `cascadeCheck`
+ * 对已经取消的子节点是幂等的，省下的那点遍历不值得多一个分支。
+ *
+ * 树里查不到的 id（检索过滤后不可见、或菜单已被删）直接跳过：批量操作的影响面不能
+ * 因为找不到节点而变得不可预期。
+ */
+export function applyCheckedChanges(
+  treeRef: CheckableTree | null | undefined,
+  tree: GrantNode[],
+  ids: Iterable<unknown>,
+  checked: boolean,
+): void {
+  if (!treeRef) {
+    return;
+  }
+  for (const id of ids) {
+    if (!treeRef.getNode(id)) {
+      continue;
+    }
+    treeRef.setChecked(id, checked, false);
+    cascadeCheck(treeRef, tree, id);
+  }
+}

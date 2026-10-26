@@ -163,14 +163,15 @@ try {
     timeout: 20_000,
   });
 
-  // ElTree 的节点：用文案定位到 .el-tree-node，再取它自己那一层的复选框
-  const treeNode = (label) =>
+  // 授权树的节点用了自定义插槽（名称按关键字高亮 + 类型/权限标识），
+  // ElTree 默认的 `.el-tree-node__label` 不再渲染，所以按节点内容里的
+  // `.role-menu-node-name` 定位（CLAUDE.md 4.5.2）。
+  const nodeContent = (label) =>
     page
-      .locator('[data-testid="role-menu-tree"] .el-tree-node')
-      .filter({ has: page.locator(`.el-tree-node__label:text-is("${label}")`) })
+      .locator('[data-testid="role-menu-tree"] .el-tree-node__content')
+      .filter({ has: page.locator(`.role-menu-node-name:text-is("${label}")`) })
       .first();
-  const nodeCheckbox = (label) =>
-    treeNode(label).locator('.el-checkbox').first();
+  const nodeCheckbox = (label) => nodeContent(label).locator('.el-checkbox');
   const isChecked = async (label) =>
     await nodeCheckbox(label).evaluate((el) =>
       el.classList.contains('is-checked'),
@@ -179,6 +180,7 @@ try {
     await nodeCheckbox(label).evaluate((el) =>
       el.classList.contains('is-indeterminate'),
     );
+  const isVisible = async (label) => await nodeContent(label).isVisible();
 
   // 勾父：子节点跟着勾（便捷级联）
   await nodeCheckbox('用户管理').click();
@@ -225,6 +227,53 @@ try {
     menuCountText.includes('已选 2 项'),
     menuCountText,
   );
+
+  // -------------------------------------------------- 分配菜单：检索 / 批量
+  const menuCount = async () => {
+    const text = await page.textContent('[data-testid="role-menu-count"]');
+    return Number(/已选 (\d+) 项/.exec(text)?.[1] ?? -1);
+  };
+
+  await page.fill('[data-testid="role-menu-search-input"] input', '用户管理');
+  await page.waitForTimeout(400);
+  check(
+    '检索命中「用户管理」时它的按钮可见、无关分支「角色管理」被隐藏',
+    (await isVisible('新增')) && !(await isVisible('角色管理')),
+  );
+
+  await page.click('[data-testid="role-menu-select-all-btn"]');
+  await page.waitForTimeout(400);
+  check(
+    '「全选结果」把命中节点的整枝都授出去（含未勾过的按钮）',
+    (await isChecked('新增')) && (await menuCount()) > 2,
+    `已选 ${await menuCount()} 项`,
+  );
+
+  await page.click('[data-testid="role-menu-unselect-all-btn"]');
+  await page.waitForTimeout(400);
+  check(
+    '「取消全选结果」只收掉命中节点及其子孙，祖先「系统管理」不动',
+    !(await isChecked('用户管理')) &&
+      !(await isChecked('新增')) &&
+      (await isChecked('系统管理')) &&
+      (await menuCount()) === 1,
+    `已选 ${await menuCount()} 项`,
+  );
+
+  await page.fill(
+    '[data-testid="role-menu-search-input"] input',
+    '这个菜单不存在',
+  );
+  await page.waitForTimeout(400);
+  check(
+    '检索无结果时给出空状态提示',
+    await page.isVisible('[data-testid="role-menu-empty"]'),
+  );
+
+  await page.fill('[data-testid="role-menu-search-input"] input', '');
+  await page.waitForTimeout(400);
+  check('清空检索后分支重新出现', await isVisible('角色管理'));
+
   await page.click('[data-testid="role-menu-cancel-btn"]');
   await page.waitForTimeout(500);
 

@@ -2,7 +2,12 @@ import type { GrantNode } from '../useGrantTree';
 
 import { describe, expect, it } from 'vitest';
 
-import { cascadeCheck, descendantIds, pathToNode } from '../useGrantTree';
+import {
+  applyCheckedChanges,
+  cascadeCheck,
+  descendantIds,
+  pathToNode,
+} from '../useGrantTree';
 
 /**
  * 典型的三层菜单树：系统管理(1) → 用户管理(2) → 新增(3)/编辑(4)/删除(5)。
@@ -102,11 +107,18 @@ describe('descendantIds', () => {
 /**
  * 最小的 ElTree 替身：只实现 `check-strictly` 下 `getNode`/`setChecked(key, v, false)`
  * 的语义——精确只改这一个节点，不级联。
+ *
+ * `known` 用来模拟"树里压根没有这个节点"（检索过滤后不可见、或菜单已删）：
+ * 传了就只认这些 key，其余 `getNode` 返回 `null`，与 ElTree 的 `nodesMap` 一致。
  */
-function fakeTree(checked: Set<string> = new Set()) {
+function fakeTree(checked: Set<string> = new Set(), known?: string[]) {
+  const knownKeys = known ? new Set(known) : null;
   return {
     checked,
-    getNode: (key: unknown) => ({ checked: checked.has(String(key)) }),
+    getNode: (key: unknown) =>
+      knownKeys && !knownKeys.has(String(key))
+        ? null
+        : { checked: checked.has(String(key)) },
     setChecked: (key: unknown, value: boolean) => {
       if (value) {
         checked.add(String(key));
@@ -185,6 +197,62 @@ describe('cascadeCheck', () => {
     const el = fakeTree(new Set(['1']));
     expect(() => cascadeCheck(null, tree, '1')).not.toThrow();
     cascadeCheck(el, tree, '999');
+    expect([...el.checked]).toEqual(['1']);
+  });
+});
+
+/**
+ * 「分配菜单」的检索结果全选 / 取消全选走的就是它。
+ *
+ * 起点必须是**树当前态**：先 `setChecked` 再按 `cascadeCheck` 补祖先 / 带子孙。
+ */
+describe('applyCheckedChanges', () => {
+  it('checks every id in the batch, pulling in ancestors and descendants', () => {
+    const tree = menuTree();
+    const el = fakeTree(new Set(['1']));
+    applyCheckedChanges(el, tree, ['2'], true);
+    expect([...el.checked].toSorted()).toEqual(['1', '2', '3', '4', '5']);
+  });
+
+  // 全选是"这一片都授出去"：管理员明确点了全选，之前特意留成只读的按钮也要勾上。
+  it('checking a node that is already checked still fills in its subtree', () => {
+    const tree = menuTree();
+    const el = fakeTree(new Set(['1', '2']));
+    applyCheckedChanges(el, tree, ['2'], true);
+    expect([...el.checked].toSorted()).toEqual(['1', '2', '3', '4', '5']);
+  });
+
+  it('unchecks the batch and its descendants but never the ancestors', () => {
+    const tree = menuTree();
+    const el = fakeTree(new Set(['1', '2', '3', '4', '5']));
+    applyCheckedChanges(el, tree, ['2'], false);
+    expect([...el.checked]).toEqual(['1']);
+  });
+
+  it('applies a batch of several ids (检索命中多个节点)', () => {
+    const tree = menuTree();
+    const el = fakeTree();
+    applyCheckedChanges(el, tree, ['3', '4'], true);
+    expect([...el.checked].toSorted()).toEqual(['1', '2', '3', '4']);
+
+    applyCheckedChanges(el, tree, ['3', '4'], false);
+    expect([...el.checked].toSorted()).toEqual(['1', '2']);
+  });
+
+  // 检索过滤后不可见的节点、菜单被删后留在 sys_role_menu 里的脏 id：
+  // 批量操作的影响面不能因为找不到节点而变得不可预期。
+  it('silently skips ids that are not in the tree', () => {
+    const tree = menuTree();
+    const el = fakeTree(new Set(['1']), ['1', '2', '3', '4', '5']);
+    expect(() => applyCheckedChanges(el, tree, ['999'], true)).not.toThrow();
+    expect([...el.checked]).toEqual(['1']);
+  });
+
+  it('does nothing when the tree ref is missing', () => {
+    const el = fakeTree(new Set(['1']));
+    expect(() =>
+      applyCheckedChanges(null, menuTree(), ['2'], true),
+    ).not.toThrow();
     expect([...el.checked]).toEqual(['1']);
   });
 });
