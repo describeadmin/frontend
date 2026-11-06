@@ -28,10 +28,11 @@ overrides:
   '@ast-grep/napi': 'catalog:'
   '@ctrl/tinycolor': 'catalog:'
   clsx: 'catalog:'
-  # axios 的传递依赖。1.16.0 有两条 high（跨域重定向时凭据头未剥离，GHSA-q3jh-wrc6-jgq8 /
-  # GHSA-8r9p-f939-6h3c）；axios 声明的是 ^1.16.0，但锁文件不会自己往前推，`pnpm update --depth`
-  # 也推不动，只能在这里钉下限。axios 自身的依赖范围到了 ^1.16.1 以后可以删掉这一行
-  follow-redirects: ^1.16.1
+  # axios 的传递依赖。1.16.0 两条 high（跨域重定向时凭据头未剥离，GHSA-q3jh-wrc6-jgq8 /
+  # GHSA-8r9p-f939-6h3c），1.16.1 又命中一条（修复于 1.16.2）。axios 声明的是 ^1.16.0，
+  # 但锁文件不会自己往前推，`pnpm update --depth` 也推不动，只能在这里钉下限。
+  # axios 自身的依赖范围到了 ^1.16.2 以后可以删掉这一行
+  follow-redirects: ^1.16.2
   pinia: 'catalog:'
   vue: 'catalog:'
 
@@ -49,7 +50,7 @@ catalog:
   '@iconify/json': ^2.2.476
   '@iconify/tailwind4': ^1.2.3
   '@iconify/vue': ^5.0.1
-  '@intlify/core-base': ^11.4.4
+  '@intlify/core-base': ^11.4.14
   '@intlify/unplugin-vue-i18n': ^11.2.3
   '@jspm/generator': ^2.15.0
   '@manypkg/get-packages': ^3.1.0
@@ -145,7 +146,7 @@ catalog:
   pinia-plugin-persistedstate: ^4.7.1
   pkg-types: ^2.3.1
   playwright: ^1.60.0
-  postcss: ^8.5.15
+  postcss: ^8.5.23
   postcss-html: ^1.8.1
   postcss-scss: ^4.0.9
   publint: ^0.3.21
@@ -188,7 +189,7 @@ catalog:
   vitest: ^4.1.7
   vue: ^3.5.42
   vue-eslint-parser: ^10.4.0
-  vue-i18n: ^11.4.4
+  vue-i18n: ^11.4.14
   vue-json-pretty: ^2.6.0
   vue-router: ^5.0.7
   vue-tippy: ^6.7.1
