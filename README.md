@@ -1,5 +1,7 @@
 # describeadmin frontend
 
+![Describe Admin](./assets/logo-text.svg)
+
 describeadmin 的前端：30 个 `@describeadmin/*` npm 包（锁步同版本，当前 1.0.0）与前端脚手架 `@describeadmin/create-app`。取材自 [Vben Admin](https://github.com/vbenjs/vue-vben-admin) 5.7.0 后独立演进，UI 库为 Element Plus，派生关系与维护责任见 [NOTICE.md](./NOTICE.md)。
 
 **文档：<https://describeadmin.github.io/docs/>**，从 [从零跑起一个管理后台](https://describeadmin.github.io/docs/guide/getting-started) 开始。
